@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fuitclassify - LC fly</title>
+<style>
+  :root { color-scheme: dark; --bg:#0d1117; --panel:#161b22; --line:#30363d; --fg:#e6edf3; --mut:#8b949e; --blue:#58a6ff; --pink:#f778ba; --green:#3fb950; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif; }
+  header { padding:14px 20px; border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:baseline; flex-wrap:wrap; }
+  header h1 { font-size:17px; margin:0; }
+  header span { color:var(--mut); font-size:13px; }
+  main { display:grid; grid-template-columns: minmax(360px, 560px) minmax(360px, 1fr); gap:16px; padding:16px 20px; max-width:1300px; margin:0 auto; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 14px; }
+  h2 { margin:0 0 8px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--mut); }
+  canvas { display:block; max-width:100%; height:auto; background:#0d1117; border-radius:6px; }
+  .col { display:flex; flex-direction:column; gap:16px; min-width:0; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0; }
+  label { color:var(--mut); font-size:12px; display:flex; flex-direction:column; gap:3px; }
+  input, select { background:#0d1117; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:5px 7px; font:inherit; width:96px; }
+  select { width:auto; }
+  input[type=checkbox] { width:auto; }
+  label.inline { flex-direction:row; align-items:center; gap:6px; }
+  button { background:#21262d; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:7px 12px; font:inherit; cursor:pointer; }
+  button:hover { border-color:var(--mut); }
+  button.primary { background:#1f6feb; border-color:#1f6feb; }
+  button.on { background:#b62324; border-color:#b62324; }
+  #genStats { font-variant-numeric:tabular-nums; margin-top:8px; min-height:1.4em; }
+  .mut { color:var(--mut); font-size:12px; }
+  pre { margin:0; max-height:170px; overflow:auto; font:12px/1.5 ui-monospace,Consolas,monospace; color:#c9d1d9; white-space:pre-wrap; }
+  details { margin-top:6px; } summary { color:var(--mut); cursor:pointer; font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>LC fly</h1>
+  <span id="neurons">...</span>
+  <span id="params"></span>
+  <span id="poolStatus"></span>
+</header>
+<main>
+  <div class="col">
+    <section>
+      <h2>Scene <span class="mut" id="watchStats" style="text-transform:none;letter-spacing:0;margin-left:8px"></span></h2>
+      <canvas id="scene" width="520" height="310"></canvas>
+      <div class="row">
+        <label class="inline"><input type="checkbox" id="watchOn" checked> watch live</label>
+        <label class="inline">speed <select id="speed"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option><option value="4">4x</option></select></label>
+        <label class="inline">show <select id="watchData"><option value="train">training images</option><option value="test">held-out images</option></select></label>
+      </div>
+    </section>
+    <section>
+      <h2>What the eye sees (retina, ~5&deg; per receptor)</h2>
+      <canvas id="eye" width="520" height="224"></canvas>
+    </section>
+    <section>
+      <h2>Neurons</h2>
+      <canvas id="neuronView" width="520" height="300"></canvas>
+    </section>
+  </div>
+
+  <div class="col">
+    <section>
+      <h2>Training</h2>
+      <div class="row">
+        <button id="btnTrain" class="primary">Start training</button>
+        <button id="btnEval">Test on new images</button>
+        <button id="btnProbe">Probe the eye</button>
+      </div>
+      <div id="genStats" class="mut">not started</div>
+      <canvas id="chart" width="600" height="220" style="margin-top:8px"></canvas>
+      <div class="mut" style="margin-top:6px">
+        <span style="color:#58a6ff">blue</span> accuracy of the current brain (right axis) &middot;
+        <span style="color:#3fb950">green</span> its return &middot; <span style="color:#d29922">amber</span> best candidate &middot; gray population mean
+      </div>
+    </section>
+
+    <section>
+      <h2>Task</h2>
+      <div class="row">
+        <label>stimulus
+          <select id="stim">
+            <option value="brightness">1. dark vs bright (easy)</option>
+            <option value="gratings">2. horizontal vs vertical stripes</option>
+            <option value="faces">3. man vs woman photos (hard)</option>
+          </select>
+        </label>
+        <label>images / class <input id="facesCap" type="number" value="300" min="20" max="1500"></label>
+        <button id="btnFaces">Load faces</button>
+      </div>
+      <div class="mut" id="facesStatus">Switching task keeps the trained brain, so it carries over. Faces load from the local dataset via the server.</div>
+    </section>
+
+    <section>
+      <h2>Brain &amp; settings</h2>
+      <div class="row">
+        <label>eyes <select id="eyes"><option value="1">1 (right)</option><option value="2">2</option></select></label>
+        <label>2-eye layout <select id="eyeLayout"><option value="overlap">overlap (both see all)</option><option value="split">split field (each sees its side)</option></select></label>
+        <label>eye resolution <select id="eyeRes"><option value="std">standard 14x20 (fast)</option><option value="fine">fine 28x40 (sharper, ~3x slower)</option></select></label>
+        <label>core neurons <input id="core" type="number" min="16" max="1024" step="16"></label>
+        <label>workers <input id="workers" type="number" min="1" max="32"></label>
+      </div>
+      <details open>
+        <summary>evolution strategy</summary>
+        <div class="row">
+          <label>pairs <input id="pairs" type="number" min="4" max="256"></label>
+          <label>sigma <input id="sigma" type="number" step="0.01" min="0.005"></label>
+          <label>lr <input id="lr" type="number" step="0.005" min="0.001"></label>
+          <label>episodes / candidate <input id="eps" type="number" min="1" max="32"></label>
+        </div>
+      </details>
+      <details>
+        <summary>rewards (correct +10 / wrong &minus;10 are fixed)</summary>
+        <div class="row">
+          <label>any response <input id="rwRespond" type="number" step="0.5"></label>
+          <label>premature <input id="rwPremature" type="number" step="0.5"></label>
+          <label>miss <input id="rwMiss" type="number" step="0.5"></label>
+          <label>per second <input id="rwTime" type="number" step="0.05"></label>
+          <label>decision margin <input id="rwMargin" type="number" step="0.5"></label>
+        </div>
+      </details>
+      <div class="row">
+        <button id="btnSave">Save brain</button>
+        <button id="btnLoad">Load brain</button>
+        <button id="btnReset">New random brain</button>
+        <input id="fileLoad" type="file" accept=".json" hidden>
+      </div>
+      <div class="mut">Autosaves to this browser every 10 generations.</div>
+    </section>
+
+    <section>
+      <h2>Log</h2>
+      <pre id="log"></pre>
+    </section>
+  </div>
+</main>
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
