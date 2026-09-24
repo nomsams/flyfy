@@ -9,7 +9,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const DATASET = process.env.DATASET_DIR || path.join(ROOT, '..', 'man-woman-dataset', 'data');
+// DATASET_DIR wins; otherwise the full local dataset if it sits next to this folder,
+// otherwise the small 64px sample bundled in ./dataset (500 images per class).
+const DATASET_CANDIDATES = [process.env.DATASET_DIR, path.join(ROOT, '..', 'man-woman-dataset', 'data'), path.join(ROOT, 'dataset')].filter(Boolean);
+const DATASET = DATASET_CANDIDATES.find((d) => fs.existsSync(path.join(d, 'men'))) || DATASET_CANDIDATES[0];
 const PORT = +(process.env.PORT || 4180);
 const IMAGE_RE = /\.(jpe?g|png|gif|webp|bmp)$/i;
 const MIME = {

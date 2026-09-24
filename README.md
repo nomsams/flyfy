@@ -15,9 +15,12 @@ node server.js          # then open http://localhost:4180
 npm test                # simulation + learning tests (Node 18+)
 ```
 
-Faces are read from a local dataset (`man-woman-dataset/data/{men,women}` next to this
-folder, or set `DATASET_DIR`). The procedural tasks (dark vs bright, horizontal vs
-vertical stripes) need no data.
+Faces come from `dataset/{men,women}`: a bundled sample of 500 images per class,
+centre-cropped and downscaled to 64x64 (the app shrinks them to 32x32 and the fly only
+ever sees ~14x20 receptors, so nothing useful is lost). The server prefers a full
+dataset if you have one: set `DATASET_DIR` (a folder containing `men/` and `women/`),
+or put it in `../man-woman-dataset/data`. The procedural tasks (dark vs bright,
+stripes) need no data.
 
 ## What is in the brain
 
