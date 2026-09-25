@@ -69,7 +69,18 @@ class WorkerPool {
 async function loadFaces(cap) {
   const status = (t) => { $('facesStatus').textContent = t; };
   status('listing dataset...');
-  const list = await (await fetch('/api/dataset')).json();
+  // With server.js the listing comes from the live dataset folder; on static hosting
+  // (GitHub Pages) there is no API, so fall back to the bundled manifest. Relative URLs only.
+  let list;
+  try {
+    const r = await fetch('api/dataset');
+    if (!r.ok) throw new Error('no api');
+    list = await r.json();
+  } catch {
+    const r = await fetch('dataset/manifest.json');
+    if (!r.ok) throw new Error('no dataset found (run node server.js, or add dataset/manifest.json)');
+    list = await r.json();
+  }
   if (!list.men.length || !list.women.length) throw new Error('server found no images (check DATASET_DIR)');
   let seed = 1234;
   const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
@@ -77,7 +88,7 @@ async function loadFaces(cap) {
   for (const [label, dir, names] of [[0, 'men', list.men], [1, 'women', list.women]]) {
     const shuffled = [...names];
     for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
-    for (const n of shuffled.slice(0, cap)) jobs.push({ label, url: `/dataset/${dir}/${encodeURIComponent(n)}` });
+    for (const n of shuffled.slice(0, cap)) jobs.push({ label, url: `dataset/${dir}/${encodeURIComponent(n)}` });
   }
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = IMG;

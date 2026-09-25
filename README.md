@@ -10,6 +10,10 @@ expands into view (a "loom"), and the fly answers by pressing a foot, or times o
 
 ## Run
 
+**Online (GitHub Pages):** https://nomsams.github.io/flyfy/ - it is a fully static site (no server, no build step, relative URLs only), so it runs on any static host. Faces load from the bundled `dataset/manifest.json`.
+
+**Locally:**
+
 ```bash
 node server.js          # then open http://localhost:4180
 npm test                # simulation + learning tests (Node 18+)
@@ -20,7 +24,8 @@ centre-cropped and downscaled to 64x64 (the app shrinks them to 32x32 and the fl
 ever sees ~14x20 receptors, so nothing useful is lost). The server prefers a full
 dataset if you have one: set `DATASET_DIR` (a folder containing `men/` and `women/`),
 or put it in `../man-woman-dataset/data`. The procedural tasks (dark vs bright,
-stripes) need no data.
+stripes) need no data. If you change the images in `dataset/`, regenerate the static listing with
+`node tools/make-manifest.mjs`.
 
 ## What is in the brain
 
