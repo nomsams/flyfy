@@ -148,7 +148,7 @@ export class Brain {
     this.lc = [];
     for (let e = 0; e < this.nEyes; e++) this.lc.push(new LCLayer(cfg.eye.rows, cfg.eye.cols, cfg.eye));
     this.nLC = this.lc.reduce((s, l) => s + l.n, 0);
-    this.nIn = this.nLC + 2; // + the two feet's touch feedback
+    this.nIn = this.nLC + 4; // + touch and pain (nociceptor) feedback from the two feet
     this.N = b.core;
     this.kIn = Math.min(b.kIn, this.nIn);
     this.kRec = Math.min(b.kRec, this.N);
@@ -182,10 +182,22 @@ export class Brain {
     this.h = new Float32Array(this.N);
     this.hn = new Float32Array(this.N);
     this.out = new Float32Array(this.M);
+    this.z = new Float32Array(this.M);
+    // Plastic (fast) synapses from the static LC cells onto the feet. Not part of the evolved
+    // parameters: they are learned during life from reward and pain, see learn().
+    this.staticIdx = [];
+    this.lc.forEach((lc, e) => { for (const t of lc.types) if (t.group === 'static') for (let k = 0; k < t.count; k++) this.staticIdx.push(e * lc.n + t.start + k); });
+    this.nS = this.staticIdx.length;
+    this.Wp = new Float32Array(this.M * this.nS);
+    this.xc = new Float32Array(this.nS);      // static features minus their running mean
+    this.fmean = new Float32Array(this.nS);
+    this.fmeanInit = false;
+    this.nAnswers = 0;
+    this.inhibition = b.inhibition;
     this.setParams(new Float32Array(this.paramCount));
   }
 
-  get neuronCount() { return this.nLC + this.N + this.M + 2; }
+  get neuronCount() { return this.nLC + this.N + this.M + 4; }
 
   initParams(seed = 1) {
     const rng = mulberry32(seed);
@@ -197,6 +209,8 @@ export class Brain {
     fill(this.sizes.wrec, g / Math.sqrt(this.kRec));
     o += this.sizes.b; // biases start at 0
     fill(this.sizes.wout, 2 / Math.sqrt(this.N));
+    // resting bias: a naive fly keeps its feet up (below the press threshold) until it has a reason to press
+    for (let m = 0; m < this.M; m++) p[o + m] = -0.6;
     return p;
   }
 
@@ -211,13 +225,50 @@ export class Brain {
     this.bout = take(this.sizes.bout);
   }
 
-  reset() {
+  // keepPlastic: keep what the fly has learned (the fast synapses) across episodes.
+  reset(keepPlastic = false) {
     this.h.fill(0); this.hn.fill(0); this.out.fill(0); this.x.fill(0);
     for (const l of this.lc) l.reset();
+    if (!keepPlastic) { this.Wp.fill(0); this.nAnswers = 0; }
+    this.fmeanInit = keepPlastic && this.nAnswers > 0; // keep the adapted mean when continuing a life
   }
 
-  // retinas: array of Float32Array; touch: Float32Array(2). Returns this.out.
-  step(retinas, touch) {
+  getPlastic() { return { Wp: Float32Array.from(this.Wp), fmean: Float32Array.from(this.fmean), n: this.nAnswers }; }
+  setPlastic(p) {
+    if (!p || p.Wp.length !== this.Wp.length) { this.Wp.fill(0); this.nAnswers = 0; this.fmeanInit = false; return; }
+    this.Wp.set(p.Wp); this.fmean.set(p.fmean); this.nAnswers = p.n; this.fmeanInit = p.n > 0;
+  }
+
+  // Pain from pressing when it should not (blank screen, or before looking): only the foot that
+  // pressed is weakened, along the features that drove it.
+  punish(foot) {
+    const L = this.cfg.learn, pn = this.cfg.pain;
+    if (!L.eta) return;
+    const d = L.eta / (1 + (L.anneal ? this.nAnswers / L.anneal : 0)) * pn.strength * pn.onPremature, nS = this.nS, a = foot * nS, xc = this.xc, Wp = this.Wp;
+    for (let j = 0; j < nS; j++) Wp[a + j] = Math.max(-L.wmax, Math.min(L.wmax, Wp[a + j] - d * xc[j]));
+  }
+
+  // Reinforcement from the answer just given: reward if correct, pain if wrong. With two choices a
+  // wrong answer also says the other foot was right, so both feet's synapses move.
+  learn(foot, correct) {
+    const L = this.cfg.learn;
+    if (!L.eta) return;
+    const sig = correct ? L.reward : -this.cfg.pain.strength;
+    const nS = this.nS, xc = this.xc, Wp = this.Wp, wmax = L.wmax;
+    // experienced flies change their minds more slowly, which settles the weights on noisy tasks
+    const speed = L.eta / (1 + (L.anneal ? this.nAnswers / L.anneal : 0));
+    const a = foot * nS, b = (1 - foot) * nS, d = speed * sig;
+    for (let j = 0; j < nS; j++) {
+      Wp[a + j] = Math.max(-wmax, Math.min(wmax, Wp[a + j] + d * xc[j]));
+      Wp[b + j] = Math.max(-wmax, Math.min(wmax, Wp[b + j] - d * xc[j]));
+    }
+    // adapt the reference to what an answered image looks like (fast at first, then slow)
+    const rate = Math.max(0.05, 1 / (1 + this.nAnswers++)), fm = this.fmean, sidx = this.staticIdx, x = this.x;
+    for (let j = 0; j < nS; j++) fm[j] += rate * (x[sidx[j]] - fm[j]);
+  }
+
+  // retinas: array of Float32Array; touch, pain: Float32Array(2) (pain optional). Returns this.out.
+  step(retinas, touch, pain) {
     const x = this.x;
     let o = 0;
     for (let e = 0; e < this.nEyes; e++) {
@@ -227,6 +278,14 @@ export class Brain {
       o += l.n;
     }
     x[o] = touch[0]; x[o + 1] = touch[1];
+    const feel = this.cfg.pain.feel;
+    x[o + 2] = pain ? pain[0] * feel : 0; x[o + 3] = pain ? pain[1] * feel : 0;
+
+    // centre the static LC features on the average image the fly has answered on (adaptation), so
+    // both classes sit either side of zero; the mean is updated in learn(), at answer time
+    const nS = this.nS, xc = this.xc, fm = this.fmean, sidx = this.staticIdx;
+    if (!this.fmeanInit) { for (let j = 0; j < nS; j++) fm[j] = x[sidx[j]]; this.fmeanInit = true; }
+    for (let j = 0; j < nS; j++) xc[j] = x[sidx[j]] - fm[j];
 
     const { N, kIn, kRec, Win, Wrec, b, inIdx, recIdx, h, hn, alpha } = this;
     for (let i = 0; i < N; i++) {
@@ -237,12 +296,20 @@ export class Brain {
       hn[i] = (1 - alpha) * h[i] + alpha * Math.tanh(s);
     }
     h.set(hn);
+    const z = this.z;
     for (let m = 0; m < this.M; m++) {
       let s = this.bout[m];
       const wb = m * N;
       for (let i = 0; i < N; i++) s += this.Wout[wb + i] * h[i];
-      this.out[m] = Math.tanh(s);
+      const gp = this.cfg.learn.gain, pb = m * nS;
+      let p = 0;
+      for (let j = 0; j < nS; j++) p += this.Wp[pb + j] * xc[j];
+      z[m] = s + gp * p;
     }
+    // each foot's motor neuron is inhibited by the other one
+    const g = this.inhibition;
+    this.out[0] = Math.tanh(z[0] - g * z[1]);
+    this.out[1] = Math.tanh(z[1] - g * z[0]);
     return this.out;
   }
 }

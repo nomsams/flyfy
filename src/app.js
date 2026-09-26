@@ -126,6 +126,85 @@ async function loadFaces(cap) {
   return splitFaces(all, Uint8Array.from(labels));
 }
 
+// ---------------------------------------------------------------- rewards
+// Every number the fly is scored on, with a plain-language explanation. Built into the page
+// from this table so the UI cannot drift from what the simulation actually uses.
+const REWARD_UI = [
+  ['reward', 'Answers'],
+  ['reward.correct', 'Correct answer', 'Pressed the foot that matches the image (left foot = man, right foot = woman).', 1],
+  ['reward.wrong', 'Wrong answer', 'Pressed the other foot. The foot also feels pain (see below).', 1],
+  ['reward.respond', 'Any-answer bonus', 'Paid for every answer, right or wrong. Only there to get the fly to try; too high and it just mashes buttons.', 0.5],
+  ['reward.miss', 'No answer in time', 'The image timed out with no press (only possible when forced choice is off). Keep it bad: if a miss costs much less than a wrong answer, the fly learns to skip cues it is unsure of.', 1],
+  ['reward.premature', 'Pressed on a blank screen', 'Pressing while the screen is blank, or within 0.3 s of an image appearing (it has to look first).', 0.5],
+  ['reward.repeat', 'Same foot over and over', 'Anti-button-mashing: charged on every answer with the same foot after the free streak below.', 0.5],
+  ['reward.repeatFree', '...free streak (answers)', 'How many answers in a row with one foot are free. Chance alone makes short streaks.', 1],
+  ['reward', 'Every second'],
+  ['reward.timePerSec', 'Time cost per second', 'A small constant drain so slow is worse than fast.', 0.05],
+  ['reward.marginPerSec', 'Steering per second', 'Live nudge while an image is up: paid for pushing the correct foot harder than the wrong one. Helps learning a lot, but it is a hint, not the goal.', 0.5],
+  ['pain', 'Pain (nociceptors, one per foot)'],
+  ['pain.strength', 'Pain strength', 'How hard a wrong answer hurts the foot that pressed. This is the punishment signal that weakens the synapses behind that foot (it learns not to do that again). 0 = it feels nothing and only learns from reward.', 0.1],
+  ['pain.onPremature', 'Pain for blank-screen press', 'Fraction of the full pain given for pressing a foot while no image is up.', 0.1],
+  ['pain.tauSec', 'Pain fades over (s)', 'Time constant of the pain fading away (shown as the red glow on the foot).', 0.1],
+  ['pain.feel', 'Pain as brain input', 'Also feed the pain nociceptors into the recurrent brain as a sensory input (0 = off). In my tests this slowed down evolution on these tasks, so it is off by default.', 0.1],
+  ['learn', 'Learning from reward and pain (how the fly actually gets better)'],
+  ['learn.eta', 'Learning speed', 'How much each answer changes the synapses from the eye onto the feet: reward strengthens the foot that was right, pain weakens the foot that was wrong. 0 = off (only evolution can teach it).', 0.05],
+  ['learn.anneal', 'Slow down after (answers)', 'Experience makes it change its mind more slowly: the learning speed halves after this many answers. Settles the weights on noisy tasks like faces. 0 = never slows.', 50],
+  ['learn.reward', 'Reward signal', 'Strength of the "that was right" signal. Pain strength is the matching "that was wrong" signal.', 0.1],
+  ['timing', 'Timing'],
+  ['timing.reactionSec', 'Reaction time (s)', 'A press earlier than this after an image appears counts as premature: the fly has to look first.', 0.05],
+  ['timing.forceAtSec', 'Forced choice after (s)', 'No press by then: the foot with the stronger output is pressed for the fly. 0 = free response (the fly can also just never answer).', 0.05],
+];
+const rwId = (path) => 'rw_' + path.replace('.', '_');
+
+function buildRewardUI() {
+  const host = $('rewardRows');
+  host.innerHTML = '';
+  for (const row of REWARD_UI) {
+    if (row.length === 2) { const h3 = document.createElement('h3'); h3.textContent = row[1]; host.appendChild(h3); continue; }
+    const [path, name, hint, step] = row;
+    const [grp, key] = path.split('.');
+    const div = document.createElement('div');
+    div.className = 'rr';
+    div.innerHTML = `<input id="${rwId(path)}" type="number" step="${step}"><div class="name"><b>${name}</b></div><div class="mut">${hint}</div>`;
+    host.appendChild(div);
+    $(rwId(path)).value = DEFAULTS[grp][key];
+    $(rwId(path)).onchange = () => applyRewards();
+  }
+}
+
+function readRewards() {
+  const out = { reward: {}, pain: {}, learn: {}, timing: {} };
+  for (const row of REWARD_UI) {
+    if (row.length === 2) continue;
+    const [grp, key] = row[0].split('.');
+    const v = num(rwId(row[0]));
+    out[grp][key] = Number.isFinite(v) ? v : DEFAULTS[grp][key];
+  }
+  return out;
+}
+
+// Rewards are read fresh on every simulation step, so they can change while training runs.
+function applyRewards() {
+  const { reward, pain, learn, timing } = readRewards();
+  S.cfg.reward = { ...S.cfg.reward, ...reward }; S.cfg.pain = { ...S.cfg.pain, ...pain };
+  S.cfg.learn = { ...S.cfg.learn, ...learn }; S.cfg.timing = { ...S.cfg.timing, ...timing };
+  for (const r of [S.runner, S.watch, S.life]) if (r) { r.cfg.reward = S.cfg.reward; r.cfg.pain = S.cfg.pain; r.cfg.learn = S.cfg.learn; r.cfg.timing = S.cfg.timing; }
+  S.pool?.workers.forEach((w) => w.postMessage({ type: 'setcfg', reward: S.cfg.reward, pain: S.cfg.pain, learn: S.cfg.learn, timing: S.cfg.timing }));
+  log(`settings changed${S.gen || S.lifeEp ? ' mid-training - returns before/after are not directly comparable' : ''}`);
+}
+
+const PART_NAMES = {
+  correct: 'correct answers', wrong: 'wrong answers', respond: 'any-answer bonus', miss: 'no answer in time',
+  premature: 'pressed on blank screen', repeat: 'same foot over and over', margin: 'steering', time: 'time cost',
+};
+function renderLedger(ev) {
+  const rows = Object.keys(PART_NAMES).map((k) => [PART_NAMES[k], ev.parts[k] || 0]);
+  const total = rows.reduce((a, r) => a + r[1], 0);
+  const cell = (v) => `<td class="v ${v > 0.05 ? 'pos' : v < -0.05 ? 'neg' : 'mut'}">${v > 0 ? '+' : ''}${v.toFixed(1)}</td>`;
+  $('ledger').innerHTML = '<tbody>' + rows.map(([n, v]) => `<tr><td>${n}</td>${cell(v)}</tr>`).join('')
+    + `<tr><td><b>total</b></td><td class="v"><b>${total.toFixed(1)}</b></td></tr></tbody>`;
+}
+
 // ---------------------------------------------------------------- setup
 // Anything that changes the brain's shape (so trained parameters can't carry over).
 const shapeKey = (c) => JSON.stringify([c.eye.eyes, c.eye.rows, c.eye.cols, c.eye.lcStatic, c.brain.core, c.brain.kIn]);
@@ -135,7 +214,7 @@ function readCfg() {
   return mergeConfig({
     eye: { eyes: num('eyes'), layout: $('eyeLayout').value, rows: fine ? 28 : 14, cols: fine ? 40 : 20, lcStatic: fine ? [10, 12] : [5, 6] },
     brain: { core: num('core'), kIn: fine ? 20 : 10 },
-    reward: { respond: num('rwRespond'), premature: num('rwPremature'), miss: num('rwMiss'), timePerSec: num('rwTime'), marginPerSec: num('rwMargin') },
+    ...readRewards(),
     es: { pairs: num('pairs'), sigma: num('sigma'), lr: num('lr'), episodesPerCandidate: num('eps') },
   });
 }
@@ -143,8 +222,10 @@ function readCfg() {
 function buildRunners() {
   S.runner = new Runner(S.cfg, S.train);
   S.watch = new Runner(S.cfg, S.train);
+  S.life = new Runner(S.cfg, S.train);
+  S.lifeState = null; // what the fly learned by pain belongs to this task and this eye
   S.watchStarted = false;
-  $('neurons').textContent = `${S.runner.brain.neuronCount} neurons (${S.runner.brain.nLC} LC + ${S.runner.brain.N} core + 2 feet + 2 touch)`;
+  $('neurons').textContent = `${S.runner.brain.neuronCount} neurons (${S.runner.brain.nLC} LC + ${S.runner.brain.N} core + 2 feet + 2 touch + 2 pain)`;
   $('params').textContent = `${S.runner.brain.paramCount.toLocaleString()} trainable parameters`;
 }
 
@@ -169,7 +250,7 @@ async function applyStimulus(mode) {
   }
   buildRunners();
   await buildPool();
-  S.hist = []; S.gen = 0;
+  S.hist = []; S.gen = 0; S.histKind = null; S.lifeEp = 0;
   viz.drawChart($('chart').getContext('2d'), $('chart').width, $('chart').height, S.hist);
   log(`stimulus: ${mode}${mode === 'faces' ? ` (${S.train.size} train / ${S.test.size} held-out images)` : ''}`);
 }
@@ -177,7 +258,7 @@ async function applyStimulus(mode) {
 function newBrain(seed = Date.now() % 100000) {
   const theta = S.runner.brain.initParams(seed);
   S.es = new ES(theta, { ...S.cfg.es, seed });
-  S.gen = 0; S.hist = [];
+  S.gen = 0; S.hist = []; S.histKind = null; S.lifeEp = 0; S.lifeState = null;
   S.watchParams = Float32Array.from(theta);
   S.watchStarted = false;
 }
@@ -194,38 +275,93 @@ async function guarded(fn) {
 }
 
 function syncButtons() {
-  $('btnTrain').textContent = S.training ? 'Stop training' : 'Start training';
-  $('btnTrain').classList.toggle('on', S.training);
+  const life = S.training && S.kind === 'life', evo = S.training && S.kind === 'evo';
+  $('btnLife').textContent = life ? 'Stop learning' : 'Learn by pain (fast)';
+  $('btnTrain').textContent = evo ? 'Stop evolving' : 'Evolve the core (slow)';
+  $('btnLife').classList.toggle('on', life); $('btnTrain').classList.toggle('on', evo);
+  $('btnLife').disabled = evo; $('btnTrain').disabled = life;
 }
 
 // ---------------------------------------------------------------- training
 async function trainLoop() {
   const stepsPerEp = Math.round(S.cfg.timing.episodeSec / S.cfg.timing.dt);
-  while (S.training) {
+  if (S.histKind !== 'evo') { S.hist = []; S.histKind = 'evo'; }
+  while (S.training && S.kind === 'evo') {
     const t0 = performance.now();
     const cands = S.es.ask();
     const seeds = Array.from({ length: S.cfg.es.episodesPerCandidate }, (_, i) => (S.gen + 1) * 1000 + i);
     let res;
     try { res = await S.pool.evalAll(cands, seeds); } catch (e) { log('worker error: ' + e.message); break; }
     if (!S.training) break;
+    S.watchStarted = false;
     const fit = res.map((r) => r.fitness);
     S.es.tell(fit);
     S.gen++;
     const ev = S.runner.evaluate(S.es.theta, EVAL_SEEDS);
-    const popTrials = res.reduce((a, r) => a + r.trials, 0), popCorrect = res.reduce((a, r) => a + r.correct, 0);
+    const popCues = res.reduce((a, r) => a + r.cues, 0), popCorrect = res.reduce((a, r) => a + r.correct, 0);
     S.hist.push({
       gen: S.gen, popMean: fit.reduce((a, b) => a + b, 0) / fit.length, best: Math.max(...fit),
-      theta: ev.fitness, acc: ev.trials ? ev.correct / ev.trials : 0,
+      theta: ev.fitness, acc: ev.cues ? ev.correct / ev.cues : 0,
     });
     if (S.hist.length > 800) S.hist.shift();
     S.watchParams = Float32Array.from(S.es.theta);
     const dt = (performance.now() - t0) / 1000;
     const p = S.hist[S.hist.length - 1];
-    $('genStats').textContent = `gen ${S.gen}   return ${p.theta.toFixed(1)}   accuracy ${(p.acc * 100).toFixed(0)}%   `
-      + `(population ${(popTrials ? (popCorrect / popTrials) * 100 : 0).toFixed(0)}%)   `
-      + `${dt.toFixed(1)} s/gen   ${((cands.length * seeds.length * stepsPerEp) / dt / 1000).toFixed(0)}k steps/s`;
-    viz.drawChart($('chart').getContext('2d'), $('chart').width, $('chart').height, S.hist);
+    const answered = ev.cues ? ev.trials / ev.cues : 0, ans = ev.left + ev.right, leftShare = ans ? ev.left / ans : 0.5;
+    $('genStats').textContent = `gen ${S.gen}   return ${p.theta.toFixed(1)}   correct ${(p.acc * 100).toFixed(0)}% of all images (chance 50%)   `
+      + `answers ${(answered * 100).toFixed(0)}% of images   left foot ${(leftShare * 100).toFixed(0)}% / right ${((1 - leftShare) * 100).toFixed(0)}%   `
+      + `(population ${(popCues ? (popCorrect / popCues) * 100 : 0).toFixed(0)}%)   ${dt.toFixed(1)} s/gen   ${((cands.length * seeds.length * stepsPerEp) / dt / 1000).toFixed(0)}k steps/s`;
+    const notes = [];
+    // a random brain always looks bad: wait a few generations before nagging
+    if (S.gen >= 5 && ev.cues && answered < 0.8) notes.push(`only answers ${(answered * 100).toFixed(0)}% of images - it is skipping the rest (raise the "no answer in time" penalty)`);
+    if (S.gen >= 5 && ans > 10 && (leftShare < 0.15 || leftShare > 0.85)) notes.push(`using almost only the ${leftShare > 0.5 ? 'left' : 'right'} foot (raise the same-foot penalty, or it may just need more generations)`);
+    $('warn').textContent = notes.length ? 'Heads up: ' + notes.join('; ') : '';
+    renderLedger(ev);
+    viz.drawChart($('chart').getContext('2d'), $('chart').width, $('chart').height, S.hist, 'generation');
     if (S.gen % 10 === 0) autosave();
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  S.training = false;
+  autosave();
+  syncButtons();
+}
+
+// Learn by pain: one fly plays trial after trial; reward and pain reshape its foot synapses as it goes.
+// No population, no workers, no backprop: this is the cheap path.
+async function lifeLoop() {
+  const life = S.life, BLOCK = 5;
+  life.brain.setParams(S.es.theta);
+  life.brain.setPlastic(S.lifeState);
+  if (S.histKind !== 'life') { S.hist = []; S.histKind = 'life'; }
+  const recent = []; // last few blocks, for a steadier accuracy readout
+  while (S.training && S.kind === 'life') {
+    const t0 = performance.now();
+    const b = { ret: 0, cues: 0, trials: 0, correct: 0, left: 0, right: 0 };
+    const parts = {};
+    for (let i = 0; i < BLOCK; i++) {
+      b.ret += life.episode(null, 7000 + S.lifeEp++, null, true) / BLOCK;
+      const w = life.world;
+      b.cues += w.trials + w.misses; b.trials += w.trials; b.correct += w.correct; b.left += w.resp[0]; b.right += w.resp[1];
+      for (const k in w.parts) parts[k] = (parts[k] || 0) + w.parts[k] / BLOCK;
+    }
+    S.lifeState = life.brain.getPlastic();
+    S.watchStarted = false; // the watched fly picks up what was just learned
+    recent.push(b); if (recent.length > 4) recent.shift();
+    const sum = (k) => recent.reduce((a, r) => a + r[k], 0);
+    const acc = sum('cues') ? sum('correct') / sum('cues') : 0, answered = sum('cues') ? sum('trials') / sum('cues') : 0;
+    const leftShare = sum('left') + sum('right') ? sum('left') / (sum('left') + sum('right')) : 0.5;
+    S.hist.push({ gen: S.lifeEp, popMean: b.ret, best: b.ret, theta: b.ret, acc: b.cues ? b.correct / b.cues : 0 });
+    if (S.hist.length > 800) S.hist.shift();
+    $('genStats').textContent = `episode ${S.lifeEp}   correct ${(acc * 100).toFixed(0)}% of the last ${sum('cues')} images (chance 50%)   `
+      + `left foot ${(leftShare * 100).toFixed(0)}% / right ${((1 - leftShare) * 100).toFixed(0)}%   return/episode ${b.ret.toFixed(1)}   `
+      + `${((performance.now() - t0) / BLOCK).toFixed(0)} ms/episode   (learning from reward and pain, no evolution)`;
+    const notes = [];
+    if (S.lifeEp >= 100 && acc < 0.56) notes.push('barely above chance after 100 episodes - the eye may not carry this distinction (try "Probe the eye"), or raise the learning speed');
+    if (S.lifeEp >= 30 && answered < 0.9) notes.push('it is skipping images (forced choice is off?)');
+    $('warn').textContent = notes.length ? 'Heads up: ' + notes.join('; ') : '';
+    renderLedger({ parts });
+    viz.drawChart($('chart').getContext('2d'), $('chart').width, $('chart').height, S.hist, 'episode');
+    if ((S.lifeEp / BLOCK) % 20 === 0) autosave();
     await new Promise((r) => setTimeout(r, 0));
   }
   S.training = false;
@@ -236,8 +372,10 @@ async function trainLoop() {
 // ---------------------------------------------------------------- watch
 function resetWatch() {
   const wr = S.watch;
+  const fresh = !S.watchStarted;
   wr.brain.setParams(S.watchParams || S.es.theta);
-  wr.brain.reset();
+  // a new watched life starts from what the fly has learned; later episodes just carry on learning
+  if (fresh) { wr.brain.reset(false); wr.brain.setPlastic(S.lifeState); } else wr.brain.reset(true);
   const stim = $('watchData').value === 'test' && S.test ? S.test : S.train;
   wr.world.reset((Math.random() * 1e9) >>> 0, stim);
   S.watchStats = { trials: 0, correct: 0 };
@@ -247,8 +385,7 @@ function resetWatch() {
 function stepWatch() {
   const wr = S.watch;
   if (!S.watchStarted || wr.world.done) resetWatch();
-  const o = wr.brain.step(wr.world.retinas, wr.world.touch);
-  wr.world.step(o[0], o[1]);
+  wr.step();
   const ev = wr.world.lastEvent;
   const now = performance.now();
   if (ev === EVENT.CORRECT) { S.flash = { color: '#3fb950', until: now + 250 }; S.watchStats.trials++; S.watchStats.correct++; }
@@ -288,7 +425,8 @@ function startWatchLoop() {
 // ---------------------------------------------------------------- persistence
 function checkpoint() {
   return {
-    v: 1, stimMode: S.stimMode, gen: S.gen, theta: Array.from(S.es.theta), hist: S.hist.slice(-400),
+    v: 3, stimMode: S.stimMode, gen: S.gen, theta: Array.from(S.es.theta), hist: S.hist.slice(-400), lifeEp: S.lifeEp || 0,
+    life: S.lifeState ? { Wp: Array.from(S.lifeState.Wp), fmean: Array.from(S.lifeState.fmean), n: S.lifeState.n } : null,
     shape: { key: shapeKey(S.cfg), paramCount: S.es.n },
   };
 }
@@ -314,7 +452,8 @@ function autosave() { if (S.es) kvSet('latest', checkpoint()).catch(() => {}); }
 function restore(ck) {
   if (!ck || ck.shape.key !== shapeKey(S.cfg) || ck.shape.paramCount !== S.es.n) throw new Error('checkpoint does not match this brain (different eye resolution / eyes / core size)');
   S.es = new ES(Float32Array.from(ck.theta), { ...S.cfg.es, seed: Date.now() % 100000 });
-  S.gen = ck.gen; S.hist = ck.hist || [];
+  S.gen = ck.gen; S.hist = ck.hist || []; S.histKind = null; S.lifeEp = ck.lifeEp || 0;
+  S.lifeState = ck.life ? { Wp: Float32Array.from(ck.life.Wp), fmean: Float32Array.from(ck.life.fmean), n: ck.life.n } : null;
   S.watchParams = Float32Array.from(ck.theta); S.watchStarted = false;
   viz.drawChart($('chart').getContext('2d'), $('chart').width, $('chart').height, S.hist);
 }
@@ -323,19 +462,24 @@ function restore(ck) {
 function initUI() {
   const d = DEFAULTS;
   $('eyes').value = d.eye.eyes; $('core').value = d.brain.core;
-  $('rwRespond').value = d.reward.respond; $('rwPremature').value = d.reward.premature;
-  $('rwMiss').value = d.reward.miss; $('rwTime').value = d.reward.timePerSec; $('rwMargin').value = d.reward.marginPerSec;
+  buildRewardUI();
+  $('btnRewardDefaults').onclick = () => {
+    for (const row of REWARD_UI) if (row.length > 2) { const [g, k] = row[0].split('.'); $(rwId(row[0])).value = DEFAULTS[g][k]; }
+    applyRewards();
+  };
   $('pairs').value = d.es.pairs; $('sigma').value = d.es.sigma; $('lr').value = d.es.lr; $('eps').value = d.es.episodesPerCandidate;
   $('workers').value = Math.max(1, Math.min(8, (navigator.hardwareConcurrency || 4) - 1));
 
-  $('btnTrain').onclick = () => {
+  const toggle = (kind, loop) => () => {
     if (S.busy) return;
     if (S.training) { S.training = false; syncButtons(); return; }
-    S.training = true; syncButtons(); trainLoop();
+    S.training = true; S.kind = kind; syncButtons(); loop();
   };
+  $('btnLife').onclick = toggle('life', lifeLoop);
+  $('btnTrain').onclick = toggle('evo', trainLoop);
   $('stim').onchange = () => guarded(async () => { await applyStimulus($('stim').value); log('kept the current brain - it carries over to the new task'); });
   $('btnFaces').onclick = () => guarded(async () => { S.faces = null; $('stim').value = 'faces'; await applyStimulus('faces'); });
-  for (const id of ['eyes', 'eyeLayout', 'eyeRes', 'core', 'rwRespond', 'rwPremature', 'rwMiss', 'rwTime', 'rwMargin', 'workers']) {
+  for (const id of ['eyes', 'eyeLayout', 'eyeRes', 'core', 'workers']) {
     $(id).onchange = () => guarded(async () => {
       const before = S.cfg;
       S.cfg = readCfg();
@@ -351,10 +495,23 @@ function initUI() {
   }
   $('btnEval').onclick = () => guarded(async () => {
     const stim = S.test || S.train;
-    const r = new Runner(S.cfg, stim);
-    const out = r.evaluate(S.es.theta, Array.from({ length: 40 }, (_, i) => 700000 + i));
-    const acc = out.trials ? out.correct / out.trials : 0;
-    log(`${S.stimMode === 'faces' ? 'HELD-OUT (never trained on)' : 'fresh'} images: ${(acc * 100).toFixed(1)}% correct over ${out.trials} responses, `
+    const seeds = Array.from({ length: 40 }, (_, i) => 700000 + i);
+    let out;
+    if (S.lifeState) {
+      // the fly as it is now, learning switched off, on images it has not learned from
+      const r = new Runner({ ...S.cfg, learn: { ...S.cfg.learn, eta: 0 } }, stim);
+      r.brain.setParams(S.es.theta); r.brain.setPlastic(S.lifeState);
+      out = { fitness: 0, trials: 0, cues: 0, correct: 0, premature: 0, misses: 0, left: 0, right: 0, parts: {} };
+      for (const s of seeds) {
+        r.episode(null, s, null, true);
+        const w = r.world;
+        out.trials += w.trials; out.cues += w.trials + w.misses; out.correct += w.correct; out.premature += w.premature; out.misses += w.misses; out.left += w.resp[0]; out.right += w.resp[1];
+        for (const k in w.parts) out.parts[k] = (out.parts[k] || 0) + w.parts[k] / seeds.length;
+      }
+    } else out = new Runner(S.cfg, stim).evaluate(S.es.theta, seeds);
+    const acc = out.cues ? out.correct / out.cues : 0;
+    renderLedger(out);
+    log(`${S.stimMode === 'faces' ? 'HELD-OUT (never trained on)' : 'fresh'} images: ${(acc * 100).toFixed(1)}% correct of ${out.cues} images (answered ${(100 * out.trials / Math.max(1, out.cues)).toFixed(0)}%, left foot ${(100 * out.left / Math.max(1, out.left + out.right)).toFixed(0)}%), `
       + `${(out.premature / 40).toFixed(1)} premature + ${(out.misses / 40).toFixed(1)} misses per episode`);
   });
   $('btnProbe').onclick = () => guarded(async () => {
@@ -387,11 +544,20 @@ async function main() {
   await guarded(async () => {
     await applyStimulus('brightness');
     newBrain();
-    const ck = await kvGet('latest').catch(() => null);
-    if (ck && ck.stimMode === 'brightness') {
-      try { restore(ck); log(`resumed autosave (generation ${S.gen})`); } catch { /* different shape: start fresh */ }
-    }
+    resetWatch(); draw(); // one still frame; nothing runs until you press Start / tick "play"
   });
+  // Never resume behind your back: offer it.
+  const ck = await kvGet('latest').catch(() => null);
+  if (ck && ck.v === 3 && ck.shape) {
+    $('btnResume').hidden = false;
+    $('btnResume').textContent = `Resume saved fly (${ck.stimMode}, ${ck.lifeEp ? ck.lifeEp + ' episodes' : 'generation ' + ck.gen})`;
+    $('btnResume').onclick = () => guarded(async () => {
+      if (ck.stimMode !== S.stimMode) { $('stim').value = ck.stimMode; await applyStimulus(ck.stimMode); }
+      newBrain(); restore(ck); resetWatch(); draw();
+      $('btnResume').hidden = true;
+      log(`resumed saved fly. Press a training button to continue`);
+    });
+  }
   startWatchLoop();
   window.__fly = S; // handy for debugging in the console
 }

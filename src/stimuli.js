@@ -6,7 +6,7 @@ export const IMG = 32;
 export const LABEL_NAMES = ['man', 'woman'];
 
 export class StimulusSet {
-  // mode: 'brightness' | 'gratings' | 'faces'. For 'faces', `images` is a
+  // mode: 'brightness' | 'gratings' | 'faint' | 'faces'. For 'faces', `images` is a
   // Float32Array(n*IMG*IMG) and `labels` a Uint8Array(n).
   constructor(mode, images = null, labels = null) {
     this.mode = mode;
@@ -38,12 +38,14 @@ export class StimulusSet {
     if (this.mode === 'brightness') {
       const base = label === 1 ? 0.85 : 0.2;
       for (let i = 0; i < out.length; i++) out[i] = base + (rng() - 0.5) * 0.1;
-    } else if (this.mode === 'gratings') {
+    } else if (this.mode === 'gratings' || this.mode === 'faint') {
+      // 'faint' = the same stripes at low contrast under heavy noise: a hard, faces-like task
+      const amp = this.mode === 'faint' ? 0.12 : 0.4, noise = this.mode === 'faint' ? 0.3 : 0.05;
       const cycles = 2.5 + rng() * 2, phase = rng() * 2 * Math.PI;
       for (let y = 0; y < IMG; y++) {
         for (let x = 0; x < IMG; x++) {
           const t = (label === 1 ? y : x) / IMG;
-          out[y * IMG + x] = 0.5 + 0.4 * Math.sin(2 * Math.PI * cycles * t + phase) + (rng() - 0.5) * 0.05;
+          out[y * IMG + x] = 0.5 + amp * Math.sin(2 * Math.PI * cycles * t + phase) + (rng() - 0.5) * noise;
         }
       }
     } else {

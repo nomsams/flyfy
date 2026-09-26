@@ -1,6 +1,6 @@
 // The whole "environment": a screen in front of fixed eye(s), and two feet.
 // No body, no locomotion. A trial is: blank screen (ITI) -> a new image
-// expands into view -> the fly answers by pressing then releasing one foot
+// expands into view -> the fly answers by pressing one foot
 // (left foot = label 0, right foot = label 1) -> blank again.
 
 import { mulberry32 } from './rng.js';
@@ -35,6 +35,9 @@ export class TrialWorld {
     for (let c = 0; c < this.C; c++) this.az[c] = (-0.5 + (c + 0.5) / this.C) * e.fovAzDeg;
     for (let r = 0; r < this.R; r++) this.el[r] = (0.5 - (r + 0.5) / this.R) * e.fovElDeg;
     this.touch = new Float32Array(2);
+    this.pain = new Float32Array(2);   // nociceptors, one per foot
+    this.resp = [0, 0];                // answers given with each foot
+    this.parts = {};                   // reward ledger for this episode, by component
     this.pressed = [false, false];
     this.image = null;
     this.label = 0;
@@ -51,6 +54,10 @@ export class TrialWorld {
     this.phaseT = 0;
     this.pressed[0] = this.pressed[1] = false;
     this.touch[0] = this.touch[1] = 0;
+    this.pain[0] = this.pain[1] = 0;
+    this.resp[0] = this.resp[1] = 0;
+    this.lastFoot = -1; this.streak = 0;
+    this.parts = { correct: 0, wrong: 0, respond: 0, premature: 0, miss: 0, time: 0, margin: 0, repeat: 0 };
     this.trials = 0;
     this.correct = 0;
     this.premature = 0;
@@ -86,8 +93,11 @@ export class TrialWorld {
 
   // out0/out1: motor outputs of the left/right foot in [-1, 1].
   step(out0, out1) {
-    const t = this.cfg.timing, f = this.cfg.feet, rw = this.cfg.reward;
+    const t = this.cfg.timing, f = this.cfg.feet, rw = this.cfg.reward, pn = this.cfg.pain, P = this.parts;
+    const decay = Math.exp(-t.dt / pn.tauSec);
+    this.pain[0] *= decay; this.pain[1] *= decay;
     let reward = rw.timePerSec * t.dt;
+    P.time += reward;
     this.lastEvent = EVENT.NONE;
     this.time += t.dt;
     this.phaseT += t.dt;
@@ -97,35 +107,35 @@ export class TrialWorld {
     // which on its own is nearly invisible to ES on anything but trivial tasks.
     if (this.phase === 'stim' && rw.marginPerSec) {
       const oc = this.label === 0 ? out0 : out1, ow = this.label === 0 ? out1 : out0;
-      reward += rw.marginPerSec * t.dt * 0.5 * (oc - ow);
+      const m = rw.marginPerSec * t.dt * 0.5 * (oc - ow);
+      reward += m; P.margin += m;
     }
 
+    // A press IS the answer: the foot whose output crosses the threshold first (the stronger one
+    // if both cross in the same step) answers. Releasing just re-arms the foot.
     const outs = [out0, out1];
-    for (let foot = 0; foot < 2; foot++) {
+    const order = out1 > out0 ? [1, 0] : [0, 1];
+    for (const foot of order) {
       if (!this.pressed[foot] && outs[foot] > f.pressThr) {
         this.pressed[foot] = true;
+        reward += this._answer(foot);
       } else if (this.pressed[foot] && outs[foot] < f.releaseThr) {
         this.pressed[foot] = false;
-        if (this.phase === 'stim') {
-          this.trials++;
-          const ok = foot === this.label;
-          reward += rw.respond + (ok ? rw.correct : rw.wrong);
-          if (ok) this.correct++;
-          this.lastEvent = ok ? EVENT.CORRECT : EVENT.WRONG;
-          this._endTrial();
-        } else {
-          reward += rw.premature;
-          this.premature++;
-          this.lastEvent = EVENT.PREMATURE;
-        }
       }
-      this.touch[foot] = this.pressed[foot] ? 1 : 0;
     }
+    // Forced choice: out of time to make up its mind, the stronger foot is pressed for the fly.
+    if (this.phase === 'stim' && t.forceAtSec && this.phaseT >= t.forceAtSec) {
+      const foot = out1 > out0 ? 1 : 0;
+      this.pressed[foot] = true;
+      reward += this._answer(foot);
+    }
+    this.touch[0] = this.pressed[0] ? 1 : 0;
+    this.touch[1] = this.pressed[1] ? 1 : 0;
 
     if (this.phase === 'iti' && this.phaseT >= t.itiSec) {
       this._startTrial();
     } else if (this.phase === 'stim' && this.phaseT >= t.stimTimeoutSec) {
-      reward += rw.miss;
+      reward += rw.miss; P.miss += rw.miss;
       this.misses++;
       this.lastEvent = EVENT.MISS;
       this._endTrial();
@@ -133,6 +143,33 @@ export class TrialWorld {
 
     if (this.time >= t.episodeSec) this.done = true;
     this._render();
+    return reward;
+  }
+
+  // A foot has been pressed. Returns the reward it earns. During a cue (and past the reaction
+  // time) it is an answer; otherwise it is premature.
+  _answer(foot) {
+    const t = this.cfg.timing, rw = this.cfg.reward, pn = this.cfg.pain, P = this.parts;
+    let reward = 0;
+    this.lastPress = foot;
+    if (this.phase === 'stim' && this.phaseT >= t.reactionSec) {
+      this.trials++;
+      this.resp[foot]++;
+      const ok = foot === this.label;
+      reward += rw.respond; P.respond += rw.respond;
+      if (ok) { reward += rw.correct; P.correct += rw.correct; this.correct++; }
+      else { reward += rw.wrong; P.wrong += rw.wrong; this.pain[foot] = pn.strength; }
+      this.streak = foot === this.lastFoot ? this.streak + 1 : 1;
+      this.lastFoot = foot;
+      if (this.streak > rw.repeatFree) { reward += rw.repeat; P.repeat += rw.repeat; }
+      this.lastEvent = ok ? EVENT.CORRECT : EVENT.WRONG;
+      this._endTrial();
+    } else {
+      reward += rw.premature; P.premature += rw.premature;
+      this.pain[foot] = Math.max(this.pain[foot], pn.strength * pn.onPremature);
+      this.premature++;
+      this.lastEvent = EVENT.PREMATURE;
+    }
     return reward;
   }
 

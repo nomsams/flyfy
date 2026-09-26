@@ -25,6 +25,8 @@ export const DEFAULTS = {
     itiSec: 0.3,         // blank screen between trials
     onsetSec: 0.25,      // new image expands into view over this long
     onsetLoom: true,     // the expansion is what LPLC2/LC4 detect
+    reactionSec: 0.3,    // a press earlier than this after the image appears counts as premature: look first
+    forceAtSec: 0.5,     // no press by now: the foot with the stronger output is pressed for it (forced choice). 0 = free response
     stimTimeoutSec: 3.0, // no response by then = a miss
   },
   // A foot "presses" when its motor output rises above pressThr and a
@@ -39,13 +41,23 @@ export const DEFAULTS = {
     miss: -3.0,          // cue timed out with no response
     timePerSec: -0.1,
     marginPerSec: 3.0,   // dense reward: correct foot output minus wrong foot output, per second of cue
+    repeat: -1.0,        // anti-button-mashing: charged for every answer with the same foot beyond repeatFree in a row
+    repeatFree: 2,
   },
+  // Nociceptors: one per foot. A wrong answer (or pressing while the screen is blank) hurts that
+  // foot; the pain is an *input* to the brain that fades over tauSec. strength 0 = feels nothing.
+  pain: { strength: 1.0, onPremature: 0.5, tauSec: 0.6, feel: 0 },
+  // Fast learning inside the fly's lifetime (no evolution, no backprop): each answer changes the
+  // synapses from the eye's static LC cells onto the two feet. A wrong answer's pain weakens the foot
+  // that fired and strengthens the other; a correct answer's reward does the opposite. eta 0 = off.
+  learn: { eta: 0.2, anneal: 400, reward: 1.0, gain: 1.0, wmax: 4 }, // anneal: the speed halves after this many answers
   brain: {
     core: 128,           // recurrent neurons
     kIn: 10,             // inputs per core neuron
     kRec: 12,            // recurrent inputs per core neuron
     alpha: 0.5,          // leak: 1 = no memory of previous state
     recGain: 0.9,
+    inhibition: 0,       // mutual inhibition between the two foot motor neurons: 1 = winner-take-all, 0 = independent feet
     netSeed: 12345,      // fixes the (random) wiring, not the weights
   },
   es: { pairs: 32, sigma: 0.08, lr: 0.03, weightDecay: 0.005, episodesPerCandidate: 4 },

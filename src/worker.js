@@ -11,6 +11,8 @@ self.onmessage = (ev) => {
     if (m.type === 'init') {
       runner = new Runner(m.cfg, StimulusSet.fromMessage(m.stim));
       self.postMessage({ type: 'ready' });
+    } else if (m.type === 'setcfg') {
+      runner.cfg.reward = m.reward; runner.cfg.pain = m.pain; runner.cfg.learn = m.learn; runner.cfg.timing = m.timing; // read fresh every step, so this is live
     } else if (m.type === 'eval') {
       const results = m.params.map((p) => runner.evaluate(p, m.seeds));
       self.postMessage({ type: 'result', id: m.id, results });

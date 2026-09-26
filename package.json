@@ -4,6 +4,6 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/sim.test.mjs && node test/learn.test.mjs"
+    "test": "node test/sim.test.mjs && node test/life.test.mjs brightness 30 && node test/life.test.mjs gratings 60"
   }
 }

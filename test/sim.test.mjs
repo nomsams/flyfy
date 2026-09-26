@@ -26,11 +26,11 @@ ok('feet score a response: correct foot = correct, other = wrong', () => {
     let guard = 0;
     while (w.phase !== 'stim' && guard++ < 100) w.step(-1, -1);
     assert.equal(w.phase, 'stim');
+    while (w.phaseT < cfg.timing.reactionSec) w.step(-1, -1);   // let the image finish appearing
     const label = w.label;
     const press = foot === 0 ? [1, -1] : [-1, 1];
-    w.step(...press);           // press
+    w.step(...press);           // a press is the answer, scored immediately
     assert.equal(w.touch[foot], 1);
-    w.step(-1, -1);             // release -> scored
     assert.equal(w.lastEvent, foot === label ? EVENT.CORRECT : EVENT.WRONG);
     assert.equal(w.phase, 'iti');
     assert.equal(w.trials, 1);
@@ -41,17 +41,33 @@ ok('responding to a blank screen is premature, not a trial', () => {
   const w = new TrialWorld(cfg);
   w.reset(1, stim);
   w.step(1, -1);
-  w.step(-1, -1);
   assert.equal(w.lastEvent, EVENT.PREMATURE);
   assert.equal(w.trials, 0);
 });
 
-ok('unanswered cue times out as a miss', () => {
-  const w = new TrialWorld(cfg);
+ok('free response: an unanswered cue times out as a miss', () => {
+  const w = new TrialWorld(mergeConfig({ timing: { forceAtSec: 0 } }));
   w.reset(2, stim);
   let sawMiss = false;
   for (let i = 0; i < 100 && !sawMiss; i++) { w.step(-1, -1); sawMiss = w.lastEvent === EVENT.MISS; }
   assert.ok(sawMiss);
+});
+
+ok('forced choice: no press by forceAtSec = the stronger foot is pressed for the fly', () => {
+  for (const strong of [0, 1]) {
+    const w = new TrialWorld(cfg);
+    w.reset(6, stim);
+    let g = 0;
+    while (w.phase !== 'stim' && g++ < 100) w.step(-1, -1);
+    const label = w.label;
+    let steps = 0;
+    while (w.phase === 'stim' && steps++ < 40) w.step(strong === 0 ? 0.2 : -0.5, strong === 1 ? 0.2 : -0.5); // both below the press threshold
+    assert.equal(w.trials, 1, 'answered without ever crossing the threshold');
+    assert.equal(w.misses, 0);
+    assert.equal(w.resp[strong], 1, 'the stronger foot answered');
+    assert.equal(w.lastEvent, strong === label ? EVENT.CORRECT : EVENT.WRONG);
+    assert.ok(w.phaseT >= 0, 'sane');
+  }
 });
 
 ok('retina shows the screen only while a cue is up', () => {
@@ -67,7 +83,7 @@ ok('retina shows the screen only while a cue is up', () => {
 
 ok('LC types respond to what they should', () => {
   const brain = new Brain(cfg);
-  const w = new TrialWorld(cfg);
+  const w = new TrialWorld(mergeConfig({ timing: { forceAtSec: 0 } })); // nobody answers: the image just stays up
   brain.reset();
   w.reset(21, stim);
   const lc = brain.lc[0];
@@ -116,6 +132,41 @@ ok('two-eye layouts: split gives each eye its own side of the screen', () => {
     assert.ok(left.outer <= left.inner && right.outer <= right.inner, layout + ': screen is on the inner side of each eye');
     if (layout === 'split') assert.ok(left.outer === 0 && right.outer === 0 || left.inner > 3 * left.outer, 'split: eyes are clearly off-axis');
   }
+});
+
+ok('pain: a wrong answer hurts that foot, then fades; a right one does not', () => {
+  const w = new TrialWorld(cfg);
+  for (const wrong of [true, false]) {
+    w.reset(9, stim);
+    let g = 0;
+    while (w.phase !== 'stim' && g++ < 100) w.step(-1, -1);
+    while (w.phaseT < cfg.timing.reactionSec) w.step(-1, -1);
+    const foot = wrong ? 1 - w.label : w.label;
+    const press = foot === 0 ? [1, -1] : [-1, 1];
+    w.step(...press);
+    if (wrong) {
+      assert.equal(w.pain[foot], cfg.pain.strength, 'pressed foot feels pain');
+      assert.equal(w.pain[1 - foot], 0, 'other foot does not');
+      for (let i = 0; i < 60; i++) w.step(-1, -1);
+      assert.ok(w.pain[foot] < 0.01, 'pain fades');
+    } else assert.equal(w.pain[0] + w.pain[1], 0, 'no pain for a correct answer');
+  }
+});
+
+ok('ledger adds up to the return; repeat penalty only after repeatFree in a row', () => {
+  const r = new Runner(cfg, stim);
+  const p = r.brain.initParams(4);
+  const ret = r.episode(p, 21);
+  const sum = Object.values(r.world.parts).reduce((a, b) => a + b, 0);
+  assert.ok(Math.abs(ret - sum) < 1e-6, 'ledger ' + sum + ' vs return ' + ret);
+  const w = new TrialWorld(cfg);
+  w.reset(3, stim);
+  let answers = 0, g = 0;
+  while (answers < 4 && g++ < 2000) {
+    if (w.phase === 'stim' && w.phaseT >= cfg.timing.reactionSec) { w.step(1, -1); w.step(-1, -1); answers++; } else w.step(-1, -1); // press answers, then release re-arms
+  }
+  assert.equal(w.resp[0], 4);
+  assert.equal(w.parts.repeat, cfg.reward.repeat * (4 - cfg.reward.repeatFree), 'answers 3 and 4 with the same foot are charged');
 });
 
 ok('size + speed', () => {

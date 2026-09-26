@@ -61,6 +61,12 @@ export function drawScene(ctx, W, H, world, imgCanvas, flash) {
     ctx.fill();
     ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
     ctx.fillStyle = '#8b949e'; ctx.fillText(name, x, y + 36);
+    const pain = world.pain[i];
+    if (pain > 0.03) {
+      ctx.strokeStyle = `rgba(248,81,73,${Math.min(1, pain)})`; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(x, y, 27, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#f85149'; ctx.fillText('pain', x, y - 30);
+    }
   });
   if (flash && flash.until > performance.now()) {
     ctx.strokeStyle = flash.color; ctx.lineWidth = 6;
@@ -140,7 +146,7 @@ export function drawNeurons(ctx, W, H, brain) {
   });
 }
 
-export function drawChart(ctx, W, H, hist) {
+export function drawChart(ctx, W, H, hist, unit = 'generation') {
   ctx.fillStyle = '#0d1117';
   ctx.fillRect(0, 0, W, H);
   ctx.font = '11px system-ui, sans-serif';
@@ -148,7 +154,7 @@ export function drawChart(ctx, W, H, hist) {
   const w = W - pl - pr, h = H - pt - pb;
   if (hist.length < 2) {
     ctx.fillStyle = '#8b949e'; ctx.textAlign = 'center';
-    ctx.fillText('learning curve appears after a couple of generations', W / 2, H / 2);
+    ctx.fillText('the learning curve appears once training has started', W / 2, H / 2);
     return;
   }
   const series = [
@@ -181,5 +187,5 @@ export function drawChart(ctx, W, H, hist) {
   ctx.strokeStyle = '#30363d'; ctx.setLineDash([4, 4]);
   ctx.beginPath(); ctx.moveTo(pl, pt + h / 2); ctx.lineTo(pl + w, pt + h / 2); ctx.stroke(); ctx.setLineDash([]);
   ctx.textAlign = 'center'; ctx.fillStyle = '#8b949e';
-  ctx.fillText(`generation ${hist[0].gen} → ${hist[hist.length - 1].gen}`, pl + w / 2, H - 5);
+  ctx.fillText(`${unit} ${hist[0].gen} → ${hist[hist.length - 1].gen}`, pl + w / 2, H - 5);
 }
