@@ -76,6 +76,12 @@ export const ABILITIES = [
     on: { learn: { evolveRule: 1 } }, off: { learn: { evolveRule: 0 } }, needsEvolve: true,
   },
   {
+    id: 'reflex', name: 'Look at what stands out', icon: 'target',
+    short: 'Born knowing to turn toward and walk up to anything striking.',
+    long: 'An innate reflex, like real flies turning toward and approaching small objects: the eye cells that detect small dark or bright spots are compared across the view; if one spot stands out, the fly turns its eye toward it and, once it is straight ahead, steps closer. Needs no training at all, so it works with Quick learn. The learned Smart eye and Step closer outputs add on top.',
+    on: { eye: { reflex: 1 } }, off: { eye: { reflex: 0 } },
+  },
+  {
     id: 'zoom', name: 'Step closer or back', icon: 'zoom',
     short: 'Walks toward the picture for detail, or backs off to see all of it.',
     long: 'A third eye-motor output changes how far away the picture is: closer makes it bigger (more detail, but it may not fit in view), further makes it smaller. Flies really do this - approaching things is exactly what their looming cells detect. Each move costs a few points, and the fly feels how far away it is.',

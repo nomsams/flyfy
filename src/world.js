@@ -114,9 +114,10 @@ export class TrialWorld {
   // Efference copy: where the eye points and how far away it is, each scaled to [-1, 1].
   _feel() {
     const e = this.cfg.eye;
-    this.pos[0] = e.activeVision ? this.gazeAz / e.gazeRangeDeg : 0;
-    this.pos[1] = e.activeVision ? this.gazeEl / e.gazeRangeDeg : 0;
-    this.pos[2] = e.activeZoom ? Math.max(-1, Math.min(1, Math.log(this.dist) / Math.log(e.zoomMax))) : 0;
+    const eyeMoves = e.activeVision || e.reflex, legsMove = e.activeZoom || e.reflex;
+    this.pos[0] = eyeMoves ? this.gazeAz / e.gazeRangeDeg : 0;
+    this.pos[1] = eyeMoves ? this.gazeEl / e.gazeRangeDeg : 0;
+    this.pos[2] = legsMove ? Math.max(-1, Math.min(1, Math.log(this.dist) / Math.log(e.zoomMax))) : 0;
   }
 
   _endTrial() {
@@ -139,7 +140,7 @@ export class TrialWorld {
     // Active vision: pan the gaze by the requested amount (clamped so the eye can't fly off the
     // image), then charge a small cost for how far it moved -- so a fly that already knows the
     // answer has no reason to keep scanning.
-    if (e.activeVision) {
+    if (e.activeVision || e.reflex) { // (the innate reflex can move the eye even without the learned smart eye)
       this.gazeAz = Math.max(-e.gazeRangeDeg, Math.min(e.gazeRangeDeg, this.gazeAz + gazeDx * e.gazeStepDeg));
       this.gazeEl = Math.max(-e.gazeRangeDeg, Math.min(e.gazeRangeDeg, this.gazeEl + gazeDy * e.gazeStepDeg));
       const m = rw.movePerSec * t.dt * (Math.abs(gazeDx) + Math.abs(gazeDy));
@@ -151,7 +152,7 @@ export class TrialWorld {
     }
     // Stepping closer or back: the picture grows or shrinks by up to zoomStep per moment (in log
     // terms, so closer and back feel symmetric), within [zoomMin, zoomMax]; moving costs like gaze.
-    if (e.activeZoom && this.phase === 'stim') {
+    if ((e.activeZoom || e.reflex) && this.phase === 'stim') {
       this.dist = Math.max(e.zoomMin, Math.min(e.zoomMax, this.dist * Math.exp(zoom * e.zoomStep)));
       const m = rw.movePerSec * t.dt * Math.abs(zoom);
       reward += m; P.move += m;

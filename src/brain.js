@@ -405,6 +405,33 @@ export class Brain {
     if (this.kcRetina) { const rm = this.rmean, rv = this.rv; for (let j = 0; j < rm.length; j++) rm[j] += rate * (rv[j] - rm[j]); }
   }
 
+  // Innate orienting and approach (eye.reflex): real flies turn toward and walk up to small,
+  // striking objects without having to learn to. The small-object eye cells (LC11: dark spot,
+  // LC_ON: bright spot) are compared across the eye; if one tile stands out from the rest, the eye
+  // is turned toward it, and once it is near the centre of view the fly steps closer. Added on top
+  // of whatever the learned eye motor wants, so evolution can refine or override it.
+  _reflex() {
+    const lc = this.lc[0], k = this.cfg.eye.reflex;
+    const a = lc.types.find((t) => t.name === 'LC11'), b = lc.types.find((t) => t.name === 'LC_ON');
+    const n = a.count, [nr, nc] = a.grid;
+    let best = -1, bi = 0, mean = 0;
+    for (let i = 0; i < n; i++) {
+      const s = lc.out[a.start + i] + lc.out[b.start + i];
+      mean += s / n;
+      if (s > best) { best = s; bi = i; }
+    }
+    const stand = Math.max(0, Math.min(1, (best - mean - 0.03) * 10)); // how much it stands out, 0..1
+    if (!stand) return;
+    const dx = ((bi % nc) + 0.5) / nc * 2 - 1, dy = 1 - (Math.floor(bi / nc) + 0.5) / nr * 2; // where, -1..1 (up = +)
+    const g = this.gaze;
+    // turning toward something on the right (or up) takes a negative pan command in this world
+    g[0] = clamp(g[0] - k * stand * dx, -1, 1);
+    g[1] = clamp(g[1] - k * stand * dy, -1, 1);
+    // step closer once it is roughly straight ahead
+    const centred = Math.max(0, 1 - Math.hypot(dx, dy));
+    g[2] = clamp(g[2] - k * stand * centred, -1, 1);
+  }
+
   // Kenyon cells: fixed random mixing of the centred static features, then only the top few
   // percent fire (1), the rest stay silent (0).
   _mushroomBody() {
@@ -497,6 +524,7 @@ export class Brain {
       for (let i = 0; i < N; i++) s += this.Wgaze[wb + i] * h[i];
       gaze[mg] = Math.tanh(s);
     }
+    if (this.cfg.eye.reflex) this._reflex();
     // "The loop trick": decisionAlpha < 1 averages the foot logits over recent frames. 1 = off.
     const da = this.cfg.brain.decisionAlpha;
     const ez = da < 1 ? this.zEma : z;

@@ -194,6 +194,7 @@ const REWARD_UI = [
   ['eye.gazeStepDeg', '...step size (deg)', 'How far the eye can move in one moment.', 0.5],
   ['eye.gazeRangeDeg', '...range (deg)', 'How far from the centre of the screen the eye may look.', 1],
   ['eye.acceptance', 'Lens blur', 'How wide a cone of light each sensor averages, in sensor gaps (real flies: about 1). Makes pictures smooth instead of full of false moire patterns. 0 = pinhole (reads one exact point).', 0.1],
+  ['eye.reflex', 'Look at what stands out', 'Strength of the innate turn-toward-and-approach reflex (0 = off; ability switch sets 1). Moves the eye and legs even without the learned abilities.', 0.1],
   ['eye.activeZoom', 'Step closer or back', '1 = a third eye-motor output moves toward or away from the picture (ability switch).', 1],
   ['eye.zoomStep', '...speed', 'How much the picture can grow or shrink per moment (0.06 = 6%).', 0.01],
   ['eye.zoomMin', '...closest', 'Closest allowed distance (0.6 = the picture looks 1.7x bigger).', 0.1],

@@ -50,6 +50,10 @@ export const DEFAULTS = {
     gazeRangeDeg: 20,  // how far the gaze may wander from the centre of the screen before clamping
     // Stepping closer or back: a third motor output changes the viewing distance, within this range.
     activeZoom: 0,
+    // Innate reflex: turn toward and step up to whatever small thing stands out (see brain.js
+    // _reflex). The strength of the pull (0 = off). Moves the eye and legs even if the learned
+    // Smart eye / Step closer abilities are off.
+    reflex: 0,
     zoomStep: 0.06,    // the picture's size can change by up to ~6% per moment
     zoomMin: 0.6, zoomMax: 2.5,
   },

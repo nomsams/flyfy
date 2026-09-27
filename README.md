@@ -48,6 +48,7 @@ also lets you use a bigger local photo folder (Settings -> Faces).
 | **Edge boost** | each sensor dims its neighbours, so edges pop (lateral inhibition) | no |
 | **Mood chemical** | one dopamine-like signal sets how long each brain cell holds a thought, live | yes |
 | **Memory centre** | 400 sparse "Kenyon cells" reading the raw light sensors, feeding the learning synapses (the mushroom body) | no |
+| **Look at what stands out** | an innate reflex: turn toward and step up to whatever small spot stands out (no training needed) | no |
 | **Step closer or back** | a third eye-motor output walks toward or away from the picture, felt by the brain | yes |
 | **Practise at many distances** | each practice picture shown from a random distance (the exam is at the set distance) | no |
 | **Learn from surprises** | learns in proportion to how unexpected an outcome was (dopamine as reward prediction error) | no |
@@ -80,6 +81,8 @@ Evolve = 30 generations.
 | Rewiring | stripes | Evolve | 75.5% | 75.1% | no clear difference (-0.4 ± 1.9) |
 | Practise at many distances | faces | Quick | 54.2% | 53.7% | no clear difference (-0.5 ± 3.0) |
 | Practise at many distances | stripes | Quick | 82.9% | 84.7% | no clear difference (+1.8 ± 7.9) |
+| Look at what stands out (+ memory centre) | find the spot | Quick | 82.3% | 81.5% | no clear difference (-0.8 ± 7.3) |
+| Look at what stands out (+ memory centre) | faces | Quick | 59.5% | 58.2% | no clear difference (-1.4 ± 4.8) |
 | Step closer or back | find the spot | Evolve (60 gen.) | 56.1% | 56.9% | no clear difference (+0.8 ± 8.6) |
 | Learn from surprises (+ memory centre) | faint stripes | Quick | 92.7% | 95.3% | **better by 2.5 pts** |
 | Learn from surprises (+ memory centre) | stripes | Quick | 99.0% | 100.0% | **better by 1.0 pts** |
