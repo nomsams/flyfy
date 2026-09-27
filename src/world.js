@@ -49,6 +49,7 @@ export class TrialWorld {
     this.stim = null;
     this.serial = 0; // bumps whenever a new image is put on screen
     this.jitterStep = 0;
+    this.gazeAz = 0; this.gazeEl = 0; // active vision: where the eye is currently panned to
   }
 
   reset(seed, stim) {
@@ -62,7 +63,7 @@ export class TrialWorld {
     this.pain[0] = this.pain[1] = 0;
     this.resp[0] = this.resp[1] = 0;
     this.lastFoot = -1; this.streak = 0;
-    this.parts = { correct: 0, wrong: 0, respond: 0, premature: 0, miss: 0, time: 0, margin: 0, repeat: 0 };
+    this.parts = { correct: 0, wrong: 0, respond: 0, premature: 0, miss: 0, time: 0, margin: 0, repeat: 0, move: 0 };
     this.trials = 0;
     this.correct = 0;
     this.premature = 0;
@@ -90,6 +91,7 @@ export class TrialWorld {
     this.image = this.stim.sample(this.rng, this.label);
     this.serial++;
     this.jitterStep = 0; // each image gets the jitter scan from the same starting phase
+    this.gazeAz = 0; this.gazeEl = 0; // each image starts with the eye looking at the centre
   }
 
   _endTrial() {
@@ -97,9 +99,10 @@ export class TrialWorld {
     this.phaseT = 0;
   }
 
-  // out0/out1: motor outputs of the left/right foot in [-1, 1].
-  step(out0, out1) {
-    const t = this.cfg.timing, f = this.cfg.feet, rw = this.cfg.reward, pn = this.cfg.pain, P = this.parts;
+  // out0/out1: motor outputs of the left/right foot in [-1, 1]. gazeDx/gazeDy: active vision's
+  // motor command for this step (also [-1, 1], 0 if not driving the eye).
+  step(out0, out1, gazeDx = 0, gazeDy = 0) {
+    const t = this.cfg.timing, f = this.cfg.feet, rw = this.cfg.reward, pn = this.cfg.pain, e = this.cfg.eye, P = this.parts;
     const decay = Math.exp(-t.dt / pn.tauSec);
     this.pain[0] *= decay; this.pain[1] *= decay;
     let reward = rw.timePerSec * t.dt;
@@ -107,6 +110,16 @@ export class TrialWorld {
     this.lastEvent = EVENT.NONE;
     this.time += t.dt;
     this.phaseT += t.dt;
+
+    // Active vision: pan the gaze by the requested amount (clamped so the eye can't fly off the
+    // image), then charge a small cost for how far it moved -- so a fly that already knows the
+    // answer has no reason to keep scanning.
+    if (e.activeVision) {
+      this.gazeAz = Math.max(-e.gazeRangeDeg, Math.min(e.gazeRangeDeg, this.gazeAz + gazeDx * e.gazeStepDeg));
+      this.gazeEl = Math.max(-e.gazeRangeDeg, Math.min(e.gazeRangeDeg, this.gazeEl + gazeDy * e.gazeStepDeg));
+      const m = rw.movePerSec * t.dt * (Math.abs(gazeDx) + Math.abs(gazeDy));
+      reward += m; P.move += m;
+    }
 
     // Dense teaching signal: while a cue is up, reward pushing the correct
     // foot above the wrong one. Far lower-variance than the +-10 outcome,
@@ -208,7 +221,7 @@ export class TrialWorld {
       // 'overlap'; a lot for 'split', where each eye sees mostly its own half).
       const half = e.layout === 'split' ? (e.fovAzDeg - e.splitOverlapDeg) / 2 : e.binocularShiftDeg;
       const shift = this.nEyes === 2 ? (eye === 0 ? 1 : -1) * half : 0;
-      const cAz = sc.centerAzDeg + shift + jAz + extraAz, cEl = sc.centerElDeg + jEl + extraEl;
+      const cAz = sc.centerAzDeg + shift + jAz + this.gazeAz + extraAz, cEl = sc.centerElDeg + jEl + this.gazeEl + extraEl;
       const hw = sc.azDeg * 0.5 * s, he = sc.elDeg * 0.5 * s;
       for (let r = 0; r < R; r++) {
         const dy = this.el[r] - cEl;

@@ -152,8 +152,9 @@ export class Brain {
     this.N = b.core;
     this.kIn = Math.min(b.kIn, this.nIn);
     this.kRec = Math.min(b.kRec, this.N);
-    this.M = 2;
-    this.alphaCentre = b.alpha; // where each neuron's evolved leak starts out, before evolution spreads them
+    this.M = 2;   // feet
+    this.Mg = 2;  // gaze motor: dx, dy
+    this.alphaCentre = b.alpha; // where each neuron's evolved *baseline* leak starts out, before evolution spreads them
 
     // Fixed random wiring (distinct sources per neuron).
     const rng = mulberry32(b.netSeed);
@@ -176,12 +177,19 @@ export class Brain {
     this.sizes = {
       win: this.N * this.kIn, wrec: this.N * this.kRec, b: this.N,
       wout: this.M * this.N, bout: this.M,
-      // Each core neuron's own leak rate (how much of each step is "new" vs "memory"), evolved
-      // rather than the single shared constant every neuron used to have. This is what lets
-      // evolution give some neurons a short memory (react to the instant) and others a long one
-      // (integrate evidence over the whole time a cue is up) -- the brain learning, on its own,
-      // how to piece together information across frames instead of everyone forgetting alike.
+      // Each core neuron's own *baseline* leak rate, evolved rather than one constant shared by
+      // everyone. Neuromodulation (below) adjusts it live, per frame, around this baseline.
       alpha: this.N,
+      // Active vision: a second, evolved readout of the core, alongside the foot readout, that
+      // says where to look next (dx, dy) instead of following a fixed scan pattern.
+      wgaze: this.Mg * this.N, bgaze: this.Mg,
+      // Neuromodulation: one evolved "modulator" readout of the whole core -- a single global
+      // number in (0,1) -- plus one evolved "sensitivity" per neuron to that number. Every step,
+      // each neuron's leak rate becomes baseline + sensitivity * modulator, instead of staying
+      // fixed forever once evolution sets it: a confusing frame can make the whole brain hold
+      // its memory longer, a clear one can make it snap to a decision, without evolution having
+      // had to see that particular frame in advance.
+      wmod: this.N, bmod: 1, sens: this.N,
     };
     this.paramCount = Object.values(this.sizes).reduce((a, b2) => a + b2, 0);
     this.x = new Float32Array(this.nIn);
@@ -189,6 +197,8 @@ export class Brain {
     this.hn = new Float32Array(this.N);
     this.out = new Float32Array(this.M);
     this.z = new Float32Array(this.M);
+    this.gaze = new Float32Array(this.Mg);   // this step's motor command, tanh-bounded to [-1, 1]
+    this.dopamine = 0.5;                     // this step's global modulator level, for viz/debugging
     // Plastic (fast) synapses from the static LC cells onto the feet. Not part of the evolved
     // parameters: they are learned during life from reward and pain, see learn().
     this.staticIdx = [];
@@ -204,7 +214,8 @@ export class Brain {
     this.setParams(new Float32Array(this.paramCount));
   }
 
-  get neuronCount() { return this.nLC + this.N + this.M + 4; }
+  // + M feet, + Mg gaze motor, +1 modulator, +4 touch/pain inputs
+  get neuronCount() { return this.nLC + this.N + this.M + this.Mg + 1 + 4; }
 
   initParams(seed = 1) {
     const rng = mulberry32(seed);
@@ -218,10 +229,19 @@ export class Brain {
     fill(this.sizes.wout, 2 / Math.sqrt(this.N));
     // resting bias: a naive fly keeps its feet up (below the press threshold) until it has a reason to press
     for (let m = 0; m < this.M; m++) p[o + m] = -0.6;
-    // per-neuron leak, centred on the config default but already spread out (as logit(alpha)) so
-    // evolution has some neurons on each side of it to start differentiating from
+    o += this.sizes.bout;
+    // per-neuron baseline leak, centred on the config default but already spread out (as
+    // logit(alpha)) so evolution has some neurons on each side of it to start differentiating from
     const centreLogit = Math.log(this.alphaCentre / (1 - this.alphaCentre));
     for (let i = 0; i < this.sizes.alpha; i++) p[o + i] = centreLogit + gauss(rng) * 1.0;
+    o += this.sizes.alpha;
+    fill(this.sizes.wgaze, 1 / Math.sqrt(this.N));
+    o += this.sizes.bgaze; // the eye starts out roughly stationary, not already panning somewhere
+    fill(this.sizes.wmod, 1 / Math.sqrt(this.N));
+    o += this.sizes.bmod;  // dopamine starts neutral: sigmoid(0) = 0.5
+    // sensitivity starts small, so a fresh brain's dynamic leak is close to its baseline
+    // regardless of dopamine; evolution can grow it wherever modulation turns out to help
+    fill(this.sizes.sens, 0.3);
     return p;
   }
 
@@ -235,13 +255,18 @@ export class Brain {
     this.Wout = take(this.sizes.wout);
     this.bout = take(this.sizes.bout);
     const alphaRaw = take(this.sizes.alpha);
-    if (!this.alpha) this.alpha = new Float32Array(this.N);
-    for (let i = 0; i < this.N; i++) this.alpha[i] = 1 / (1 + Math.exp(-alphaRaw[i])); // logistic sigmoid -> (0,1)
+    if (!this.baseAlpha) this.baseAlpha = new Float32Array(this.N);
+    for (let i = 0; i < this.N; i++) this.baseAlpha[i] = 1 / (1 + Math.exp(-alphaRaw[i])); // logistic sigmoid -> (0,1)
+    this.Wgaze = take(this.sizes.wgaze);
+    this.bgaze = take(this.sizes.bgaze);
+    this.Wmod = take(this.sizes.wmod);
+    this.bmod = take(this.sizes.bmod);
+    this.sens = take(this.sizes.sens);
   }
 
   // keepPlastic: keep what the fly has learned (the fast synapses) across episodes.
   reset(keepPlastic = false) {
-    this.h.fill(0); this.hn.fill(0); this.out.fill(0); this.x.fill(0); this.zEma.fill(0);
+    this.h.fill(0); this.hn.fill(0); this.out.fill(0); this.x.fill(0); this.zEma.fill(0); this.gaze.fill(0); this.dopamine = 0.5;
     for (const l of this.lc) l.reset();
     if (!keepPlastic) { this.Wp.fill(0); this.nAnswers = 0; }
     this.fmeanInit = keepPlastic && this.nAnswers > 0; // keep the adapted mean when continuing a life
@@ -301,13 +326,24 @@ export class Brain {
     if (!this.fmeanInit) { for (let j = 0; j < nS; j++) fm[j] = x[sidx[j]]; this.fmeanInit = true; }
     for (let j = 0; j < nS; j++) xc[j] = x[sidx[j]] - fm[j];
 
-    const { N, kIn, kRec, Win, Wrec, b, inIdx, recIdx, h, hn, alpha } = this;
+    const { N, kIn, kRec, Win, Wrec, b, inIdx, recIdx, h, hn, baseAlpha, sens } = this;
+
+    // Neuromodulation: a single global "dopamine" reading of the core's state right now (before
+    // this step's update), then each neuron's own leak rate for *this* update is its evolved
+    // baseline nudged by its own evolved sensitivity to that one shared number -- confusion (or
+    // clarity) reweighting everyone's memory live, instead of a leak rate fixed once forever.
+    let sMod = this.bmod[0];
+    for (let i = 0; i < N; i++) sMod += this.Wmod[i] * h[i];
+    const D = 1 / (1 + Math.exp(-sMod));
+    this.dopamine = D;
+
     for (let i = 0; i < N; i++) {
       let s = b[i];
       const ib = i * kIn, rb = i * kRec;
       for (let k = 0; k < kIn; k++) s += Win[ib + k] * x[inIdx[ib + k]];
       for (let k = 0; k < kRec; k++) s += Wrec[rb + k] * h[recIdx[rb + k]];
-      hn[i] = (1 - alpha[i]) * h[i] + alpha[i] * Math.tanh(s);
+      const da = Math.max(0.01, Math.min(0.99, baseAlpha[i] + sens[i] * D));
+      hn[i] = (1 - da) * h[i] + da * Math.tanh(s);
     }
     h.set(hn);
     const z = this.z;
@@ -319,6 +355,17 @@ export class Brain {
       let p = 0;
       for (let j = 0; j < nS; j++) p += this.Wp[pb + j] * xc[j];
       z[m] = s + gp * p;
+    }
+    // Active vision: a second, evolved readout of the (now updated) core says where to look
+    // next, tanh-bounded so the eye pans rather than teleports. World integrates this into an
+    // actual gaze position and applies a small penalty per step for how far it moved, so a fly
+    // that already knows the answer has no reason to keep scanning.
+    const gaze = this.gaze;
+    for (let mg = 0; mg < this.Mg; mg++) {
+      let s = this.bgaze[mg];
+      const wb = mg * N;
+      for (let i = 0; i < N; i++) s += this.Wgaze[wb + i] * h[i];
+      gaze[mg] = Math.tanh(s);
     }
     // "The loop trick" for the live fly: eye.jitterFrac gives each frame a slightly different
     // sub-receptor look; decisionAlpha < 1 sums/averages those looks' logits over time (a running

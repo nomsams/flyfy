@@ -30,6 +30,14 @@ export function drawScene(ctx, W, H, world, imgCanvas, flash) {
   if (s > 0 && imgCanvas) {
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(imgCanvas, cx - (fw * s) / 2, sy - (fh * s) / 2, fw * s, fh * s);
+    // Active vision: where on the image the eye is currently panned to.
+    if (world.cfg.eye.activeVision) {
+      const sc = world.cfg.screen;
+      const gx = cx - (world.gazeAz / sc.azDeg) * fw * s, gy = sy - (world.gazeEl / sc.elDeg) * fh * s;
+      ctx.strokeStyle = '#3fb950'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(gx, gy, 7, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(gx - 10, gy); ctx.lineTo(gx + 10, gy); ctx.moveTo(gx, gy - 10); ctx.lineTo(gx, gy + 10); ctx.stroke();
+    }
   }
   ctx.fillStyle = '#8b949e';
   ctx.font = '12px system-ui, sans-serif';
@@ -144,6 +152,17 @@ export function drawNeurons(ctx, W, H, brain) {
     ctx.fillRect(x, v >= 0 ? y + 14 + 45 - h : y + 14 + 45, 26, h);
     ctx.fillStyle = '#8b949e'; ctx.fillText(name, x - 4, y + 120);
   });
+  // Neuromodulation: the shared "dopamine" level everyone's leak rate is nudged by this frame.
+  const mx = bx + 150;
+  ctx.fillStyle = '#8b949e'; ctx.fillText('dopamine', mx, y + 9);
+  ctx.fillStyle = '#21262d'; ctx.fillRect(mx, y + 14, 90, 14);
+  ctx.fillStyle = AMBER; ctx.fillRect(mx, y + 14, 90 * brain.dopamine, 14);
+  // Active vision: this frame's motor command (dx, dy), tanh-bounded to [-1, 1].
+  ctx.fillStyle = '#8b949e'; ctx.fillText('gaze motor (dx, dy)', mx, y + 40);
+  const gcx = mx + 30, gcy = y + 66, gr = 24;
+  ctx.strokeStyle = '#30363d'; ctx.beginPath(); ctx.arc(gcx, gcy, gr, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = GREEN; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(gcx, gcy); ctx.lineTo(gcx + brain.gaze[0] * gr, gcy - brain.gaze[1] * gr); ctx.stroke();
 }
 
 export function drawChart(ctx, W, H, hist, unit = 'generation') {

@@ -35,6 +35,13 @@ export const DEFAULTS = {
     // the same idea as summing a model's logits over several jittered, downsampled looks at a
     // photo. 0 = off (every frame is identical while the image is steady).
     jitterFrac: 0,
+    // Active vision: instead of a fixed scan pattern, the brain's own core decides where to look
+    // next every frame (see brain.js's gaze output) and the eye actually pans there, rather than
+    // the image being resampled from a fixed spot. This is the new default way the eye gets more
+    // than one look at a still image -- jitterFrac is the old, fixed alternative, still available.
+    activeVision: 1,   // 1 = on, 0 = off (a plain number so it works like every other live setting)
+    gazeStepDeg: 2.0,  // degrees the gaze can move in one frame at full motor output (tanh = +-1)
+    gazeRangeDeg: 20,  // how far the gaze may wander from the centre of the screen before clamping
   },
   // Where the screen sits in the visual field, and how big it looks.
   screen: { azDeg: 70, elDeg: 50, centerAzDeg: 0, centerElDeg: 0 },
@@ -62,6 +69,10 @@ export const DEFAULTS = {
     marginPerSec: 3.0,   // dense reward: correct foot output minus wrong foot output, per second of cue
     repeat: -1.0,        // anti-button-mashing: charged for every answer with the same foot beyond repeatFree in a row
     repeatFree: 2,
+    // Active vision: a small cost on the raw motor command's size (0..1 per axis, before it is
+    // turned into degrees), per second, so a fly that already has its answer has no reason to
+    // keep scanning -- reward finding the target with the fewest, most efficient eye movements.
+    movePerSec: -0.4,
   },
   // Nociceptors: one per foot. A wrong answer (or pressing while the screen is blank) hurts that
   // foot; the pain is an *input* to the brain that fades over tauSec. strength 0 = feels nothing.

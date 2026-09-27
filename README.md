@@ -46,6 +46,50 @@ about 20 ms per episode on one thread and needs no workers.
 Workers. Slower, but it can learn *when* to answer and shapes the core. Both can be
 combined: evolution runs with the fast learning switched on inside every episode.
 
+## Active vision and neuromodulation
+
+*(This branch, `active-vision`, is where this pair of ideas is being pursued -- not yet merged
+to `main`.)*
+
+Two things used to be fixed for good the moment evolution finished with them: how the eye moved
+(a scripted scan, see "the loop trick" below), and how fast each neuron forgot (one number per
+neuron, set once). Both are now decided live, by the brain itself, frame by frame.
+
+**Active vision.** The core gets a second evolved readout alongside the two feet: a motor
+command (`dx`, `dy`, tanh-bounded to [-1, 1]) that pans the eye toward wherever it decides is
+worth a closer look, instead of following a fixed scan pattern. Each frame: the core sees the
+current view, updates, and its gaze output shifts where the *next* frame samples from -- an
+actual moving crop, not a lookup table of offsets. Movement costs a little reward every frame
+(`movePerSec`, negative), so a fly that already knows the answer has no reason to keep
+scanning, and the gaze is clamped (`gazeRangeDeg`) so it pans rather than teleports off the
+image. Watch it happen live: the scene view draws a small green crosshair on the image at the
+current gaze position, and the neurons view shows the raw motor command as a short line inside a
+dial.
+
+**Neuromodulation.** A third evolved readout, again of the whole core, is a single shared number
+in (0, 1) -- call it dopamine. Every neuron also gets one evolved "sensitivity" to it. Each
+neuron's leak rate for that step is `baseline + sensitivity * dopamine`, clamped to stay a valid
+rate, instead of just `baseline`. A confusing frame can (if evolution finds it useful) drop
+dopamine and make the whole brain hold its memory longer; a clear one can raise it and let
+neurons snap to a decision. This needed no new toggle: sensitivity starts small and evolution is
+free to shrink it toward zero (self-disabling) wherever it doesn't pay off, or grow it where it
+does. Watch it live too: the neurons view has a dopamine bar next to the feet.
+
+Both are on by default on this branch (`activeVision: 1`); the old fixed circular jitter scan
+(`jitterFrac`) is still there underneath as an alternative, off by default, in case active vision
+turns out not to be the answer for a given task.
+
+**Measured so far (honestly: inconclusive).** Evolving on stripes for 80 generations, one run
+each, same seed: active vision on ended at 93% vs 91% off. The two curves cross back and forth
+the whole way (on led at generations 10-15 and 60-70, trailed at 30-45), so a 2-point gap from a
+single seed is within noise -- on par, not a demonstrated win. And stripes are close to the worst
+possible test for it: a full-field texture looks the same wherever the eye points, so there is
+nothing for a moving eye to find. The fair test is a task where the informative patch appears at
+a *different place* on every image, so looking in the right spot actually matters -- that is the
+next experiment on this branch. Neuromodulation's contribution hasn't been isolated yet either
+(it is always on); checking whether evolution grew the sensitivities or shrank them toward zero
+would say whether it is being used at all.
+
 ## Rewards, penalties, pain and the eye (all editable, live)
 
 The "Rewards, penalties, pain & the eye" panel lists every number the fly is scored,
@@ -69,12 +113,20 @@ that answered only the images it was sure of looked 100% accurate.
 |---|---|---|
 | **LPLC2, LC4** | looming / outward-motion detectors (Hassenstein-Reichardt correlators on ON/OFF signals). Fire when the image expands into view; ~20x quieter on a static image | no (fixed) |
 | **LC11, LC_ON, LUM** | small dark object, small bright object, coarse luminance. Carry the image content | no (fixed) |
-| **core** | 128 sparse leaky tanh neurons (10 inputs + 12 recurrent connections, own leak rate each) | by evolution |
+| **core** | 128 sparse leaky tanh neurons (10 inputs + 12 recurrent connections, own baseline leak rate + dopamine sensitivity each) | by evolution |
 | **fast synapses** | static LC cells -> the two feet | by reward and pain, during life |
-| **feet** | 2 outputs; a press above 0.3 is an answer | - |
+| **feet** | 2 outputs; a press above 0.3 is an answer | by evolution + fast synapses |
+| **gaze motor** | 2 outputs (dx, dy): active vision's next move | by evolution |
+| **modulator** | 1 output: the shared "dopamine" level | by evolution |
 | **touch / pain inputs** | what each foot feels (pain input optional, off by default) | - |
 
 The LC types are an abstraction of the real cell types, not the connectome.
+
+*(Found and fixed while adding the gaze/modulator readouts: `initParams`'s write position was
+never advanced past the foot output bias, so it got silently overwritten by the per-neuron leak
+values right after it, every fresh brain, since the leak was added. A fresh brain's feet now
+correctly start near their intended resting bias instead of a stray value. Guarded by a
+regression test now.)*
 
 ## Saving resources
 

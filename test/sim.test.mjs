@@ -205,16 +205,62 @@ ok('lateral inhibition sharpens contrast and leaves a truly flat patch untouched
   assert.ok(variance(edge.retinas[0]) > variance(plain.retinas[0]), 'inhibition should increase local contrast on a striped image');
 });
 
-ok('each core neuron has its own evolvable leak (not one shared constant)', () => {
+ok('each core neuron has its own evolvable baseline leak (not one shared constant)', () => {
   const b = new Brain(cfg);
   const p = b.initParams(3);
   b.setParams(p);
-  assert.equal(b.alpha.length, b.N);
-  for (const a of b.alpha) assert.ok(a > 0 && a < 1, 'a leak rate is a probability, not a raw logit');
-  const min = Math.min(...b.alpha), max = Math.max(...b.alpha);
+  assert.equal(b.baseAlpha.length, b.N);
+  for (const a of b.baseAlpha) assert.ok(a > 0 && a < 1, 'a leak rate is a probability, not a raw logit');
+  const min = Math.min(...b.baseAlpha), max = Math.max(...b.baseAlpha);
   assert.ok(max - min > 0.3, 'neurons should start spread out, not all identical');
-  const mean = b.alpha.reduce((s, v) => s + v, 0) / b.alpha.length;
+  const mean = b.baseAlpha.reduce((s, v) => s + v, 0) / b.baseAlpha.length;
   assert.ok(Math.abs(mean - cfg.brain.alpha) < 0.1, 'centred near the configured default');
+  // resting bias survives initParams (regression: it used to get silently overwritten by alpha's
+  // block because the write pointer never advanced past it)
+  for (const v of b.bout) assert.ok(Math.abs(v - (-0.6)) < 0.05, 'resting bias should stay near -0.6: ' + v);
+});
+
+ok('neuromodulation: dopamine adjusts every neuron\'s leak rate away from its baseline', () => {
+  const b = new Brain(cfg);
+  const p = b.initParams(3);
+  b.setParams(p);
+  assert.equal(b.sens.length, b.N);
+  assert.ok(b.sens.some((v) => Math.abs(v) > 0.05), 'sensitivities should not all start at exactly zero');
+  const retinas = b.lc.map((l) => new Float32Array(l.n ? cfg.eye.rows * cfg.eye.cols : 0).fill(0.3));
+  const touch = new Float32Array(2);
+  b.reset();
+  b.step(retinas, touch, null);
+  assert.ok(b.dopamine > 0 && b.dopamine < 1, 'dopamine is a probability: ' + b.dopamine);
+  // a neuron with real sensitivity should move away from its own baseline once dopamine != 0.5
+  let moved = false;
+  for (let i = 0; i < b.N; i++) {
+    const dynamic = Math.max(0.01, Math.min(0.99, b.baseAlpha[i] + b.sens[i] * b.dopamine));
+    if (Math.abs(dynamic - b.baseAlpha[i]) > 1e-4) moved = true;
+  }
+  assert.ok(moved, 'at least one neuron\'s leak should differ from its baseline once modulated');
+});
+
+ok('active vision: the brain\'s gaze command pans the eye, and costs reward to use', () => {
+  const av = mergeConfig({ eye: { activeVision: true, gazeStepDeg: 3, gazeRangeDeg: 10 } });
+  const w = new TrialWorld(av);
+  w.reset(4, stim);
+  let g = 0;
+  while (w.phase !== 'stim' && g++ < 100) w.step(-1, -1, 0, 0);
+  assert.equal(w.gazeAz, 0, 'starts centred on a fresh image');
+  const before = w.parts.move;
+  w.step(-1, -1, 1, 0); // full rightward motor command
+  assert.ok(Math.abs(w.gazeAz - 3) < 1e-6, 'gaze should pan by exactly gazeStepDeg: ' + w.gazeAz);
+  assert.ok(w.parts.move < before, 'moving the eye should cost reward');
+  for (let i = 0; i < 20; i++) w.step(-1, -1, 1, 0); // keep pushing past the range limit
+  assert.ok(w.gazeAz <= 10 + 1e-6, 'gaze should not wander past gazeRangeDeg: ' + w.gazeAz);
+
+  const off = mergeConfig({ eye: { activeVision: false } });
+  const w2 = new TrialWorld(off);
+  w2.reset(4, stim);
+  g = 0;
+  while (w2.phase !== 'stim' && g++ < 100) w2.step(-1, -1, 0, 0);
+  w2.step(-1, -1, 1, 1);
+  assert.equal(w2.gazeAz, 0, 'gaze should not move when active vision is off, even if fed a motor command');
 });
 
 ok('size + speed', () => {

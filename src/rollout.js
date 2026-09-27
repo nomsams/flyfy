@@ -17,7 +17,7 @@ export class Runner {
   step() {
     const { world, brain } = this;
     const o = brain.step(world.retinas, world.touch, world.pain);
-    const r = world.step(o[0], o[1]);
+    const r = world.step(o[0], o[1], brain.gaze[0], brain.gaze[1]);
     const ev = world.lastEvent;
     if (ev === EVENT.CORRECT || ev === EVENT.WRONG) brain.learn(world.lastFoot, ev === EVENT.CORRECT);
     else if (ev === EVENT.PREMATURE) brain.punish(world.lastPress);

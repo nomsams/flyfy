@@ -156,8 +156,13 @@ const REWARD_UI = [
   ['optics', 'The eye’s fixed optics (before any neuron computes anything)'],
   ['eye.fovea', 'Foveation (predator’s gaze)', 'Packs receptors denser at the centre of gaze and sparser toward the edges, like a real predatory insect, instead of spreading them evenly (same total receptor count either way). Helps a lot when the subject sits centred with clutter around it (measured +20-27 points on a centred-target task) - which is exactly how the face photos are cropped. Hurts full-field textures with no centre bias (this app’s gratings/stripe tasks), since they have no "centre" to favour. 0 = uniform (off).', 0.1],
   ['eye.lateralInhib', 'Lateral inhibition', 'Each receptor minus its immediate neighbours’ average, amplified - what real photoreceptors do to each other before the signal goes anywhere else, sharpening edges and flattening flat patches for free. Strongly helped both procedural tasks in testing (faint stripes: 70% -> 92% held-out at strength 2), but slightly hurt a synthetic task whose signal was smooth low-frequency shading rather than edges - a genuine trade-off, not a free lunch. 0 = off.', 0.5],
-  ['loop', '"The loop trick": jittered-look ensembling'],
-  ['eye.jitterFrac', 'Eye jitter (microsaccades)', 'Every frame, nudges the image by a random sub-receptor amount (as a fraction of receptor spacing) before sampling it, like a real fly’s fixational eye movements. Shift + resample is exactly the "loop trick": each frame is a slightly different, cheap look at the same still image. 0 = off, every frame is identical.', 0.1],
+  ['active', 'Active vision (the eye decides where to look)'],
+  ['eye.activeVision', 'Active vision', 'The core gets a second, evolved output alongside the two feet: a motor command that pans the eye, frame by frame, toward whatever it decides is worth a closer look - instead of a fixed scan pattern. 1 = on, 0 = off (falls back to the fixed jitter scan below, if that is set).', 1],
+  ['eye.gazeStepDeg', '...max pan per frame (deg)', 'How far the eye can move in one frame at full motor output.', 0.1],
+  ['eye.gazeRangeDeg', '...max distance from centre (deg)', 'How far the eye may wander from the middle of the screen before it is clamped - keeps it from panning off the image entirely.', 1],
+  ['reward.movePerSec', '...cost of moving the eye', 'A small charge on the raw motor command’s size, per second, so a fly that already has its answer has no reason to keep scanning - reward finding the target with the fewest, most efficient eye movements. Should stay negative.', 0.05],
+  ['loop', '"The loop trick": jittered-look ensembling (the old, fixed alternative to active vision)'],
+  ['eye.jitterFrac', 'Eye jitter (microsaccades)', 'Every frame, nudges the image by a random sub-receptor amount (as a fraction of receptor spacing) before sampling it, like a real fly’s fixational eye movements. Shift + resample is exactly the "loop trick": each frame is a slightly different, cheap look at the same still image. 0 = off, every frame is identical. Independent of active vision above (both can run at once, though there is little reason to).', 0.1],
   ['brain.decisionAlpha', 'Decide from a running average', 'On its own, jitter just adds noise to a single frame’s decision. This sums/averages the foot signal over recent frames before deciding, the same idea as adding up several jittered looks’ scores instead of trusting just one. 1 = off (decide from this instant alone); lower = averages over more frames. In my tests this combination did not clearly help this task’s live decisions (the reaction-time and forced-choice window is short), but it reliably helps the passive "Probe the eye" test below - try it there.', 0.05],
 ];
 const rwId = (path) => 'rw_' + path.replace('.', '_');
@@ -204,6 +209,7 @@ function applyRewards() {
 const PART_NAMES = {
   correct: 'correct answers', wrong: 'wrong answers', respond: 'any-answer bonus', miss: 'no answer in time',
   premature: 'pressed on blank screen', repeat: 'same foot over and over', margin: 'steering', time: 'time cost',
+  move: 'eye movement (active vision)',
 };
 function renderLedger(ev) {
   const rows = Object.keys(PART_NAMES).map((k) => [PART_NAMES[k], ev.parts[k] || 0]);
@@ -234,7 +240,7 @@ function buildRunners() {
   S.life = new Runner(S.cfg, S.train);
   S.lifeState = null; // what the fly learned by pain belongs to this task and this eye
   S.watchStarted = false;
-  $('neurons').textContent = `${S.runner.brain.neuronCount} neurons (${S.runner.brain.nLC} LC + ${S.runner.brain.N} core + 2 feet + 2 touch + 2 pain)`;
+  $('neurons').textContent = `${S.runner.brain.neuronCount} neurons (${S.runner.brain.nLC} LC + ${S.runner.brain.N} core + 2 feet + 2 gaze motor + 1 modulator + 2 touch + 2 pain)`;
   $('params').textContent = `${S.runner.brain.paramCount.toLocaleString()} trainable parameters`;
 }
 
