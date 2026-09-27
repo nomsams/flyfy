@@ -153,6 +153,9 @@ const REWARD_UI = [
   ['timing', 'Timing'],
   ['timing.reactionSec', 'Reaction time (s)', 'A press earlier than this after an image appears counts as premature: the fly has to look first.', 0.05],
   ['timing.forceAtSec', 'Forced choice after (s)', 'No press by then: the foot with the stronger output is pressed for the fly. 0 = free response (the fly can also just never answer).', 0.05],
+  ['loop', '"The loop trick": jittered-look ensembling'],
+  ['eye.jitterFrac', 'Eye jitter (microsaccades)', 'Every frame, nudges the image by a random sub-receptor amount (as a fraction of receptor spacing) before sampling it, like a real fly’s fixational eye movements. Shift + resample is exactly the "loop trick": each frame is a slightly different, cheap look at the same still image. 0 = off, every frame is identical.', 0.1],
+  ['brain.decisionAlpha', 'Decide from a running average', 'On its own, jitter just adds noise to a single frame’s decision. This sums/averages the foot signal over recent frames before deciding, the same idea as adding up several jittered looks’ scores instead of trusting just one. 1 = off (decide from this instant alone); lower = averages over more frames. In my tests this combination did not clearly help this task’s live decisions (the reaction-time and forced-choice window is short), but it reliably helps the passive "Probe the eye" test below - try it there.', 0.05],
 ];
 const rwId = (path) => 'rw_' + path.replace('.', '_');
 
@@ -173,23 +176,25 @@ function buildRewardUI() {
 }
 
 function readRewards() {
-  const out = { reward: {}, pain: {}, learn: {}, timing: {} };
+  const out = {};
   for (const row of REWARD_UI) {
     if (row.length === 2) continue;
     const [grp, key] = row[0].split('.');
+    out[grp] ||= {};
     const v = num(rwId(row[0]));
     out[grp][key] = Number.isFinite(v) ? v : DEFAULTS[grp][key];
   }
   return out;
 }
 
-// Rewards are read fresh on every simulation step, so they can change while training runs.
+// Every group these live-editable numbers touch is read fresh on every simulation step, so they
+// can all change while training runs (that includes eye.jitterFrac and brain.decisionAlpha: they
+// are not part of the brain's shape, so nothing needs to be reset when they change).
 function applyRewards() {
-  const { reward, pain, learn, timing } = readRewards();
-  S.cfg.reward = { ...S.cfg.reward, ...reward }; S.cfg.pain = { ...S.cfg.pain, ...pain };
-  S.cfg.learn = { ...S.cfg.learn, ...learn }; S.cfg.timing = { ...S.cfg.timing, ...timing };
-  for (const r of [S.runner, S.watch, S.life]) if (r) { r.cfg.reward = S.cfg.reward; r.cfg.pain = S.cfg.pain; r.cfg.learn = S.cfg.learn; r.cfg.timing = S.cfg.timing; }
-  S.pool?.workers.forEach((w) => w.postMessage({ type: 'setcfg', reward: S.cfg.reward, pain: S.cfg.pain, learn: S.cfg.learn, timing: S.cfg.timing }));
+  const groups = readRewards();
+  for (const g in groups) S.cfg[g] = { ...S.cfg[g], ...groups[g] };
+  for (const r of [S.runner, S.watch, S.life]) if (r) for (const g in groups) r.cfg[g] = S.cfg[g];
+  S.pool?.workers.forEach((w) => w.postMessage({ type: 'setcfg', ...groups }));
   log(`settings changed${S.gen || S.lifeEp ? ' mid-training - returns before/after are not directly comparable' : ''}`);
 }
 
@@ -211,10 +216,11 @@ const shapeKey = (c) => JSON.stringify([c.eye.eyes, c.eye.rows, c.eye.cols, c.ey
 
 function readCfg() {
   const fine = $('eyeRes').value === 'fine';
+  const rw = readRewards(); // includes eye.jitterFrac and brain.decisionAlpha
   return mergeConfig({
-    eye: { eyes: num('eyes'), layout: $('eyeLayout').value, rows: fine ? 28 : 14, cols: fine ? 40 : 20, lcStatic: fine ? [10, 12] : [5, 6] },
-    brain: { core: num('core'), kIn: fine ? 20 : 10 },
-    ...readRewards(),
+    ...rw,
+    eye: { ...rw.eye, eyes: num('eyes'), layout: $('eyeLayout').value, rows: fine ? 28 : 14, cols: fine ? 40 : 20, lcStatic: fine ? [10, 12] : [5, 6] },
+    brain: { ...rw.brain, core: num('core'), kIn: fine ? 20 : 10 },
     es: { pairs: num('pairs'), sigma: num('sigma'), lr: num('lr'), episodesPerCandidate: num('eps') },
   });
 }
@@ -516,9 +522,13 @@ function initUI() {
   });
   $('btnProbe').onclick = () => guarded(async () => {
     const per = Math.min(200, S.train.mode === 'faces' ? Math.min(S.train.byLabel[0].length, S.train.byLabel[1].length) : 200);
-    const r = probeFrontEnd(S.cfg, S.train, per);
+    // Also runs "the loop trick" as a test-time-only comparison: the same classifier, scored on
+    // a single centred look vs. 10 independently jittered sub-receptor looks with their raw
+    // scores summed before deciding. Costs nothing extra elsewhere -- this is evaluation only.
+    const r = probeFrontEnd(S.cfg, S.train, per, 5, 10);
     log(`front-end probe (linear readout of the ${r.features} static LC units, no training of the core): `
-      + `train ${(r.train * 100).toFixed(0)}%  held-out ${(r.test * 100).toFixed(0)}%  `
+      + `train ${(r.train * 100).toFixed(0)}%  held-out, single look ${(r.test * 100).toFixed(0)}%  `
+      + `held-out, 10 jittered looks summed ${(r.testEnsembled * 100).toFixed(0)}%  `
       + `- ${r.test < 0.6 ? 'the eye barely carries this distinction' : r.test < 0.8 ? 'partly readable' : 'clearly readable'}`);
   });
   $('btnReset').onclick = () => guarded(async () => { newBrain(); log('new random brain'); });

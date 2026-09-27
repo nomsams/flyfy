@@ -46,14 +46,15 @@ about 20 ms per episode on one thread and needs no workers.
 Workers. Slower, but it can learn *when* to answer and shapes the core. Both can be
 combined: evolution runs with the fast learning switched on inside every episode.
 
-## Rewards, penalties and pain (all editable, live)
+## Rewards, penalties, pain and the eye (all editable, live)
 
-The "Rewards, penalties & pain" panel lists every number the fly is scored on, with a
-plain-language explanation. Changes apply on the next generation/episode while training
-keeps running, and "Where the reward came from" shows a ledger of what the current fly
-earned and lost per episode. Includes: correct / wrong / any-answer bonus / blank-screen
-press / no answer in time / same-foot-again-and-again / time cost / steering hint, pain
-strength and fade, learning speed and reward signal, reaction time and forced choice.
+The "Rewards, penalties, pain & the eye" panel lists every number the fly is scored,
+timed and sensed by, with a plain-language explanation. Changes apply on the next
+generation/episode while training keeps running, and "Where the reward came from" shows
+a ledger of what the current fly earned and lost per episode. Includes: correct / wrong /
+any-answer bonus / blank-screen press / no answer in time / same-foot-again-and-again /
+time cost / steering hint, pain strength and fade, learning speed and reward signal,
+reaction time, forced choice, and "the loop trick" below.
 
 Forced choice (default): if the fly has not pressed by 0.5 s after the image appears, the
 stronger foot is pressed for it, so it can never win by staying silent. Set it to 0 for
@@ -82,6 +83,39 @@ The LC types are an abstraction of the real cell types, not the connectome.
 - Sparse wiring; a small custom world instead of a physics engine.
 - The screen is only drawn while the tab is visible and the fly is set to play.
 
+## "The loop trick": jittered-look ensembling
+
+The idea: instead of classifying a photo from one look, shift it slightly, downsample it,
+classify, repeat several times, and sum the raw scores before deciding. It works here because
+a fixed low-resolution eye throws away sub-pixel detail on every single look, but which detail
+survives depends on exactly where the image lands on the receptor grid -- shift it a little and
+a different slice of high-frequency detail aliases into the low-res grid. Summed across looks,
+that averages out.
+
+Two places it is implemented:
+
+- **Probe the eye** does this literally, the way the idea is usually described: a linear
+  classifier is trained once on centred looks, then scored on held-out images two ways --
+  a single centred look, and 10 independently jittered sub-receptor looks with their scores
+  summed. On faint, noisy stripes this took a probe from 70% to 78% held-out; see the results
+  table below for more. It costs nothing during training, only a few extra (cheap) evaluation
+  passes.
+- **Eye jitter (microsaccades)** does the "shift" part live, every simulation frame, the way a
+  real fly's fixational eye movements might: while an image is on screen for up to 60 frames,
+  each frame samples the retina at a slightly different sub-receptor offset instead of the exact
+  same pixels every time, echoing real insects' compensatory head/eye micro-movements.
+  **Decide from a running average** is the matching "sum before deciding" half: it averages the
+  foot signal over recent frames instead of betting everything on one frame's instantaneous
+  read. Both are off by default (`0` / `1`) and live in the settings panel.
+
+Honestly reported: turning those two on together did **not** clearly help the live, playing fly
+in my tests. The window between the reaction-time delay and the forced-choice deadline is short
+(about 0.2 s, a handful of frames), which is not enough for a running average to settle before a
+decision is forced either way, and a single jittered frame right at decision time can still be
+an unlucky one. The trick reliably pays off where it is evaluating a fixed classifier over many
+looks with no deadline (**Probe the eye**), not yet where the decision itself is fast and time
+-pressured.
+
 ## Eyes
 
 - 1 eye or 2. With 2, `overlap` = both see the whole screen with a small disparity;
@@ -98,8 +132,9 @@ The LC types are an abstraction of the real cell types, not the connectome.
 | man vs woman photos | ~55-62% on held-out photos (varies run to run; a few hundred to a thousand episodes) |
 
 Faces are limited by the fixed eye: a linear probe on its static LC features tops out around
-63-65% (also with two eyes or the fine retina), and the photo labels are noisy. Use
-**Probe the eye** to see this ceiling for any setting.
+63-65% on a single look (also with two eyes or the fine retina), and the photo labels are
+noisy. Use **Probe the eye** to see this ceiling for any setting, and how far "the loop trick"
+(above) closes the gap: +8 points on faint stripes, +4-6 on stripes already near the ceiling.
 
 What did not work (kept out of the app, findings from testing): feeding pain into the
 recurrent core as a sensory input slowed evolution (available, off by default:

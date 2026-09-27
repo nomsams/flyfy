@@ -16,6 +16,14 @@ export const DEFAULTS = {
     background: 0.08,
     lcLoom: [2, 3],      // LPLC2 / LC4 cells (rows, cols) tiling the retina
     lcStatic: [5, 6],    // LC11 / LC_ON / LUM cells; finer = more image detail, more neurons
+    // Fixational micro-jitter ("the loop trick"): every frame, the image is nudged by a random
+    // sub-receptor amount before sampling, as a fraction of receptor spacing (0.5 = up to half a
+    // receptor). A still image is on screen for up to ~60 frames, so instead of looking at the
+    // exact same aliased pixels every frame, each frame is a slightly different sub-pixel look;
+    // the leaky recurrent core and the fast synapses then average this out over time for free,
+    // the same idea as summing a model's logits over several jittered, downsampled looks at a
+    // photo. 0 = off (every frame is identical while the image is steady).
+    jitterFrac: 0,
   },
   // Where the screen sits in the visual field, and how big it looks.
   screen: { azDeg: 70, elDeg: 50, centerAzDeg: 0, centerElDeg: 0 },
@@ -58,6 +66,11 @@ export const DEFAULTS = {
     alpha: 0.5,          // leak: 1 = no memory of previous state
     recGain: 0.9,
     inhibition: 0,       // mutual inhibition between the two foot motor neurons: 1 = winner-take-all, 0 = independent feet
+    // The other half of "the loop trick" for the live fly: on its own, eye.jitterFrac just adds
+    // noise to a single instantaneous decision. decisionAlpha < 1 smooths the foot logits over
+    // time (a running average) before deciding, so jittered frames actually get summed/averaged
+    // like the pasted algorithm's logits, instead of each being judged alone. 1 = off (instant).
+    decisionAlpha: 1,
     netSeed: 12345,      // fixes the (random) wiring, not the weights
   },
   es: { pairs: 32, sigma: 0.08, lr: 0.03, weightDecay: 0.005, episodesPerCandidate: 4 },

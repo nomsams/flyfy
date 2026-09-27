@@ -194,6 +194,7 @@ export class Brain {
     this.fmeanInit = false;
     this.nAnswers = 0;
     this.inhibition = b.inhibition;
+    this.zEma = new Float32Array(this.M); // "the loop trick" for the live fly: see decisionAlpha
     this.setParams(new Float32Array(this.paramCount));
   }
 
@@ -227,7 +228,7 @@ export class Brain {
 
   // keepPlastic: keep what the fly has learned (the fast synapses) across episodes.
   reset(keepPlastic = false) {
-    this.h.fill(0); this.hn.fill(0); this.out.fill(0); this.x.fill(0);
+    this.h.fill(0); this.hn.fill(0); this.out.fill(0); this.x.fill(0); this.zEma.fill(0);
     for (const l of this.lc) l.reset();
     if (!keepPlastic) { this.Wp.fill(0); this.nAnswers = 0; }
     this.fmeanInit = keepPlastic && this.nAnswers > 0; // keep the adapted mean when continuing a life
@@ -306,10 +307,17 @@ export class Brain {
       for (let j = 0; j < nS; j++) p += this.Wp[pb + j] * xc[j];
       z[m] = s + gp * p;
     }
+    // "The loop trick" for the live fly: eye.jitterFrac gives each frame a slightly different
+    // sub-receptor look; decisionAlpha < 1 sums/averages those looks' logits over time (a running
+    // average, cheaper than a literal replay loop) instead of betting everything on one frame's
+    // instantaneous read. 1 = off: the decision is exactly today's instantaneous z.
+    const da = this.cfg.brain.decisionAlpha;
+    const ez = da < 1 ? this.zEma : z;
+    if (da < 1) for (let m = 0; m < this.M; m++) ez[m] = da * z[m] + (1 - da) * ez[m];
     // each foot's motor neuron is inhibited by the other one
     const g = this.inhibition;
-    this.out[0] = Math.tanh(z[0] - g * z[1]);
-    this.out[1] = Math.tanh(z[1] - g * z[0]);
+    this.out[0] = Math.tanh(ez[0] - g * ez[1]);
+    this.out[1] = Math.tanh(ez[1] - g * ez[0]);
     return this.out;
   }
 }

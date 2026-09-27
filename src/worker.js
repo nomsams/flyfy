@@ -12,7 +12,10 @@ self.onmessage = (ev) => {
       runner = new Runner(m.cfg, StimulusSet.fromMessage(m.stim));
       self.postMessage({ type: 'ready' });
     } else if (m.type === 'setcfg') {
-      runner.cfg.reward = m.reward; runner.cfg.pain = m.pain; runner.cfg.learn = m.learn; runner.cfg.timing = m.timing; // read fresh every step, so this is live
+      // whichever config groups changed (reward/pain/learn/timing/eye/brain) -- all are read
+      // fresh every step, so this takes effect immediately, mid-evaluation
+      const { type, ...groups } = m;
+      for (const g in groups) runner.cfg[g] = { ...runner.cfg[g], ...groups[g] };
     } else if (m.type === 'eval') {
       const results = m.params.map((p) => runner.evaluate(p, m.seeds));
       self.postMessage({ type: 'result', id: m.id, results });

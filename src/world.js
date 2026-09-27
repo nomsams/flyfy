@@ -173,11 +173,21 @@ export class TrialWorld {
     return reward;
   }
 
-  _render() {
+  // extraAz/extraEl: an explicit sub-receptor offset (degrees), on top of any automatic jitter.
+  // Used by the front-end probe to control jittered looks precisely; the live simulation leaves
+  // these at 0 and relies on eye.jitterFrac instead.
+  _render(extraAz = 0, extraEl = 0) {
     const e = this.cfg.eye, sc = this.cfg.screen;
     const s = this.scale();
     const bg = e.background;
     const R = this.R, C = this.C;
+    // Automatic fixational jitter, a fresh draw every frame the image is visible (see
+    // eye.jitterFrac in config.js). Uses the world's own RNG, so it stays deterministic per seed.
+    let jAz = 0, jEl = 0;
+    if (s > 0 && e.jitterFrac) {
+      jAz = (this.rng() - 0.5) * e.jitterFrac * (e.fovAzDeg / C);
+      jEl = (this.rng() - 0.5) * e.jitterFrac * (e.fovElDeg / R);
+    }
     for (let eye = 0; eye < this.nEyes; eye++) {
       const L = this.retinas[eye];
       if (s <= 0) { L.fill(bg); continue; }
@@ -185,7 +195,7 @@ export class TrialWorld {
       // 'overlap'; a lot for 'split', where each eye sees mostly its own half).
       const half = e.layout === 'split' ? (e.fovAzDeg - e.splitOverlapDeg) / 2 : e.binocularShiftDeg;
       const shift = this.nEyes === 2 ? (eye === 0 ? 1 : -1) * half : 0;
-      const cAz = sc.centerAzDeg + shift, cEl = sc.centerElDeg;
+      const cAz = sc.centerAzDeg + shift + jAz + extraAz, cEl = sc.centerElDeg + jEl + extraEl;
       const hw = sc.azDeg * 0.5 * s, he = sc.elDeg * 0.5 * s;
       for (let r = 0; r < R; r++) {
         const dy = this.el[r] - cEl;
