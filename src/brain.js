@@ -202,14 +202,20 @@ export class Brain {
     if (this.mbOn) {
       const r2 = mulberry32((b.netSeed ^ 0x5bd1e995) >>> 0);
       this.nKC = mb.cells;
-      this.kcFan = Math.min(mb.fanIn, this.nS);
+      // what the Kenyon cells read: the centred static eye-cell features, or (mb.retina) the centred
+      // raw light sensors of every eye -- finer detail, the way real Kenyon cells get fairly direct
+      // sensory input rather than a pre-digested summary
+      this.kcRetina = !!mb.retina;
+      this.nSrc = this.kcRetina ? this.nEyes * cfg.eye.rows * cfg.eye.cols : this.nS;
+      if (this.kcRetina) { this.rv = new Float32Array(this.nSrc); this.rc = new Float32Array(this.nSrc); this.rmean = new Float32Array(this.nSrc); }
+      this.kcFan = Math.min(mb.fanIn, this.nSrc);
       this.kcIdx = new Int32Array(this.nKC * this.kcFan);
       this.kcW = new Float32Array(this.nKC * this.kcFan);
       for (let k = 0; k < this.nKC; k++) {
         const used = new Set();
         for (let j = 0; j < this.kcFan; j++) {
           let s;
-          do { s = Math.floor(r2() * this.nS); } while (used.has(s));
+          do { s = Math.floor(r2() * this.nSrc); } while (used.has(s));
           used.add(s);
           this.kcIdx[k * this.kcFan + j] = s;
           this.kcW[k * this.kcFan + j] = r2() < 0.5 ? -1 : 1;
@@ -349,10 +355,11 @@ export class Brain {
     this.fmeanInit = keepPlastic && this.nAnswers > 0; // keep the adapted mean when continuing a life
   }
 
-  getPlastic() { return { Wp: Float32Array.from(this.Wp), fmean: Float32Array.from(this.fmean), n: this.nAnswers }; }
+  getPlastic() { return { Wp: Float32Array.from(this.Wp), fmean: Float32Array.from(this.fmean), rmean: this.rmean ? Float32Array.from(this.rmean) : null, n: this.nAnswers }; }
   setPlastic(p) {
     if (!p || p.Wp.length !== this.Wp.length || p.fmean.length !== this.fmean.length) { this.Wp.fill(0); this.nAnswers = 0; this.fmeanInit = false; return; }
-    this.Wp.set(p.Wp); this.fmean.set(p.fmean); this.nAnswers = p.n; this.fmeanInit = p.n > 0;
+    if (this.rmean && !(p.rmean && p.rmean.length === this.rmean.length)) { this.Wp.fill(0); this.nAnswers = 0; this.fmeanInit = false; return; }
+    this.Wp.set(p.Wp); this.fmean.set(p.fmean); if (this.rmean) this.rmean.set(p.rmean); this.nAnswers = p.n; this.fmeanInit = p.n > 0;
   }
 
   _plasticUpdate(foot, sig, both) {
@@ -385,22 +392,28 @@ export class Brain {
     // adapt the reference to what an answered image looks like (fast at first, then slow)
     const rate = Math.max(0.05, 1 / (1 + this.nAnswers++)), fm = this.fmean, sidx = this.staticIdx, x = this.x;
     for (let j = 0; j < this.nS; j++) fm[j] += rate * (x[sidx[j]] - fm[j]);
+    if (this.kcRetina) { const rm = this.rmean, rv = this.rv; for (let j = 0; j < rm.length; j++) rm[j] += rate * (rv[j] - rm[j]); }
   }
 
   // Kenyon cells: fixed random mixing of the centred static features, then only the top few
   // percent fire (1), the rest stay silent (0).
   _mushroomBody() {
-    const { nKC, kcFan, kcIdx, kcW, kcAct, kcSort, kc, xc } = this;
+    const { nKC, kcFan, kcIdx, kcW, kcAct, kcSort, kc } = this;
+    const src = this.kcRetina ? this.rc : this.xc;
     for (let k = 0; k < nKC; k++) {
       let s = 0;
       const o = k * kcFan;
-      for (let j = 0; j < kcFan; j++) s += kcW[o + j] * xc[kcIdx[o + j]];
+      for (let j = 0; j < kcFan; j++) s += kcW[o + j] * src[kcIdx[o + j]];
       kcAct[k] = s;
     }
     kcSort.set(kcAct);
     kcSort.sort();
     const thr = kcSort[nKC - this.kActive];
-    for (let k = 0; k < nKC; k++) kc[k] = kcAct[k] >= thr && kcAct[k] > 1e-6 ? 1 : 0;
+    // strictly above the threshold fire first; ties at the threshold only fill the remaining places,
+    // so exactly kActive cells (or fewer) ever fire
+    let n = 0;
+    for (let k = 0; k < nKC; k++) { kc[k] = kcAct[k] > thr && kcAct[k] > 1e-6 ? 1 : 0; n += kc[k]; }
+    for (let k = 0; k < nKC && n < this.kActive; k++) if (!kc[k] && kcAct[k] === thr && kcAct[k] > 1e-6) { kc[k] = 1; n++; }
   }
 
   // retinas: array of Float32Array; touch, pain: Float32Array(2) (pain optional); pos: where the eye
@@ -422,8 +435,14 @@ export class Brain {
     // centre the static LC features on the average image the fly has answered on (adaptation), so
     // both classes sit either side of zero; the mean is updated in learn(), at answer time
     const nS = this.nS, xc = this.xc, fm = this.fmean, sidx = this.staticIdx;
-    if (!this.fmeanInit) { for (let j = 0; j < nS; j++) fm[j] = x[sidx[j]]; this.fmeanInit = true; }
+    if (this.kcRetina) { let q = 0; for (let e = 0; e < this.nEyes; e++) { this.rv.set(retinas[e], q); q += retinas[e].length; } }
+    if (!this.fmeanInit) {
+      for (let j = 0; j < nS; j++) fm[j] = x[sidx[j]];
+      if (this.kcRetina) this.rmean.set(this.rv);
+      this.fmeanInit = true;
+    }
     for (let j = 0; j < nS; j++) xc[j] = x[sidx[j]] - fm[j];
+    if (this.kcRetina) { const rc = this.rc, rv = this.rv, rm = this.rmean; for (let j = 0; j < rc.length; j++) rc[j] = rv[j] - rm[j]; }
     if (this.mbOn) this._mushroomBody();
 
     const { N, kIn, kRec, Win, Wrec, b, inIdx, recIdx, h, hn, baseAlpha, sens, Wpos } = this;

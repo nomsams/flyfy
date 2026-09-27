@@ -207,6 +207,7 @@ const REWARD_UI = [
   ['brain.neuromod', 'Mood chemical', '1 = a dopamine-like signal adjusts how long each cell holds a thought (ability switch).', 1],
   ['brain.decisionAlpha', 'Decision smoothing', 'Average the foot signal over recent moments before deciding. 1 = off.', 0.05],
   ['mb.enabled', 'Memory centre', '1 = add the mushroom-body layer of Kenyon cells (ability switch).', 1],
+  ['mb.retina', '...reads raw sensors', '1 = Kenyon cells sample the raw light sensors directly instead of the coarse eye-cell tiles (more detail).', 1],
   ['es.rewire', 'Rewiring', '1 = evolution moves the weakest connections to new places (ability switch).', 1],
   ['es.rewireEvery', '...every (generations)', 'How often rewiring happens.', 1],
   ['es.rewireFrac', '...fraction moved', 'What share of all connections is moved each time.', 0.01],
@@ -296,7 +297,7 @@ async function newBrain(seed = Date.now() % 100000) {
 
 // Only a few things change the structure of the simulation without changing its parameters:
 // right now that is the memory centre (it adds or removes a layer of cells).
-const structKey = (c) => JSON.stringify([c.mb.enabled ? c.mb.cells : 0]);
+const structKey = (c) => JSON.stringify([c.mb.enabled ? c.mb.cells : 0, c.mb.enabled ? c.mb.retina : 0]);
 
 // The Settings table changed (directly, or via an ability switch / task card).
 async function applySettings() {
@@ -669,7 +670,7 @@ function checkpoint() {
     build: { eyes: $('eyes').value, eyeLayout: $('eyeLayout').value, eyeRes: $('eyeRes').value, core: $('core').value },
     settings: readRewards(),
     gen: S.gen, theta: Array.from(S.es.theta), hist: S.hist.slice(-400), histKind: S.histKind, lifeEp: S.lifeEp || 0,
-    life: S.lifeState ? { Wp: Array.from(S.lifeState.Wp), fmean: Array.from(S.lifeState.fmean), n: S.lifeState.n } : null,
+    life: S.lifeState ? { Wp: Array.from(S.lifeState.Wp), fmean: Array.from(S.lifeState.fmean), rmean: S.lifeState.rmean ? Array.from(S.lifeState.rmean) : null, n: S.lifeState.n } : null,
     wiring: S.wiring, shape: { key: shapeKey(S.cfg), paramCount: S.es.n },
   };
 }
@@ -709,7 +710,7 @@ async function restore(ck) {
     if (ck.shape.paramCount !== S.runner.brain.paramCount) throw new Error('this fly\'s brain doesn\'t fit these settings');
     S.es = new ES(Float32Array.from(ck.theta), { ...S.cfg.es, seed: Date.now() % 100000 });
     S.gen = ck.gen; S.hist = ck.hist || []; S.histKind = ck.histKind || null; S.lifeEp = ck.lifeEp || 0;
-    S.lifeState = ck.life ? { Wp: Float32Array.from(ck.life.Wp), fmean: Float32Array.from(ck.life.fmean), n: ck.life.n } : null;
+    S.lifeState = ck.life ? { Wp: Float32Array.from(ck.life.Wp), fmean: Float32Array.from(ck.life.fmean), rmean: ck.life.rmean ? Float32Array.from(ck.life.rmean) : null, n: ck.life.n } : null;
     S.watchParams = Float32Array.from(ck.theta); S.watchStarted = false;
     syncAbilitySwitches();
     const last = S.hist[S.hist.length - 1];

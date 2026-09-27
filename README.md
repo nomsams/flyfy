@@ -92,6 +92,43 @@ Evolve = 30 generations.
   the tasks tried. They are cheap and switched off unless you want them; they may need longer
   evolution or harder tasks to matter.
 
+## Distance and lenses (the billboard question)
+
+Up close a billboard is a grid of dots; from further away the dots melt into a clean picture, but
+small details disappear. Could a fly see some things *better* from further away? Two pieces make
+that question testable here:
+
+- **Viewing distance** (Train tab, "How far away": close / normal / far / very far). Further away
+  the picture is smaller on the eye, with darkness around it; closer, it is bigger and may not fit.
+- **Lens blur** (Settings). A real ommatidium averages light over a small cone about as wide as the
+  gap to its neighbour - that averaging is what makes the billboard look clean from afar. Without
+  it, each sensor reads one exact point (a pinhole), and a picture seen from afar turns into false
+  moire patterns instead of a clean, smaller image. Implemented with a per-picture mipmap, so each
+  sensor reads the picture at exactly the blur its cone implies, at any distance.
+
+What training flies actually showed (Quick learn, 5 paired flies each):
+
+| change | challenge | before | after | verdict |
+|---|---|---|---|---|
+| lens instead of pinhole | faint stripes | 62.4% | 56.8% | **worse by 5.6 pts** |
+| lens instead of pinhole | find the spot | 59.7% | 49.1% | **worse by 10.6 pts** |
+| lens instead of pinhole | stripes | 82.9% | 81.4% | no clear difference (-1.5 ± 2.5) |
+| lens instead of pinhole | faces | 54.2% | 53.3% | no clear difference (-0.9 ± 1.6) |
+| half-strength lens instead of pinhole | faint stripes / find the spot | 62.4% / 59.7% | 59.6% / 53.6% | **worse by 2.8 / 6.1 pts** |
+| closer (0.6x) | find the spot | 59.9% | 77.4% | **better by 17.5 pts** |
+| further (1.7x) | faint stripes | 62.6% | 55.4% | **worse by 7.2 pts** |
+| further (1.7x) | faces | 54.2% | 53.4% | no clear difference (-0.8 ± 5.0) |
+| further (1.7x), with lens instead of pinhole | faces | 53.4% | 56.6% | no clear difference (+3.2 ± 6.0) |
+| practise at many distances | faces / stripes | 54.2% / 82.9% | 53.7% / 84.7% | no clear difference |
+
+So, honestly: for this fly, **closer beats further**. Its eye is already so coarse (a few hundred
+sensors) that pictures never carry "too much" detail for it; stepping back only throws detail away,
+and even the noise-averaging you would expect on faint, noisy stripes doesn't make up for it. And
+the realistic lens *hurts* learning: a brain that is trained can use the pinhole's sharp, even
+aliased, detail, which the lens smooths away. The pinhole therefore stays the default; the lens is
+there for realism. The one hint of the billboard effect: with the lens, faces seen from further
+away came out 3 points ahead - not enough to call.
+
 ## For developers
 
 Zero dependencies, plain ES modules, runs in any modern browser and in Node.
