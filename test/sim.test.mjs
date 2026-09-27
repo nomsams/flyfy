@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { DEFAULTS, mergeConfig } from '../src/config.js';
-import { StimulusSet } from '../src/stimuli.js';
+import { StimulusSet, IMG } from '../src/stimuli.js';
 import { TrialWorld, EVENT } from '../src/world.js';
 import { Brain } from '../src/brain.js';
 import { Runner } from '../src/rollout.js';
@@ -167,6 +167,42 @@ ok('ledger adds up to the return; repeat penalty only after repeatFree in a row'
   }
   assert.equal(w.resp[0], 4);
   assert.equal(w.parts.repeat, cfg.reward.repeat * (4 - cfg.reward.repeatFree), 'answers 3 and 4 with the same foot are charged');
+});
+
+ok('fovea packs receptors densest at the centre and reduces to uniform spacing at 0', () => {
+  const flat = new TrialWorld(cfg); // default fovea: 0
+  const spacing = (az) => Array.from({ length: az.length - 1 }, (_, i) => az[i + 1] - az[i]);
+  const flatGaps = spacing(flat.az);
+  for (let i = 1; i < flatGaps.length; i++) assert.ok(Math.abs(flatGaps[i] - flatGaps[0]) < 1e-4, 'uniform when fovea is 0');
+
+  const fov = new TrialWorld(mergeConfig({ eye: { fovea: 1.0 } }));
+  const gaps = spacing(fov.az);
+  const mid = Math.floor(gaps.length / 2);
+  assert.ok(gaps[mid] < gaps[0] && gaps[mid] < gaps[gaps.length - 1], 'centre receptors should be packed tighter than the edges');
+});
+
+ok('lateral inhibition sharpens contrast and leaves a truly flat patch untouched', () => {
+  const flat = new TrialWorld(mergeConfig({ eye: { lateralInhib: 2 } }));
+  flat.reset(1, new StimulusSet('brightness'));
+  flat.image = new Float32Array(IMG * IMG).fill(0.6); // perfectly flat, no per-pixel noise
+  flat.phase = 'stim'; flat.phaseT = 10;
+  flat._render();
+  // Only the screen's *interior* is flat -- its edge against the background is a real, sharp
+  // edge that inhibition is supposed to amplify, so check a block well inside the screen only.
+  const interior = [];
+  for (let r = 4; r <= 9; r++) for (let c = 6; c <= 13; c++) interior.push(flat.retinas[0][r * flat.C + c]);
+  const spread = Math.max(...interior) - Math.min(...interior);
+  assert.ok(spread < 1e-4, 'a truly flat patch stays exactly flat: ' + spread);
+
+  const edge = new TrialWorld(mergeConfig({ eye: { lateralInhib: 2 } }));
+  const plain = new TrialWorld(mergeConfig({}));
+  const stripes = new StimulusSet('gratings');
+  edge.reset(2, stripes); plain.reset(2, stripes);
+  let g2 = 0;
+  while (edge.phase !== 'stim' && g2++ < 100) { edge.step(-1, -1); plain.step(-1, -1); }
+  for (let i = 0; i < 20; i++) { edge.step(-1, -1); plain.step(-1, -1); }
+  const variance = (L) => { const m = L.reduce((a, b) => a + b, 0) / L.length; return L.reduce((a, b) => a + (b - m) ** 2, 0) / L.length; };
+  assert.ok(variance(edge.retinas[0]) > variance(plain.retinas[0]), 'inhibition should increase local contrast on a striped image');
 });
 
 ok('each core neuron has its own evolvable leak (not one shared constant)', () => {

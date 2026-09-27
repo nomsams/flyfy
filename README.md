@@ -83,6 +83,17 @@ The LC types are an abstraction of the real cell types, not the connectome.
 - Sparse wiring; a small custom world instead of a physics engine.
 - The screen is only drawn while the tab is visible and the fly is set to play.
 
+The wiring is sparse from the moment the brain is built, not pruned down to sparse afterwards:
+each of the 128 core neurons only ever has 10 inputs (out of 106 possible) and 12 recurrent
+connections (out of 128 possible) -- 2,816 actual connection weights where a fully dense core
+would need 29,952. That is already about 9% density, sparser than even aggressively pruning a
+dense network (say, to 20%) would land. What is *not* evolved is which 10/12 sources each neuron
+gets wired to -- that pattern is drawn once from a fixed seed and stays fixed; only the weights on
+those fixed wires are evolved. Letting evolution also rewire *which* connections exist (in the
+spirit of NEAT) is a reasonable next step, but a fair test of it needs several from-scratch
+evolution runs per topology to see past the noise between random seeds, which did not fit this
+round -- flagged here rather than shipped on a guess.
+
 ## "The loop trick": jittered-look ensembling
 
 The idea: instead of classifying a photo from one look, shift it slightly, downsample it,
@@ -133,6 +144,30 @@ that turns out to help. Measured on stripes it landed at about the same place as
 constant (~91-93% either way) -- a wash on this task, not a clear win -- but it costs 128 extra
 parameters (about 4% more) and next to nothing to run, so it stays: harmless, and available for
 whatever task might actually need it.
+
+## The eye's fixed optics
+
+Two more fixed (untrained), optional preprocessing steps, both live-editable, both applied
+before any neuron -- fixed or trained -- sees anything:
+
+- **Lateral inhibition**: every receptor minus its immediate neighbours' average, amplified --
+  what real photoreceptors do to each other before the signal goes anywhere else. `LC11`/`LC_ON`
+  already do a version of this (see the table above), but only as an average over a whole tile
+  of several receptors; this happens one receptor at a time, at the native retina resolution.
+  Measured: a strong, clean win on both procedural tasks (faint stripes 70% -> 92% held-out at
+  strength 2, plain stripes 95% -> 99%), a real trade-off elsewhere -- it is a high-pass filter,
+  so it can suppress smooth, low-frequency signal in favour of sharpening any edge, including
+  ones in background clutter that carry no label information (on a synthetic task built to have
+  exactly that shape, it cost a few points). Off by default; worth trying on faces.
+- **Foveation**: receptors packed denser at the centre of gaze and sparser toward the edges (a
+  tangent warp), like a real predatory insect, rather than spread evenly -- same total receptor
+  count either way. Only helps when the informative content is actually centred: on full-field
+  textures with no centre bias (this app's stripe tasks) it does nothing useful and can hurt,
+  but on a synthetic task built to have a small, resolution-limited target sitting in the middle
+  with clutter around it (closer to how a centre-cropped face photo is framed), it took a probe
+  from 72% to 96-100% held-out as the effect was turned up. Off by default; likely worth trying
+  on faces given how they are cropped, but not measured on real photos (Node here can't decode
+  JPEGs, so this was tested on a synthetic stand-in -- see `Probe the eye` to check it yourself).
 
 ## Eyes
 

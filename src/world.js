@@ -29,11 +29,15 @@ export class TrialWorld {
     this.C = e.cols;
     this.retinas = [];
     for (let i = 0; i < this.nEyes; i++) this.retinas.push(new Float32Array(this.R * this.C));
-    // Angular position (degrees) of every receptor column/row.
+    // Angular position (degrees) of every receptor column/row. Uniform spacing by default; with
+    // eye.fovea > 0, a tangent warp packs receptors densest at the centre of gaze (t=0) and
+    // sparsest at the field's edges (t=+-1), same receptor count either way.
+    const k = e.fovea || 0;
+    const warp = (t) => (k ? Math.tan(t * k) / Math.tan(k) : t);
     this.az = new Float32Array(this.C);
     this.el = new Float32Array(this.R);
-    for (let c = 0; c < this.C; c++) this.az[c] = (-0.5 + (c + 0.5) / this.C) * e.fovAzDeg;
-    for (let r = 0; r < this.R; r++) this.el[r] = (0.5 - (r + 0.5) / this.R) * e.fovElDeg;
+    for (let c = 0; c < this.C; c++) this.az[c] = 0.5 * warp(-1 + (2 * (c + 0.5)) / this.C) * e.fovAzDeg;
+    for (let r = 0; r < this.R; r++) this.el[r] = -0.5 * warp(-1 + (2 * (r + 0.5)) / this.R) * e.fovElDeg;
     this.touch = new Float32Array(2);
     this.pain = new Float32Array(2);   // nociceptors, one per foot
     this.resp = [0, 0];                // answers given with each foot
@@ -214,6 +218,25 @@ export class TrialWorld {
           L[r * C + c] = inRow && dx >= -hw && dx <= hw
             ? sample(this.image, (dx + hw) / (2 * hw), 1 - (dy + he) / (2 * he))
             : bg;
+        }
+      }
+      // Lateral inhibition (see eye.lateralInhib): each receptor minus its immediate neighbours'
+      // average, amplified. A fixed, untrained edge/contrast enhancement at native receptor
+      // resolution -- LC11/LC_ON do this too, but only over whole tiles of several receptors;
+      // this happens one receptor at a time, before anything else sees the image.
+      if (e.lateralInhib) {
+        const raw = Float32Array.from(L);
+        for (let r = 0; r < R; r++) {
+          for (let c = 0; c < C; c++) {
+            const i = r * C + c;
+            let n = 0, sum = 0;
+            if (r > 0) { sum += raw[i - C]; n++; }
+            if (r < R - 1) { sum += raw[i + C]; n++; }
+            if (c > 0) { sum += raw[i - 1]; n++; }
+            if (c < C - 1) { sum += raw[i + 1]; n++; }
+            const avg = n ? sum / n : raw[i];
+            L[i] = Math.max(0, Math.min(1, raw[i] + e.lateralInhib * (raw[i] - avg)));
+          }
         }
       }
     }

@@ -16,6 +16,17 @@ export const DEFAULTS = {
     background: 0.08,
     lcLoom: [2, 3],      // LPLC2 / LC4 cells (rows, cols) tiling the retina
     lcStatic: [5, 6],    // LC11 / LC_ON / LUM cells; finer = more image detail, more neurons
+    // Foveation: receptors are packed denser near the centre of gaze and sparser toward the
+    // edges (a tangent warp), like a real predatory insect's fovea, instead of being spread
+    // evenly across the field. Same receptor count either way -- just spent where the screen
+    // actually is (it sits centred in the field by default). 0 = uniform spacing (off); up to
+    // ~1.4 = strongly foveated. See TrialWorld's az/el construction.
+    fovea: 0,
+    // Lateral inhibition: each receptor's signal minus its immediate neighbours' average,
+    // amplified by this factor -- literally what real photoreceptors do to each other before the
+    // signal goes anywhere else, sharpening edges and flattening large uniform patches for free,
+    // before any neuron (fixed or trained) does a single calculation. 0 = off.
+    lateralInhib: 0,
     // Fixational micro-jitter ("the loop trick"): every frame, the image is nudged by a random
     // sub-receptor amount before sampling, as a fraction of receptor spacing (0.5 = up to half a
     // receptor). A still image is on screen for up to ~60 frames, so instead of looking at the
