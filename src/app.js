@@ -192,6 +192,14 @@ const REWARD_UI = [
   ['eye.activeVision', 'Smart eye', '1 = the brain moves the eye (ability switch). Moves up to the step size per moment, within the range below.', 1],
   ['eye.gazeStepDeg', '...step size (deg)', 'How far the eye can move in one moment.', 0.5],
   ['eye.gazeRangeDeg', '...range (deg)', 'How far from the centre of the screen the eye may look.', 1],
+  ['eye.acceptance', 'Lens blur', 'How wide a cone of light each sensor averages, in sensor gaps (real flies: about 1). Makes pictures smooth instead of full of false moire patterns. 0 = pinhole (reads one exact point).', 0.1],
+  ['eye.activeZoom', 'Step closer or back', '1 = a third eye-motor output moves toward or away from the picture (ability switch).', 1],
+  ['eye.zoomStep', '...speed', 'How much the picture can grow or shrink per moment (0.06 = 6%).', 0.01],
+  ['eye.zoomMin', '...closest', 'Closest allowed distance (0.6 = the picture looks 1.7x bigger).', 0.1],
+  ['eye.zoomMax', '...furthest', 'Furthest allowed distance (2.5 = the picture looks 2.5x smaller).', 0.1],
+  ['screen', 'Viewing distance'],
+  ['screen.distance', 'Distance', '1 = normal. 2 = twice as far away (half the size, with dark around it); 0.6 = closer (bigger, edges out of view).', 0.1],
+  ['screen.distanceJitter', 'Practise at many distances', 'Show each practice picture from a random distance between e^-x and e^+x times the one above (0.35: about 0.7x to 1.4x). The exam is always at the set distance. Ability switch.', 0.05],
   ['eye.fovea', 'Sharp centre', 'How strongly sensors are packed at the centre (0 = even; ability switch sets 1.1).', 0.1],
   ['eye.lateralInhib', 'Edge boost', 'How strongly each sensor dims its neighbours (0 = off; ability switch sets 1.5).', 0.5],
   ['eye.jitterFrac', 'Fixed jitter scan', 'The old, scripted alternative to Smart eye: a tiny circular scan every moment. 0 = off.', 0.1],
@@ -405,6 +413,8 @@ function setAbility(id, on) {
 }
 
 function syncAbilitySwitches() {
+  const d = S.cfg.screen.distance;
+  document.querySelectorAll('#distSeg button').forEach((b) => b.classList.toggle('on', Math.abs(+b.dataset.v - d) < 1e-6));
   const st = abilitiesOf(S.cfg);
   for (const a of ABILITIES) { const el = $(`abilityList_${a.id}`); if (el) el.checked = !!st[a.id]; }
 }
@@ -609,7 +619,7 @@ function startWatchLoop() {
 // ---------------------------------------------------------------- Inside the brain tab
 const PART_NAMES = {
   correct: 'Right answers', wrong: 'Wrong answers', respond: 'Answering at all', miss: 'Too slow',
-  premature: 'Too early', repeat: 'Same foot again and again', margin: 'Steering hint', time: 'Time cost', move: 'Moving the eye',
+  premature: 'Too early', repeat: 'Same foot again and again', margin: 'Steering hint', time: 'Time cost', move: 'Moving the eye or stepping',
 };
 function renderLedger(parts) {
   if (!parts) return;
@@ -725,6 +735,7 @@ function initUI() {
   $('btnPlay').onclick = () => setWatch(!S.watchOn);
   seg('speedSeg', (v) => { S.speed = +v; });
   seg('picsSeg', (v) => { S.watchTest = v === 'test'; S.watchStarted = false; });
+  seg('distSeg', (v) => { $(rwId('screen.distance')).value = v; S.watchStarted = false; applySettings(); });
   $('btnQuick').onclick = () => toggleTraining('life');
   $('btnEvolve').onclick = () => toggleTraining('evo');
   $('btnExam').onclick = () => guarded(async () => runExam());

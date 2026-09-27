@@ -10,6 +10,8 @@ import { ABILITIES, setupConfig, abilitiesOf } from '../src/abilities.js';
 import { runTrial } from '../src/experiment.js';
 import { mulberry32 } from '../src/rng.js';
 import { loadFacesNode } from '../tools/lib.mjs';
+import { TrialWorld } from '../src/world.js';
+import { exam } from '../src/experiment.js';
 
 let passed = 0;
 const ok = (name, fn) => { fn(); passed++; console.log('ok  -', name); };
@@ -146,6 +148,73 @@ ok('abilities round-trip through config', () => {
 ok('a quick-learn trial learns the easy task and passes its exam', () => {
   const r = runTrial({ cfg: setupConfig('brightness', {}), train: new StimulusSet('brightness'), test: new StimulusSet('brightness'), method: 'quick', seed: 1, budget: { episodes: 30 } });
   assert.ok(r.acc > 0.9, 'exam accuracy ' + r.acc);
+});
+
+// a world showing one fixed picture, long past its onset
+function showing(cfgOver, img) {
+  const w = new TrialWorld(mergeConfig(cfgOver));
+  w.reset(1, new StimulusSet('brightness'));
+  w.image = img; w.phase = 'stim'; w.phaseT = 10;
+  w._render();
+  return w;
+}
+const contrast = (L) => Math.max(...L) - Math.min(...L);
+const centre = (w) => { const out = []; for (let r = 4; r < 10; r++) for (let c = 6; c < 14; c++) out.push(w.retinas[0][r * w.C + c]); return out; };
+
+ok('lens blur: fine stripes melt into grey, a flat picture stays flat', () => {
+  const fine = Float32Array.from({ length: IMG * IMG }, (_, i) => ((i % IMG) % 2 ? 0.9 : 0.1)); // 1-pixel stripes
+  const pin = showing({ eye: { acceptance: 0 } }, fine), lens = showing({ eye: { acceptance: 1 } }, fine);
+  assert.ok(contrast(centre(lens)) < 0.1, 'through the lens, stripes finer than a receptor average out: ' + contrast(centre(lens)));
+  assert.ok(contrast(centre(pin)) > 0.5, 'a pinhole reads single points, so it sees (aliased) stripes');
+  const flatImg = new Float32Array(IMG * IMG).fill(0.6);
+  assert.ok(contrast(centre(showing({ eye: { acceptance: 1 } }, flatImg))) < 1e-3);
+});
+
+ok('viewing distance: twice as far covers about a quarter of the receptors', () => {
+  const bright = new Float32Array(IMG * IMG).fill(0.95);
+  const lit = (d) => showing({ screen: { distance: d } }, bright).retinas[0].filter((v) => v > 0.5).length;
+  const near = lit(1), far = lit(2);
+  assert.ok(far > 0 && far / near > 0.15 && far / near < 0.4, `${far} of ${near}`);
+});
+
+ok('step closer or back: moves, stops at its limits, costs points, and is felt', () => {
+  const c = mergeConfig({ eye: { activeZoom: 1 } });
+  const w = new TrialWorld(c);
+  w.reset(4, new StimulusSet('brightness'));
+  let g = 0;
+  while (w.phase !== 'stim' && g++ < 100) w.step(-1, -1);
+  const before = w.parts.move;
+  w.step(-1, -1, 0, 0, -1);
+  assert.ok(Math.abs(w.dist - Math.exp(-c.eye.zoomStep)) < 1e-9, 'one step closer: ' + w.dist);
+  assert.ok(w.parts.move < before, 'stepping costs points');
+  assert.ok(w.pos[2] < 0, 'the brain feels that it is closer than normal');
+  for (let i = 0; i < 12; i++) w.step(-1, -1, 0, 0, -1);
+  assert.ok(Math.abs(w.dist - c.eye.zoomMin) < 1e-9, 'stops at the closest allowed distance');
+  const off = new TrialWorld(mergeConfig({}));
+  off.reset(4, new StimulusSet('brightness'));
+  g = 0; while (off.phase !== 'stim' && g++ < 100) off.step(-1, -1);
+  off.step(-1, -1, 0, 0, -1);
+  assert.equal(off.dist, 1, 'no stepping when the ability is off');
+});
+
+ok('practise at many distances: varies within range in training, never in the exam', () => {
+  const c = mergeConfig({ screen: { distanceJitter: 0.35 } });
+  const w = new TrialWorld(c);
+  w.reset(7, new StimulusSet('brightness'));
+  const seen = new Set();
+  for (let i = 0; i < 400; i++) { w.step(-1, -1); if (w.phase === 'stim') seen.add(w.dist0.toFixed(3)); }
+  const ds = [...seen].map(Number);
+  assert.ok(ds.length > 5, 'different pictures come at different distances');
+  assert.ok(Math.min(...ds) >= Math.exp(-0.35) - 1e-9 && Math.max(...ds) <= Math.exp(0.35) + 1e-9);
+  // exam() must switch the variation off: check the config it builds by running a tiny exam and
+  // watching the distance every picture is shown at
+  const b = new Brain(c);
+  const theta = b.initParams(1);
+  const seenExam = new Set();
+  const orig = TrialWorld.prototype._startTrial;
+  TrialWorld.prototype._startTrial = function () { orig.call(this); seenExam.add(this.dist0); };
+  try { exam(c, new StimulusSet('brightness'), theta, null, 1, null, 2); } finally { TrialWorld.prototype._startTrial = orig; }
+  assert.deepEqual([...seenExam], [1], 'every exam picture is at the set distance');
 });
 
 console.log(`\n${passed} passed`);

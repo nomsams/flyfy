@@ -5,6 +5,7 @@
 
 import { mulberry32 } from './rng.js';
 import { IMG } from './stimuli.js';
+import { Mipmap, PAD } from './optics.js';
 
 export const EVENT = { NONE: 0, CORRECT: 1, WRONG: 2, PREMATURE: 3, MISS: 4 };
 
@@ -38,6 +39,12 @@ export class TrialWorld {
     this.el = new Float32Array(this.R);
     for (let c = 0; c < this.C; c++) this.az[c] = 0.5 * warp(-1 + (2 * (c + 0.5)) / this.C) * e.fovAzDeg;
     for (let r = 0; r < this.R; r++) this.el[r] = -0.5 * warp(-1 + (2 * (r + 0.5)) / this.R) * e.fovElDeg;
+    // Local gap to the neighbouring receptors (degrees): each receptor's lens gathers light over a
+    // cone about this wide (see eye.acceptance). Denser near the centre when foveated.
+    const gaps = (a) => Float32Array.from(a, (_, i) => Math.abs(i === 0 ? a[1] - a[0] : i === a.length - 1 ? a[i] - a[i - 1] : (a[i + 1] - a[i - 1]) / 2));
+    this.gapAz = gaps(this.az); this.gapEl = gaps(this.el);
+    this.mip = new Mipmap(); this.mipImg = null; this.mipDirty = true;
+    this.dist = cfg.screen.distance || 1; this.dist0 = this.dist; // viewing distance (1 = normal)
     this.touch = new Float32Array(2);
     this.pain = new Float32Array(2);   // nociceptors, one per foot
     this.resp = [0, 0];                // answers given with each foot
@@ -50,7 +57,7 @@ export class TrialWorld {
     this.serial = 0; // bumps whenever a new image is put on screen
     this.jitterStep = 0;
     this.gazeAz = 0; this.gazeEl = 0; // active vision: where the eye is currently panned to
-    this.pos = new Float32Array(2);   // the same, as the brain feels it (efference copy), each axis in [-1, 1]
+    this.pos = new Float32Array(3);   // where the eye points (x, y) and how far away it is, as the brain feels it, each in [-1, 1]
     this.trail = new Float32Array(2 * 48); this.trailN = 0; // recent gaze positions, for drawing
   }
 
@@ -94,7 +101,22 @@ export class TrialWorld {
     this.serial++;
     this.jitterStep = 0; // each image gets the jitter scan from the same starting phase
     this.gazeAz = 0; this.gazeEl = 0; // each image starts with the eye looking at the centre
-    this.pos[0] = this.pos[1] = 0; this.trailN = 0;
+    this.trailN = 0;
+    this.mipDirty = true;
+    // Viewing distance for this picture: the set distance, or (practising at many distances) a
+    // random distance around it, so the fly learns what things look like at different sizes.
+    const sc = this.cfg.screen, j = sc.distanceJitter || 0;
+    this.dist0 = (sc.distance || 1) * (j ? Math.exp((this.rng() * 2 - 1) * j) : 1);
+    this.dist = this.dist0;
+    this._feel();
+  }
+
+  // Efference copy: where the eye points and how far away it is, each scaled to [-1, 1].
+  _feel() {
+    const e = this.cfg.eye;
+    this.pos[0] = e.activeVision ? this.gazeAz / e.gazeRangeDeg : 0;
+    this.pos[1] = e.activeVision ? this.gazeEl / e.gazeRangeDeg : 0;
+    this.pos[2] = e.activeZoom ? Math.max(-1, Math.min(1, Math.log(this.dist) / Math.log(e.zoomMax))) : 0;
   }
 
   _endTrial() {
@@ -103,8 +125,8 @@ export class TrialWorld {
   }
 
   // out0/out1: motor outputs of the left/right foot in [-1, 1]. gazeDx/gazeDy: active vision's
-  // motor command for this step (also [-1, 1], 0 if not driving the eye).
-  step(out0, out1, gazeDx = 0, gazeDy = 0) {
+  // motor command for this step; zoom: step closer (-) or back (+). All [-1, 1], 0 if unused.
+  step(out0, out1, gazeDx = 0, gazeDy = 0, zoom = 0) {
     const t = this.cfg.timing, f = this.cfg.feet, rw = this.cfg.reward, pn = this.cfg.pain, e = this.cfg.eye, P = this.parts;
     const decay = Math.exp(-t.dt / pn.tauSec);
     this.pain[0] *= decay; this.pain[1] *= decay;
@@ -122,12 +144,19 @@ export class TrialWorld {
       this.gazeEl = Math.max(-e.gazeRangeDeg, Math.min(e.gazeRangeDeg, this.gazeEl + gazeDy * e.gazeStepDeg));
       const m = rw.movePerSec * t.dt * (Math.abs(gazeDx) + Math.abs(gazeDy));
       reward += m; P.move += m;
-      this.pos[0] = this.gazeAz / e.gazeRangeDeg; this.pos[1] = this.gazeEl / e.gazeRangeDeg;
       if (this.phase === 'stim') {
         const cap = this.trail.length / 2, k = this.trailN % cap;
         this.trail[2 * k] = this.gazeAz; this.trail[2 * k + 1] = this.gazeEl; this.trailN++;
       }
-    } else { this.pos[0] = this.pos[1] = 0; }
+    }
+    // Stepping closer or back: the picture grows or shrinks by up to zoomStep per moment (in log
+    // terms, so closer and back feel symmetric), within [zoomMin, zoomMax]; moving costs like gaze.
+    if (e.activeZoom && this.phase === 'stim') {
+      this.dist = Math.max(e.zoomMin, Math.min(e.zoomMax, this.dist * Math.exp(zoom * e.zoomStep)));
+      const m = rw.movePerSec * t.dt * Math.abs(zoom);
+      reward += m; P.move += m;
+    }
+    this._feel();
 
     // Dense teaching signal: while a cue is up, reward pushing the correct
     // foot above the wrong one. Far lower-variance than the +-10 outcome,
@@ -230,15 +259,32 @@ export class TrialWorld {
       const half = e.layout === 'split' ? (e.fovAzDeg - e.splitOverlapDeg) / 2 : e.binocularShiftDeg;
       const shift = this.nEyes === 2 ? (eye === 0 ? 1 : -1) * half : 0;
       const cAz = sc.centerAzDeg + shift + jAz + this.gazeAz + extraAz, cEl = sc.centerElDeg + jEl + this.gazeEl + extraEl;
-      const hw = sc.azDeg * 0.5 * s, he = sc.elDeg * 0.5 * s;
-      for (let r = 0; r < R; r++) {
-        const dy = this.el[r] - cEl;
-        const inRow = dy >= -he && dy <= he;
-        for (let c = 0; c < C; c++) {
-          const dx = this.az[c] - cAz;
-          L[r * C + c] = inRow && dx >= -hw && dx <= hw
-            ? sample(this.image, (dx + hw) / (2 * hw), 1 - (dy + he) / (2 * he))
-            : bg;
+      // apparent size of the picture (degrees): shrinks with distance, grows during the onset loom
+      const aw = (sc.azDeg * s) / this.dist, ah = (sc.elDeg * s) / this.dist;
+      const hw = aw / 2, he = ah / 2;
+      if (e.acceptance > 0) {
+        // Real optics: each receptor averages the picture over its own acceptance cone.
+        if (this.image !== this.mipImg || this.mipDirty || this.mip.bg !== bg) { this.mip.build(this.image, bg); this.mipImg = this.image; this.mipDirty = false; }
+        const pxPerDeg = Math.sqrt(((IMG - 1) / aw) * ((IMG - 1) / ah));
+        const k = (e.acceptance / 2.355) * pxPerDeg; // cone width (FWHM) -> Gaussian sigma, in pixels
+        for (let r = 0; r < R; r++) {
+          const y0 = PAD + (0.5 - (this.el[r] - cEl) / ah) * (IMG - 1);
+          for (let c = 0; c < C; c++) {
+            const x0 = PAD + (0.5 + (this.az[c] - cAz) / aw) * (IMG - 1);
+            L[r * C + c] = this.mip.sample(x0, y0, k * Math.sqrt(this.gapAz[c] * this.gapEl[r]));
+          }
+        }
+      } else {
+        // Pinhole: each receptor reads one exact point (aliases on fine detail).
+        for (let r = 0; r < R; r++) {
+          const dy = this.el[r] - cEl;
+          const inRow = dy >= -he && dy <= he;
+          for (let c = 0; c < C; c++) {
+            const dx = this.az[c] - cAz;
+            L[r * C + c] = inRow && dx >= -hw && dx <= hw
+              ? sample(this.image, (dx + hw) / (2 * hw), 1 - (dy + he) / (2 * he))
+              : bg;
+          }
         }
       }
       // Lateral inhibition (see eye.lateralInhib): each receptor minus its immediate neighbours'

@@ -16,7 +16,7 @@
 import { mulberry32, gauss } from './rng.js';
 
 export const LC_TYPES = [
-  { name: 'LPLC2', group: 'loom', gain: 800 },
+  { name: 'LPLC2', group: 'loom', gain: 800 }, // x(1 + 2 * lens blur): calibrated so onset responses match with or without the lens
   { name: 'LC4', group: 'loom', gain: 1500 },
   { name: 'LC11', group: 'static', gain: 5 },
   { name: 'LC_ON', group: 'static', gain: 5 },
@@ -55,6 +55,8 @@ export class LCLayer {
     this.n = start;
     this.out = new Float32Array(this.n);
     this.q = new Float32Array(4);
+    // a blurred (lens) image moves less sharply, so the looming detector needs more gain to match
+    this.loomBoost = 1 + 2 * (eye.acceptance || 0);
   }
 
   reset() {
@@ -134,7 +136,7 @@ export class LCLayer {
           const mS = nE > nC ? (mE * nE - mC * nC) / (nE - nC) : mC;
           x = t.name === 'LC11' ? Math.max(mS - mC, 0) : Math.max(mC - mS, 0);
         }
-        out[t.start + k] = sat(t.gain * x);
+        out[t.start + k] = sat(t.gain * (t.name === 'LPLC2' ? this.loomBoost : 1) * x);
       }
     }
   }
@@ -142,7 +144,7 @@ export class LCLayer {
 
 // Bumped whenever what the evolved parameters *mean* changes, so an old saved brain is refused
 // instead of being loaded into slots that now do something else.
-export const BRAIN_VERSION = 5;
+export const BRAIN_VERSION = 6;
 
 const sigmoid = (x) => 1 / (1 + Math.exp(-x));
 const clamp = (x, lo, hi) => (x < lo ? lo : x > hi ? hi : x);
@@ -160,7 +162,7 @@ export class Brain {
     this.kIn = Math.min(b.kIn, this.nIn);
     this.kRec = Math.min(b.kRec, this.N);
     this.M = 2;   // feet
-    this.Mg = 2;  // gaze motor: dx, dy
+    this.Mg = 3;  // eye motor: pan dx, pan dy, step closer/back
     this.alphaCentre = b.alpha; // where each neuron's evolved *baseline* leak starts out
 
     // Sparse random wiring (distinct sources per neuron), drawn from a fixed seed. Evolution can
@@ -232,9 +234,9 @@ export class Brain {
       // Neuromodulation: one "dopamine" readout of the whole core, and each neuron's sensitivity
       // to it. leak = baseline + sensitivity * dopamine, every step.
       wmod: this.N, bmod: 1, sens: this.N,
-      // Efference copy: every core neuron is told where the eye is currently pointing (x, y), so
+      // Efference copy: every core neuron is told where the eye points (x, y) and how far away it is, so
       // it can relate what it sees to where it is looking -- real flies have this too.
-      wpos: this.N * 2,
+      wpos: this.N * 3,
       // Evolvable learning rule for the fast pathway: [log speed, log reward weight, log pain
       // weight, forgetting] plus a log learning speed per static feature. Only used when
       // learn.evolveRule is on; always present so switching it on doesn't reshape the brain.
@@ -256,7 +258,7 @@ export class Brain {
     this.setParams(new Float32Array(this.paramCount));
   }
 
-  // + M feet, + Mg gaze motor, +1 modulator, +4 touch/pain inputs, + Kenyon cells if any
+  // + M feet, + Mg eye motor, +1 modulator, +4 touch/pain inputs, + Kenyon cells if any
   get neuronCount() { return this.nLC + this.N + this.M + this.Mg + 1 + 4 + this.nKC; }
 
   getWiring() { return { inIdx: Array.from(this.inIdx), recIdx: Array.from(this.recIdx) }; }
@@ -415,7 +417,7 @@ export class Brain {
     x[o] = touch[0]; x[o + 1] = touch[1];
     const feel = this.cfg.pain.feel;
     x[o + 2] = pain ? pain[0] * feel : 0; x[o + 3] = pain ? pain[1] * feel : 0;
-    const px = pos ? pos[0] : 0, py = pos ? pos[1] : 0;
+    const px = pos ? pos[0] : 0, py = pos ? pos[1] : 0, pz = pos ? pos[2] || 0 : 0;
 
     // centre the static LC features on the average image the fly has answered on (adaptation), so
     // both classes sit either side of zero; the mean is updated in learn(), at answer time
@@ -439,7 +441,7 @@ export class Brain {
     this.dopamine = D;
 
     for (let i = 0; i < N; i++) {
-      let s = b[i] + Wpos[2 * i] * px + Wpos[2 * i + 1] * py;
+      let s = b[i] + Wpos[3 * i] * px + Wpos[3 * i + 1] * py + Wpos[3 * i + 2] * pz;
       const ib = i * kIn, rb = i * kRec;
       for (let k = 0; k < kIn; k++) s += Win[ib + k] * x[inIdx[ib + k]];
       for (let k = 0; k < kRec; k++) s += Wrec[rb + k] * h[recIdx[rb + k]];

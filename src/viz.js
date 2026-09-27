@@ -34,18 +34,32 @@ export function drawScene(ctx, W, H, world, imgCanvas, flash, answers, T) {
   ctx.fillStyle = T.bg;
   ctx.fillRect(0, 0, W, H);
   ctx.font = FONT;
-  const cx = W / 2, sy = 100, fw = 230, fh = 150;
-  const sc = world.cfg.screen;
-
-  ctx.strokeStyle = T.line; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.roundRect(cx - fw / 2 - 6, sy - fh / 2 - 6, fw + 12, fh + 12, 8); ctx.stroke();
+  // Drawn in degrees of the fly's view (k pixels per degree): the picture at the size it really
+  // appears (smaller when further away), and the fly's field of view as a dashed box that moves with
+  // its gaze -- so you can see at a glance whether the picture fits in view or overflows it.
+  const cx = W / 2, sy = 104, k = 2.1;
+  const sc = world.cfg.screen, e = world.cfg.eye;
   const s = world.scale();
+  ctx.save();
+  ctx.beginPath(); ctx.rect(8, 6, W - 16, 196); ctx.clip();
+  const gx = cx - world.gazeAz * k, gy = sy + world.gazeEl * k; // where on the picture the eye points
   if (s > 0 && imgCanvas) {
+    const iw = (sc.azDeg * s / world.dist) * k, ih = (sc.elDeg * s / world.dist) * k;
     ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(imgCanvas, cx - (fw * s) / 2, sy - (fh * s) / 2, fw * s, fh * s);
-    if (world.cfg.eye.activeVision) {
+    ctx.drawImage(imgCanvas, cx - iw / 2, sy - ih / 2, iw, ih);
+  } else {
+    ctx.fillStyle = T.mut; ctx.textAlign = 'center';
+    ctx.fillText('(screen blank between pictures)', cx, sy + 4);
+  }
+  ctx.setLineDash([5, 4]); ctx.strokeStyle = T.mut; ctx.lineWidth = 1.2;
+  ctx.strokeRect(gx - (e.fovAzDeg * k) / 2, gy - (e.fovElDeg * k) / 2, e.fovAzDeg * k, e.fovElDeg * k);
+  ctx.setLineDash([]);
+  ctx.fillStyle = T.mut; ctx.textAlign = 'left';
+  ctx.fillText("fly's view", gx - (e.fovAzDeg * k) / 2 + 4, gy - (e.fovElDeg * k) / 2 + 13);
+  if (s > 0 && imgCanvas) {
+    if (e.activeVision) {
       // where the eye has been looking at this picture (fading trail), and where it looks now
-      const toX = (az) => cx - (az / sc.azDeg) * fw * s, toY = (el) => sy - (el / sc.elDeg) * fh * s;
+      const toX = (az) => cx - az * k, toY = (el) => sy + el * k;
       const cap = world.trail.length / 2, n = Math.min(world.trailN, cap);
       for (let j = 1; j < n; j++) {
         const a = (world.trailN - n + j - 1) % cap, b = (world.trailN - n + j) % cap;
@@ -53,15 +67,18 @@ export function drawScene(ctx, W, H, world, imgCanvas, flash, answers, T) {
         ctx.beginPath(); ctx.moveTo(toX(world.trail[2 * a]), toY(world.trail[2 * a + 1])); ctx.lineTo(toX(world.trail[2 * b]), toY(world.trail[2 * b + 1])); ctx.stroke();
       }
       ctx.globalAlpha = 1;
-      const gx = toX(world.gazeAz), gy = toY(world.gazeEl);
       ctx.strokeStyle = T.green; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(gx, gy, 8, 0, Math.PI * 2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(gx - 12, gy); ctx.lineTo(gx - 5, gy); ctx.moveTo(gx + 5, gy); ctx.lineTo(gx + 12, gy);
       ctx.moveTo(gx, gy - 12); ctx.lineTo(gx, gy - 5); ctx.moveTo(gx, gy + 5); ctx.lineTo(gx, gy + 12); ctx.stroke();
     }
-  } else {
-    ctx.fillStyle = T.mut; ctx.textAlign = 'center';
-    ctx.fillText('(screen blank between pictures)', cx, sy + 4);
+  }
+  ctx.restore();
+  // how far away the picture is (only shown when it isn't the normal distance)
+  if (Math.abs(world.dist - 1) > 0.02 || e.activeZoom) {
+    ctx.fillStyle = T.fg; ctx.textAlign = 'right'; ctx.font = '600 12.5px system-ui, sans-serif';
+    ctx.fillText(`distance ${world.dist.toFixed(2)}x${world.dist < 0.98 ? ' (closer)' : world.dist > 1.02 ? ' (further)' : ''}`, W - 14, 22);
+    ctx.font = FONT;
   }
 
   // head + eye(s)
@@ -183,6 +200,12 @@ export function drawNeurons(ctx, W, H, brain, T) {
   ctx.strokeStyle = T.green; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.moveTo(gcx, gcy); ctx.lineTo(gcx + brain.gaze[0] * gr, gcy - brain.gaze[1] * gr); ctx.stroke();
   ctx.lineWidth = 1;
+  // closer (down) / further (up)
+  const zx = gcx + 40, zy = gcy - gr, zh = 2 * gr, z = brain.gaze[2] || 0;
+  ctx.fillStyle = T.panel; ctx.fillRect(zx, zy, 12, zh); ctx.strokeStyle = T.line; ctx.strokeRect(zx + 0.5, zy + 0.5, 11, zh - 1);
+  ctx.fillStyle = T.green; const zp = Math.abs(z) * gr;
+  ctx.fillRect(zx, z >= 0 ? gcy - zp : gcy, 12, zp);
+  ctx.fillStyle = T.mut; ctx.fillText('back', zx + 16, zy + 8); ctx.fillText('closer', zx + 16, zy + zh);
 }
 
 // How often the fly has been right, 0-100%, with a dashed "guessing" line at 50%.

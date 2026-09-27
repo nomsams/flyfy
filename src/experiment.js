@@ -54,7 +54,7 @@ export function runTrial({ cfg, train, test, method, seed, budget = {}, onProgre
 // The exam: never-seen pictures. A quick-learned fly is frozen (learning off, what it learned
 // kept); an evolved fly behaves as evolved (fresh life each episode, learning on inside it).
 export function exam(cfg, test, theta, plastic, seed, wiring, episodes = EXAM_EPISODES) {
-  const c = mergeConfig({ ...cfg, wiring: wiring || cfg.wiring, learn: { ...cfg.learn, eta: plastic ? 0 : cfg.learn.eta } });
+  const c = mergeConfig({ ...cfg, wiring: wiring || cfg.wiring, learn: { ...cfg.learn, eta: plastic ? 0 : cfg.learn.eta }, screen: { ...cfg.screen, distanceJitter: 0 } });
   const r = new Runner(c, test);
   r.brain.setParams(theta);
   let cues = 0, correct = 0, trials = 0;

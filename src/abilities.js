@@ -70,6 +70,18 @@ export const ABILITIES = [
     on: { learn: { evolveRule: 1 } }, off: { learn: { evolveRule: 0 } }, needsEvolve: true,
   },
   {
+    id: 'zoom', name: 'Step closer or back', icon: 'zoom',
+    short: 'Walks toward the picture for detail, or backs off to see all of it.',
+    long: 'A third eye-motor output changes how far away the picture is: closer makes it bigger (more detail, but it may not fit in view), further makes it smaller. Flies really do this - approaching things is exactly what their looming cells detect. Each move costs a few points, and the fly feels how far away it is.',
+    on: { eye: { activeZoom: 1 } }, off: { eye: { activeZoom: 0 } }, needsEvolve: true,
+  },
+  {
+    id: 'sizeVary', name: 'Practise at many distances', icon: 'sizes',
+    short: 'Sees practice pictures from nearer and further, to learn any size.',
+    long: 'During training, each picture is shown from a random distance between about 0.7x and 1.4x the usual one, so the fly learns what things look like at different sizes instead of memorising one. The final exam is always at the usual distance.',
+    on: { screen: { distanceJitter: 0.35 } }, off: { screen: { distanceJitter: 0 } },
+  },
+  {
     id: 'rewire', name: 'Rewiring', icon: 'wires',
     short: 'Unused connections get moved somewhere more useful.',
     long: 'Every 10 generations of evolution, the weakest 5% of the brain’s connections are cut and regrown to new random places. Same number of wires, better placed.',

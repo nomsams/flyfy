@@ -182,7 +182,7 @@ ok('fovea packs receptors densest at the centre and reduces to uniform spacing a
 });
 
 ok('lateral inhibition sharpens contrast and leaves a truly flat patch untouched', () => {
-  const flat = new TrialWorld(mergeConfig({ eye: { lateralInhib: 2 } }));
+  const flat = new TrialWorld(mergeConfig({ eye: { lateralInhib: 2, acceptance: 0 } })); // pinhole: isolate inhibition from lens blur
   flat.reset(1, new StimulusSet('brightness'));
   flat.image = new Float32Array(IMG * IMG).fill(0.6); // perfectly flat, no per-pixel noise
   flat.phase = 'stim'; flat.phaseT = 10;

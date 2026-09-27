@@ -14,6 +14,12 @@ export const DEFAULTS = {
     binocularShiftDeg: 8, // 'overlap': the screen sits this far off-axis in each eye
     splitOverlapDeg: 40,  // 'split': how far the two visual fields overlap in the middle
     background: 0.08,
+    // Lens blur: each receptor averages light over a cone this many receptor-gaps wide (full width
+    // at half maximum), like a real ommatidium (flies: about 1). Smooths away false moire patterns,
+    // especially from far away -- but measured, it made learning *worse* (faint stripes -5.6, find
+    // the spot -10.6 points at 1.0; still worse at 0.5): a trainable brain can use the pinhole's
+    // sharp, even aliased, detail. So the default is the pinhole (0); the lens is there for realism.
+    acceptance: 0,
     lcLoom: [2, 3],      // LPLC2 / LC4 cells (rows, cols) tiling the retina
     lcStatic: [5, 6],    // LC11 / LC_ON / LUM cells; finer = more image detail, more neurons
     // Foveation: receptors are packed denser near the centre of gaze and sparser toward the
@@ -42,9 +48,16 @@ export const DEFAULTS = {
     activeVision: 1,   // 1 = on, 0 = off (a plain number so it works like every other live setting)
     gazeStepDeg: 2.0,  // degrees the gaze can move in one frame at full motor output (tanh = +-1)
     gazeRangeDeg: 20,  // how far the gaze may wander from the centre of the screen before clamping
+    // Stepping closer or back: a third motor output changes the viewing distance, within this range.
+    activeZoom: 0,
+    zoomStep: 0.06,    // the picture's size can change by up to ~6% per moment
+    zoomMin: 0.6, zoomMax: 2.5,
   },
   // Where the screen sits in the visual field, and how big it looks.
-  screen: { azDeg: 70, elDeg: 50, centerAzDeg: 0, centerElDeg: 0 },
+  // distance: how far away the screen is (1 = normal, 2 = twice as far, so half the size).
+  // distanceJitter: practise at many distances -- each picture is shown between e^-j and e^+j times
+  // the set distance (the final exam always uses the set distance).
+  screen: { azDeg: 70, elDeg: 50, centerAzDeg: 0, centerElDeg: 0, distance: 1, distanceJitter: 0 },
   timing: {
     dt: 0.05,            // seconds per control step (20 Hz)
     episodeSec: 12,
