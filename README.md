@@ -47,7 +47,10 @@ also lets you use a bigger local photo folder (Settings -> Faces).
 | **Sharp centre** | same sensors, packed tight at the centre of gaze (a fovea) | no |
 | **Edge boost** | each sensor dims its neighbours, so edges pop (lateral inhibition) | no |
 | **Mood chemical** | one dopamine-like signal sets how long each brain cell holds a thought, live | yes |
-| **Memory centre** | 400 sparse "Kenyon cells" between eye and learning synapses (the mushroom body) | no |
+| **Memory centre** | 400 sparse "Kenyon cells" reading the raw light sensors, feeding the learning synapses (the mushroom body) | no |
+| **Step closer or back** | a third eye-motor output walks toward or away from the picture, felt by the brain | yes |
+| **Practise at many distances** | each practice picture shown from a random distance (the exam is at the set distance) | no |
+| **Learn from surprises** | learns in proportion to how unexpected an outcome was (dopamine as reward prediction error) | no |
 | **Self-tuning learning** | evolution tunes the learning rule itself - speeds, reward/pain weights, forgetting | yes |
 | **Rewiring** | every 10 generations the weakest 5% of connections are regrown elsewhere | yes |
 
@@ -63,8 +66,8 @@ Evolve = 30 generations.
 
 | ability | challenge | training | without | with | verdict |
 |---|---|---|---|---|---|
-| Memory centre | faint stripes | Quick | 62.6% | 91.6% | **better by 28.9 pts** |
-| Memory centre | faces | Quick | 54.2% | 55.3% | no clear difference (+1.1 ± 6.1) |
+| Memory centre | faint stripes | Quick | 62.6% | 92.7% | **better by 30.1 pts** |
+| Memory centre | faces | Quick | 54.2% | 59.5% | **better by 5.3 pts** |
 | Edge boost | faint stripes | Quick | 62.6% | 77.1% | **better by 14.5 pts** |
 | Edge boost | faces | Quick | 54.2% | 55.5% | no clear difference (+1.3 ± 2.5) |
 | Sharp centre | faces | Quick | 54.2% | 53.9% | no clear difference (-0.3 ± 3.7) |
@@ -75,12 +78,31 @@ Evolve = 30 generations.
 | Mood chemical | stripes | Evolve | 75.5% | 76.9% | no clear difference (+1.3 ± 6.0) |
 | Self-tuning learning | faint stripes | Evolve | 55.4% | 54.1% | no clear difference (-1.3 ± 7.1) |
 | Rewiring | stripes | Evolve | 75.5% | 75.1% | no clear difference (-0.4 ± 1.9) |
+| Practise at many distances | faces | Quick | 54.2% | 53.7% | no clear difference (-0.5 ± 3.0) |
+| Practise at many distances | stripes | Quick | 82.9% | 84.7% | no clear difference (+1.8 ± 7.9) |
+| Step closer or back | find the spot | Evolve (60 gen.) | 56.1% | 56.9% | no clear difference (+0.8 ± 8.6) |
+| Learn from surprises (+ memory centre) | faint stripes | Quick | 92.7% | 95.3% | **better by 2.5 pts** |
+| Learn from surprises (+ memory centre) | stripes | Quick | 99.0% | 100.0% | **better by 1.0 pts** |
+| Learn from surprises (+ memory centre) | faces | Quick | 59.5% | 55.1% | no clear difference (-4.4 ± 5.5) |
 
 **In short:**
-- **Clear wins, free to try:** the memory centre (+29 points) and edge boost (+15) on faint
-  stripes, and the sharp centre (+12) on find the spot. All three work with Quick learn.
-- **Faces:** nothing clearly helps yet with Quick learn - every ability lands within about a point
-  of the 54% baseline. The fixed eye loses most of the detail (see "How much can this eye see?").
+- **Clear wins, free to try:** the memory centre (+30 points on faint stripes, +5 on faces) and
+  edge boost (+15 on faint stripes), and the sharp centre (+12) on find the spot. All three work
+  with Quick learn.
+- **Faces:** the memory centre is the one thing that clearly helps (54% -> 60%), once its Kenyon
+  cells read the raw light sensors directly: reading the coarse eye-cell tiles instead, it made no
+  clear difference (55%). More Kenyon cells (1,200) or more inputs per cell (12) didn't help
+  further. Every other ability lands within about a point of the 54% baseline.
+- **Learn from surprises:** real dopamine signals how much better or worse things went than
+  expected. Learning in proportion to that surprise helps the clean tasks (faint stripes +2.5,
+  stripes to 100%), but trailed on faces by 3-4 points in every variant tried (faster learning,
+  4x longer training). The likely reason: some face labels are noisy (group photos), and a
+  surprise-driven rule learns hardest from confident "mistakes" - exactly the mislabelled
+  pictures. So it is off by default, and worth switching on for clean challenges.
+- **Step closer or back:** evolution did not discover it in 60 generations (+0.8, not clear), even
+  though simply putting the picture closer is worth +17.5 on find the spot. A new fly's legs start
+  still, and the small random changes evolution tries barely move it within one picture, so the
+  benefit is too faint to select for.
 - **Smart eye:** at first it *hurt* Quick learn by 12 points - an untrained eye wandering at random
   made learning noisier - so a new fly's eye now holds still until evolution teaches it to move,
   which removed the harm entirely. On find the spot, 60 generations of evolution with smart eye

@@ -184,6 +184,7 @@ const REWARD_UI = [
   ['learn.eta', 'Learning speed', 'How much each answer changes the synapses behind the feet. 0 = no learning by pain.', 0.05],
   ['learn.anneal', 'Settle down after', 'Learning slows to half after this many answers - steadier on noisy tasks. 0 = never.', 50],
   ['learn.reward', 'Reward signal', 'Strength of the "that was right" signal (pain strength is the "wrong" one).', 0.1],
+  ['learn.surprise', 'Learn from surprises', '1 = learn in proportion to how unexpected each outcome was (dopamine as prediction error), not the same amount every time (ability switch).', 1],
   ['learn.evolveRule', 'Self-tuning learning', '1 = evolution tunes the learning rule itself (speeds, reward and pain weights, forgetting). Ability switch.', 1],
   ['timing', 'Timing'],
   ['timing.reactionSec', 'Reaction time (s)', 'Presses earlier than this after a picture appears count as too early: look first.', 0.05],

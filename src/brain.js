@@ -254,6 +254,7 @@ export class Brain {
     this.hn = new Float32Array(this.N);
     this.out = new Float32Array(this.M);
     this.z = new Float32Array(this.M);
+    this.zp = new Float32Array(this.M);      // the learning synapses' share of z (their own prediction)
     this.gaze = new Float32Array(this.Mg);   // this step's motor command, tanh-bounded to [-1, 1]
     this.dopamine = 0.5;                     // this step's global modulator level
     this.fmeanInit = false;
@@ -388,7 +389,16 @@ export class Brain {
   learn(foot, correct) {
     if (!this.cfg.learn.eta) return;
     const R = this.ruleNow();
-    this._plasticUpdate(foot, correct ? R.reward : -R.pain, true);
+    let sig = correct ? R.reward : -R.pain;
+    if (this.cfg.learn.surprise) {
+      // Dopamine as reward prediction error: learn in proportion to how *unexpected* the outcome was.
+      // The prediction is what the learning synapses themselves expected (how far they favoured this
+      // foot) -- not the whole decision, which also carries the core's own, possibly untrained, signal.
+      // A confident right answer teaches almost nothing, a confident mistake a lot.
+      const zp = this.zp, conf = 1 / (1 + Math.exp(-(zp[foot] - zp[1 - foot])));
+      sig *= 2 * (correct ? 1 - conf : conf);
+    }
+    this._plasticUpdate(foot, sig, true);
     // adapt the reference to what an answered image looks like (fast at first, then slow)
     const rate = Math.max(0.05, 1 / (1 + this.nAnswers++)), fm = this.fmean, sidx = this.staticIdx, x = this.x;
     for (let j = 0; j < this.nS; j++) fm[j] += rate * (x[sidx[j]] - fm[j]);
@@ -476,6 +486,7 @@ export class Brain {
       const pb = m * nP;
       let p = 0;
       for (let j = 0; j < nP; j++) p += this.Wp[pb + j] * pv[j];
+      this.zp[m] = gp * p;
       z[m] = s + gp * p;
     }
     // Active vision: where to look next, tanh-bounded so the eye pans rather than teleports.

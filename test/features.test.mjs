@@ -217,4 +217,18 @@ ok('practise at many distances: varies within range in training, never in the ex
   assert.deepEqual([...seenExam], [1], 'every exam picture is at the set distance');
 });
 
+ok('learn from surprises: a confident right answer teaches less than an uncertain one', () => {
+  const c = mergeConfig({ learn: { surprise: 1 } });
+  const change = (confident) => {
+    const b = new Brain(c);
+    b.setParams(b.initParams(4)); b.reset();
+    b.step(flat(b, 0.5), touch); b.step(stripes(b), touch);
+    b.zp[0] = confident ? 3 : 0; b.zp[1] = 0; // how strongly the learning synapses already favour foot 0
+    b.learn(0, true);
+    return b.Wp.reduce((s, v) => s + Math.abs(v), 0);
+  };
+  const sure = change(true), unsure = change(false);
+  assert.ok(sure > 0 && sure < 0.2 * unsure, `confident ${sure} vs uncertain ${unsure}`);
+});
+
 console.log(`\n${passed} passed`);

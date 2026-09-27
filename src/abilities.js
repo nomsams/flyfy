@@ -60,8 +60,14 @@ export const ABILITIES = [
   {
     id: 'memory', name: 'Memory centre', icon: 'layers',
     short: 'A big sparse layer that helps tell similar things apart.',
-    long: 'Adds 400 "Kenyon cells" between the eye and the learning synapses, of which only about 1 in 20 fire at once - the mushroom body, where real flies store what they learn. Rewards and pain train its outputs.',
+    long: 'Adds 400 "Kenyon cells" - the mushroom body, where real flies store what they learn. Each one listens to a few random light sensors, and only about 1 in 20 fire at once, so similar pictures get clearly different codes. Rewards and pain train its outputs.',
     on: { mb: { enabled: 1 } }, off: { mb: { enabled: 0 } },
+  },
+  {
+    id: 'surprise', name: 'Learn from surprises', icon: 'spark',
+    short: 'Learns a lot from unexpected results, little from expected ones.',
+    long: 'Real flies’ dopamine neurons signal how much better or worse things went than expected. With this on, a confident right answer barely changes anything and a confident mistake changes a lot, instead of every answer counting the same. Great on clean tasks; on the face photos, whose labels are noisy, it chases the noise.',
+    on: { learn: { surprise: 1 } }, off: { learn: { surprise: 0 } },
   },
   {
     id: 'selfTune', name: 'Self-tuning learning', icon: 'dial',
@@ -123,22 +129,22 @@ export const MEASURED = [
     task: "faint",
     method: "quick",
     a: 0.6263,
-    b: 0.9156,
-    diff: 0.2893,
-    margin: 0.0648,
+    b: 0.9275,
+    diff: 0.3012,
+    margin: 0.0848,
     clear: true,
-    summary: "On faint stripes with Quick learn: 62.6% without vs 91.6% with - better by 28.9 points (clear)."
+    summary: "On faint stripes with Quick learn: 62.6% without vs 92.7% with - better by 30.1 points (clear)."
   },
   {
     ability: "memory",
     task: "faces",
     method: "quick",
     a: 0.542,
-    b: 0.5532,
-    diff: 0.0112,
-    margin: 0.061,
-    clear: false,
-    summary: "On faces with Quick learn: 54.2% without vs 55.3% with - no clear difference (+1.1 ± 6.1 points)."
+    b: 0.5952,
+    diff: 0.0532,
+    margin: 0.0396,
+    clear: true,
+    summary: "On faces with Quick learn: 54.2% without vs 59.5% with - better by 5.3 points (clear)."
   },
   {
     ability: "edges",
@@ -250,5 +256,74 @@ export const MEASURED = [
     margin: 0.0188,
     clear: false,
     summary: "On stripes with Evolve (30 generations): 75.5% without vs 75.1% with - no clear difference (-0.4 ± 1.9 points)."
+  },
+  {
+    ability: "sizeVary",
+    task: "faces",
+    method: "quick",
+    a: 0.542,
+    b: 0.5367,
+    diff: -0.0053,
+    margin: 0.0298,
+    clear: false,
+    summary: "On faces with Quick learn: 54.2% without vs 53.7% with - no clear difference (-0.5 ± 3.0 points)."
+  },
+  {
+    ability: "sizeVary",
+    task: "gratings",
+    method: "quick",
+    a: 0.8291,
+    b: 0.8473,
+    diff: 0.0182,
+    margin: 0.0785,
+    clear: false,
+    summary: "On stripes with Quick learn: 82.9% without vs 84.7% with - no clear difference (+1.8 ± 7.9 points)."
+  },
+  {
+    ability: "zoom",
+    task: "spot",
+    method: "thorough",
+    a: 0.5606,
+    b: 0.5686,
+    diff: 0.0081,
+    margin: 0.0858,
+    clear: false,
+    summary: "On find the spot with Evolve (60 generations): 56.1% without vs 56.9% with - no clear difference (+0.8 ± 8.6 points)."
+  },
+  {
+    ability: "surprise",
+    task: "faint",
+    method: "quick",
+    with: "Memory centre",
+    a: 0.9275,
+    b: 0.9526,
+    diff: 0.0252,
+    margin: 0.0175,
+    clear: true,
+    summary: "On faint stripes with Quick learn (and Memory centre on): 92.7% without vs 95.3% with - better by 2.5 points (clear)."
+  },
+  {
+    ability: "surprise",
+    task: "gratings",
+    method: "quick",
+    with: "Memory centre",
+    a: 0.9898,
+    b: 0.9996,
+    diff: 0.0098,
+    margin: 0.0037,
+    clear: true,
+    summary: "On stripes with Quick learn (and Memory centre on): 99.0% without vs 100.0% with - better by 1.0 points (clear)."
+  },
+  {
+    ability: "surprise",
+    task: "faces",
+    method: "quick",
+    with: "Memory centre",
+    a: 0.5952,
+    b: 0.5514,
+    diff: -0.0438,
+    margin: 0.0554,
+    clear: false,
+    summary: "On faces with Quick learn (and Memory centre on): 59.5% without vs 55.1% with - no clear difference (-4.4 ± 5.5 points)."
   }
 ];
