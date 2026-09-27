@@ -3,151 +3,381 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>fuitclassify - LC fly</title>
+<title>Fly Lab</title>
+<meta name="description" content="Teach a tiny simulated fly brain to tell pictures apart, right in your browser.">
 <style>
-  :root { color-scheme: dark; --bg:#0d1117; --panel:#161b22; --line:#30363d; --fg:#e6edf3; --mut:#8b949e; --blue:#58a6ff; --pink:#f778ba; --green:#3fb950; }
+  :root {
+    color-scheme: dark;
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c222b; --line:#2a313c; --fg:#e8edf3; --mut:#93a0b0;
+    --accent:#4f9dff; --accent-fg:#fff; --green:#3fb950; --red:#f0605a; --amber:#e3a23b; --pink:#f778ba;
+    --shadow: 0 1px 0 rgba(255,255,255,.03), 0 8px 24px rgba(0,0,0,.25);
+    --r:14px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { color-scheme: light; --bg:#f4f6f9; --panel:#ffffff; --panel2:#f5f7fa; --line:#dde3ea; --fg:#18202b; --mut:#5b6878;
+      --accent:#2f6fe0; --green:#1f9a44; --red:#d23f39; --amber:#b87700; --pink:#c43b8a; --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 18px rgba(20,30,50,.06); }
+  }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif; }
-  header { padding:14px 20px; border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:baseline; flex-wrap:wrap; }
-  header h1 { font-size:17px; margin:0; }
-  header span { color:var(--mut); font-size:13px; }
-  main { display:grid; grid-template-columns: minmax(360px, 560px) minmax(360px, 1fr); gap:16px; padding:16px 20px; max-width:1300px; margin:0 auto; }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
-  section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 14px; }
-  h2 { margin:0 0 8px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--mut); }
-  canvas { display:block; max-width:100%; height:auto; background:#0d1117; border-radius:6px; }
-  .col { display:flex; flex-direction:column; gap:16px; min-width:0; }
-  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0; }
-  label { color:var(--mut); font-size:12px; display:flex; flex-direction:column; gap:3px; }
-  input, select { background:#0d1117; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:5px 7px; font:inherit; width:96px; }
-  select { width:auto; }
-  input[type=checkbox] { width:auto; }
-  label.inline { flex-direction:row; align-items:center; gap:6px; }
-  button { background:#21262d; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:7px 12px; font:inherit; cursor:pointer; }
-  button:hover { border-color:var(--mut); }
-  button.primary { background:#1f6feb; border-color:#1f6feb; }
-  button.on { background:#b62324; border-color:#b62324; }
-  #genStats { font-variant-numeric:tabular-nums; margin-top:8px; min-height:1.4em; }
-  .mut { color:var(--mut); font-size:12px; }
-  pre { margin:0; max-height:170px; overflow:auto; font:12px/1.5 ui-monospace,Consolas,monospace; color:#c9d1d9; white-space:pre-wrap; }
-  .rr { display:grid; grid-template-columns: 96px 1fr; gap:2px 10px; align-items:center; margin:7px 0; }
-  .rr b { font-weight:600; font-size:13px; } .rr .mut { grid-column: 2; margin-top:-2px; }
-  .rr .name { display:flex; flex-direction:column; }
-  h3 { margin:12px 0 2px; font-size:12px; color:var(--blue); font-weight:600; }
-  table { border-collapse:collapse; width:100%; font-variant-numeric:tabular-nums; }
-  td { padding:2px 6px; border-bottom:1px solid var(--line); font-size:12px; } td.v { text-align:right; }
-  .pos { color:var(--green); } .neg { color:#f85149; }
-  details { margin-top:6px; } summary { color:var(--mut); cursor:pointer; font-size:12px; }
+  html, body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  button, input, select { font:inherit; color:inherit; }
+  a { color: var(--accent); }
+
+  /* header + tabs */
+  .top { position:sticky; top:0; z-index:5; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line); padding:12px 20px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+  .brand { display:flex; align-items:center; gap:10px; margin-right:auto; }
+  .brand .logo { width:38px; height:38px; border-radius:11px; display:grid; place-items:center; background:var(--accent); color:var(--accent-fg); }
+  .brand h1 { font-size:18px; margin:0; line-height:1.1; }
+  .brand p { margin:0; color:var(--mut); font-size:13px; }
+  .tabs { display:flex; gap:4px; background:var(--panel); border:1px solid var(--line); padding:4px; border-radius:12px; }
+  .tabs button { display:flex; align-items:center; gap:6px; border:0; background:transparent; padding:7px 13px; border-radius:9px; cursor:pointer; color:var(--mut); font-weight:500; }
+  .tabs button svg { width:18px; height:18px; }
+  .tabs button.active { background:var(--panel2); color:var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+  .tabs button:hover { color:var(--fg); }
+
+  main { max-width:1280px; margin:0 auto; padding:20px; }
+  .tab { display:none; }
+  .tab.active { display:block; }
+  .grid-train { display:grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap:18px; align-items:start; }
+  .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start; }
+  @media (max-width: 960px) { .grid-train, .grid-2 { grid-template-columns: 1fr; } }
+  .stack { display:flex; flex-direction:column; gap:18px; min-width:0; }
+  .sticky { position:sticky; top:84px; }
+  @media (max-width: 960px) { .sticky { position:static; } }
+
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:18px; box-shadow:var(--shadow); min-width:0; }
+  .card h2 { font-size:16px; margin:0 0 12px; display:flex; align-items:center; gap:10px; }
+  .card h2 .num { width:24px; height:24px; border-radius:50%; background:var(--accent); color:var(--accent-fg); display:grid; place-items:center; font-size:13px; flex:none; }
+  .card-h { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+  .card-h h2 { margin:0; }
+  canvas { display:block; width:100%; height:auto; border-radius:10px; background:var(--panel2); }
+  .hint { color:var(--mut); font-size:13px; margin:8px 0 0; }
+  .note { font-size:13.5px; margin:10px 0 0; padding:10px 12px; border-radius:10px; background:color-mix(in srgb, var(--amber) 13%, transparent); border:1px solid color-mix(in srgb, var(--amber) 35%, transparent); }
+  .note:empty { display:none; }
+  .pill { font-size:12.5px; color:var(--mut); background:var(--panel2); border:1px solid var(--line); padding:3px 10px; border-radius:999px; white-space:nowrap; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+  /* buttons */
+  .btn, button.link, .seg button { cursor:pointer; }
+  .btn { display:inline-flex; align-items:center; gap:8px; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 14px; font-weight:500; }
+  .btn:hover:not(:disabled) { border-color:var(--mut); }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:var(--accent-fg); }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .btn svg { width:18px; height:18px; }
+  button.link { background:none; border:0; color:var(--accent); padding:0; font-size:13.5px; }
+  button.link.danger { color:var(--red); }
+  .train-btns { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .big { display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel2); cursor:pointer; }
+  .big b { display:flex; align-items:center; gap:8px; font-size:15.5px; }
+  .big b svg { width:19px; height:19px; }
+  .big small { color:var(--mut); font-size:12.5px; }
+  .big.primary { background:var(--accent); border-color:var(--accent); color:var(--accent-fg); }
+  .big.primary small { color: color-mix(in srgb, var(--accent-fg) 80%, transparent); }
+  .big.running { background:var(--red); border-color:var(--red); color:#fff; }
+  .big.running small { color:#fff; opacity:.85; }
+  .big:disabled { opacity:.4; cursor:not-allowed; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel2); }
+  .seg button { border:0; background:transparent; padding:6px 11px; color:var(--mut); font-size:13.5px; }
+  .seg button + button { border-left:1px solid var(--line); }
+  .seg button.on { background:var(--accent); color:var(--accent-fg); }
+
+  /* task cards */
+  .tasks { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:8px; }
+  .task { text-align:left; border:1.5px solid var(--line); background:var(--panel2); border-radius:12px; padding:10px 11px; cursor:pointer; display:flex; flex-direction:column; gap:4px; }
+  .task:hover { border-color:var(--mut); }
+  .task.on { border-color:var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .task .t1 { display:flex; align-items:center; gap:8px; font-weight:600; }
+  .task .t1 svg { color:var(--accent); flex:none; }
+  .task .lvl { font-size:11.5px; color:var(--mut); }
+  .task .bl { font-size:12.5px; color:var(--mut); line-height:1.35; }
+
+  /* abilities */
+  .abilities { display:flex; flex-direction:column; gap:2px; }
+  .ab { display:grid; grid-template-columns: 32px 1fr auto; gap:4px 10px; align-items:center; padding:8px 6px; border-radius:10px; }
+  .ab:hover { background:var(--panel2); }
+  .ab .ic { color:var(--accent); display:grid; place-items:center; }
+  .ab .nm { font-weight:600; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .ab .sh { grid-column:2; color:var(--mut); font-size:13px; line-height:1.35; }
+  .ab details { grid-column:2 / 4; font-size:13px; color:var(--mut); }
+  .ab details summary { cursor:pointer; color:var(--accent); font-size:12.5px; width:max-content; }
+  .ab details p { margin:6px 0 2px; }
+  .tag { font-size:11px; font-weight:500; padding:1px 7px; border-radius:999px; background:var(--panel2); border:1px solid var(--line); color:var(--mut); }
+  .tag.good { color:var(--green); border-color:color-mix(in srgb, var(--green) 40%, transparent); }
+  .tag.evo { color:var(--amber); border-color:color-mix(in srgb, var(--amber) 40%, transparent); }
+  .switch { position:relative; width:42px; height:24px; flex:none; }
+  .switch input { opacity:0; width:0; height:0; position:absolute; }
+  .switch span { position:absolute; inset:0; border-radius:999px; background:var(--line); transition:.15s; cursor:pointer; }
+  .switch span::after { content:""; position:absolute; width:18px; height:18px; left:3px; top:3px; border-radius:50%; background:#fff; transition:.15s; box-shadow:0 1px 2px rgba(0,0,0,.3); }
+  .switch input:checked + span { background:var(--accent); }
+  .switch input:checked + span::after { transform:translateX(18px); }
+  .switch input:focus-visible + span { outline:2px solid var(--accent); outline-offset:2px; }
+
+  /* score */
+  .score { display:flex; align-items:center; gap:14px; margin:14px 0 10px; }
+  .bignum { font-size:44px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; min-width:110px; }
+  .score .lbl { font-weight:600; }
+  .meter { position:relative; height:12px; border-radius:999px; background:var(--panel2); border:1px solid var(--line); overflow:hidden; margin-top:10px; }
+  .meter i { position:absolute; inset:0 auto 0 0; background:var(--accent); border-radius:999px; transition:width .4s; }
+  .meter b { position:absolute; left:50%; top:-3px; bottom:-3px; width:2px; background:var(--mut); }
+  .exam { margin-top:12px; }
+  .exam .big-line { font-size:18px; font-weight:600; }
+  .progress { margin-top:14px; }
+  .progress .bar { height:10px; border-radius:999px; background:var(--panel2); border:1px solid var(--line); overflow:hidden; }
+  .progress .bar i { display:block; height:100%; width:0; background:var(--accent); transition:width .3s; }
+  .progress span { display:block; font-size:13px; color:var(--mut); margin-top:6px; }
+
+  /* forms / tables */
+  label.f { display:flex; flex-direction:column; gap:5px; font-size:13px; color:var(--mut); }
+  select, input[type=number] { background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:7px 9px; min-width:0; }
+  .form { display:grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap:12px; }
+  .verdict { font-size:16.5px; font-weight:600; margin:12px 0 0; }
+  table { border-collapse:collapse; width:100%; font-variant-numeric:tabular-nums; font-size:13.5px; }
+  th, td { padding:6px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  th { color:var(--mut); font-weight:500; font-size:12.5px; }
+  td.v { text-align:right; white-space:nowrap; }
+  .pos { color:var(--green); } .neg { color:var(--red); } .mut { color:var(--mut); }
+  .rr { display:grid; grid-template-columns: 110px 1fr; gap:2px 12px; align-items:start; padding:8px 0; border-bottom:1px solid var(--line); }
+  .rr input { width:100%; }
+  .rr b { font-size:14px; } .rr .mut { font-size:12.5px; line-height:1.4; }
+  h3.grp { margin:18px 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--accent); }
+  pre#log { margin:0; max-height:220px; overflow:auto; font:12px/1.5 ui-monospace,Consolas,monospace; color:var(--mut); white-space:pre-wrap; }
+  details.sub { margin-top:12px; }
+  details.sub > summary { cursor:pointer; color:var(--accent); font-size:13.5px; }
+  details.sub > canvas { margin-top:10px; }
+
+  .banner { max-width:1240px; margin:14px auto 0; padding:12px 16px; border-radius:12px; background:color-mix(in srgb, var(--accent) 12%, var(--panel)); border:1px solid color-mix(in srgb, var(--accent) 35%, transparent); display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .banner[hidden] { display:none; }
+  .toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:var(--fg); color:var(--bg); padding:10px 16px; border-radius:10px; font-size:14px; box-shadow:var(--shadow); z-index:20; max-width:min(560px, 92vw); }
+  .toast[hidden] { display:none; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--mut); margin-top:8px; }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+  ol.how { margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; font-size:14px; }
+  ol.how li::marker { color:var(--accent); font-weight:700; }
+  .hist { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  @media (max-width: 600px) { .hist { grid-template-columns: 1fr; } .train-btns { grid-template-columns: 1fr; } .top { padding:10px 14px; } main { padding:14px; } .tabs button { padding:7px 9px; font-size:13.5px; } }
+  @media (max-width: 420px) { .tabs button span { display:none; } .tabs button { padding:8px 12px; } }
 </style>
 </head>
 <body>
-<header>
-  <h1>LC fly</h1>
-  <span id="neurons">...</span>
-  <span id="params"></span>
-  <span id="poolStatus"></span>
+<header class="top">
+  <div class="brand">
+    <div class="logo" id="logo"></div>
+    <div><h1>Fly Lab</h1><p>Teach a tiny simulated fly brain to tell pictures apart.</p></div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" title="Train" aria-label="Train" data-tab="train" class="active"><i data-icon="bolt"></i><span>Train</span></button>
+    <button role="tab" title="Compare" aria-label="Compare" data-tab="compare"><i data-icon="scales"></i><span>Compare</span></button>
+    <button role="tab" title="Inside the brain" aria-label="Inside the brain" data-tab="brain"><i data-icon="brain"></i><span>Inside the brain</span></button>
+    <button role="tab" title="Settings" aria-label="Settings" data-tab="settings"><i data-icon="gear"></i><span>Settings</span></button>
+  </nav>
 </header>
+
+<div class="banner" id="banner" hidden></div>
+
 <main>
-  <div class="col">
-    <section>
-      <h2>Scene <span class="mut" id="watchStats" style="text-transform:none;letter-spacing:0;margin-left:8px"></span></h2>
-      <canvas id="scene" width="520" height="310"></canvas>
-      <div class="row">
-        <label class="inline"><input type="checkbox" id="watchOn"> play the fly live (off until you tick this)</label>
-        <label class="inline">speed <select id="speed"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option><option value="4">4x</option></select></label>
-        <label class="inline">show <select id="watchData"><option value="train">training images</option><option value="test">held-out images</option></select></label>
-      </div>
-    </section>
-    <section>
-      <h2>What the eye sees (retina, ~5&deg; per receptor)</h2>
-      <canvas id="eye" width="520" height="224"></canvas>
-    </section>
-    <section>
-      <h2>Neurons</h2>
-      <canvas id="neuronView" width="520" height="300"></canvas>
-    </section>
-  </div>
-
-  <div class="col">
-    <section>
-      <h2>Training</h2>
-      <div class="row">
-        <button id="btnLife" class="primary">Learn by pain (fast)</button>
-        <button id="btnTrain">Evolve the core (slow)</button>
-        <button id="btnEval">Test on new images</button>
-        <button id="btnProbe">Probe the eye</button>
-      </div>
-      <div id="genStats" class="mut">Nothing is running. Press <b>Learn by pain (fast)</b> to let the fly learn from reward and pain, or <b>Evolve the core</b> to breed brains (slow).</div>
-      <div id="warn" style="color:#d29922;font-size:12px;min-height:1.2em;margin-top:4px"></div>
-      <div class="row"><button id="btnResume" hidden>Resume saved brain</button></div>
-      <canvas id="chart" width="600" height="220" style="margin-top:8px"></canvas>
-      <div class="mut" style="margin-top:6px">
-        <b>Learn by pain</b>: one fly learns from reward and pain while it plays, no evolution (seconds). <b>Evolve</b>: a population of brains is bred (minutes).<br>
-        <span style="color:#58a6ff">blue</span> accuracy of the current brain (right axis) &middot;
-        <span style="color:#3fb950">green</span> its return &middot; <span style="color:#d29922">amber</span> best candidate &middot; gray population mean
-      </div>
-    </section>
-
-    <section>
-      <h2>Task</h2>
-      <div class="row">
-        <label>stimulus
-          <select id="stim">
-            <option value="brightness">1. dark vs bright (easy)</option>
-            <option value="gratings">2. horizontal vs vertical stripes</option>
-            <option value="faint">2b. faint noisy stripes (hard, like faces)</option>
-            <option value="faces">3. man vs woman photos (hard)</option>
-          </select>
-        </label>
-        <label>images / class <input id="facesCap" type="number" value="300" min="20" max="1500"></label>
-        <button id="btnFaces">Load faces</button>
-      </div>
-      <div class="mut" id="facesStatus">Switching task keeps the trained brain, so it carries over. Faces load from the local dataset via the server.</div>
-    </section>
-
-    <section>
-      <h2>Rewards, penalties, pain &amp; the eye</h2>
-      <div class="mut">Every number the fly is scored, timed and sensed by. Edit any of them - changes apply on the next generation, training keeps running.</div>
-      <div id="rewardRows"></div>
-      <div class="row"><button id="btnRewardDefaults">Reset to defaults</button></div>
-      <h2 style="margin-top:12px">Where the reward came from <span class="mut" style="text-transform:none;letter-spacing:0">(current brain, per 12 s episode)</span></h2>
-      <table id="ledger"><tbody><tr><td class="mut">appears after the first generation</td></tr></tbody></table>
-    </section>
-
-    <section>
-      <h2>Brain &amp; settings</h2>
-      <div class="row">
-        <label>eyes <select id="eyes"><option value="1">1 (right)</option><option value="2">2</option></select></label>
-        <label>2-eye layout <select id="eyeLayout"><option value="overlap">overlap (both see all)</option><option value="split">split field (each sees its side)</option></select></label>
-        <label>eye resolution <select id="eyeRes"><option value="std">standard 14x20 (fast)</option><option value="fine">fine 28x40 (sharper, ~3x slower)</option></select></label>
-        <label>core neurons <input id="core" type="number" min="16" max="1024" step="16"></label>
-        <label>workers <input id="workers" type="number" min="1" max="32"></label>
-      </div>
-      <details open>
-        <summary>evolution strategy</summary>
-        <div class="row">
-          <label>pairs <input id="pairs" type="number" min="4" max="256"></label>
-          <label>sigma <input id="sigma" type="number" step="0.01" min="0.005"></label>
-          <label>lr <input id="lr" type="number" step="0.005" min="0.001"></label>
-          <label>episodes / candidate <input id="eps" type="number" min="1" max="32"></label>
+  <!-- ============================================================ TRAIN -->
+  <section class="tab active" id="tab-train">
+    <div class="grid-train">
+      <div class="stack sticky">
+        <div class="card">
+          <div class="card-h"><h2>Watch your fly</h2><span class="pill" id="watchStats">paused</span></div>
+          <canvas id="scene" width="560" height="320" aria-label="The fly, its screen and its two feet"></canvas>
+          <div class="row" style="margin-top:12px">
+            <button class="btn primary" id="btnPlay"><i data-icon="play"></i><span>Play</span></button>
+            <div class="seg" id="speedSeg"><button data-v="0.5">½×</button><button data-v="1" class="on">1×</button><button data-v="3">3×</button><button data-v="8">8×</button></div>
+            <div class="seg" id="picsSeg"><button data-v="train" class="on">Practice pictures</button><button data-v="test">New pictures</button></div>
+          </div>
+          <p class="hint" id="footHint"></p>
+          <details class="sub">
+            <summary>What the fly actually sees</summary>
+            <canvas id="eye" width="560" height="200"></canvas>
+            <p class="hint">Its whole eye: a few hundred blurry dots. Everything it learns, it learns from this.</p>
+          </details>
         </div>
-      </details>
-      
-      <div class="row">
-        <button id="btnSave">Save brain</button>
-        <button id="btnLoad">Load brain</button>
-        <button id="btnReset">New random brain</button>
-        <input id="fileLoad" type="file" accept=".json" hidden>
+        <div class="card">
+          <h2>How it works</h2>
+          <ol class="how">
+            <li><b>A picture appears</b> on the screen in front of the fly.</li>
+            <li><b>Its eye</b> turns it into a few hundred blurry dots, and fixed "LC" eye cells (modelled on real fly neurons) pick out edges, spots and motion.</li>
+            <li><b>A small brain</b> of 128 cells turns that into a decision, and the fly <b>presses a foot</b>.</li>
+            <li><b>Right answers earn points; wrong ones hurt</b> that foot. Training changes the brain so it earns more points.</li>
+          </ol>
+          <p class="hint"><b>Quick learn</b> changes the connections behind the feet as the fly plays, from rewards and pain alone. <b>Evolve</b> breeds a population of brains and keeps the best. Both use no backpropagation - everything runs in this browser tab.</p>
+        </div>
       </div>
-      <div class="mut">Autosaves to this browser every 10 generations.</div>
-    </section>
 
-    <section>
-      <h2>Log</h2>
-      <pre id="log"></pre>
-    </section>
-  </div>
+      <div class="stack">
+        <div class="card">
+          <h2><span class="num">1</span>Pick a challenge</h2>
+          <div class="tasks" id="taskGrid"></div>
+          <p class="hint" id="taskStatus"></p>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2><span class="num">2</span>Give it abilities</h2><button class="link" id="btnAbilDefault">Reset</button></div>
+          <div class="abilities" id="abilityList"></div>
+        </div>
+
+        <div class="card">
+          <h2><span class="num">3</span>Train it</h2>
+          <div class="train-btns">
+            <button class="big primary" id="btnQuick"><b><i data-icon="bolt"></i><span>Quick learn</span></b><small>Learns from rewards and pain · seconds</small></button>
+            <button class="big" id="btnEvolve"><b><i data-icon="dna"></i><span>Evolve</span></b><small>Breeds better brains · minutes</small></button>
+          </div>
+          <div class="score">
+            <div class="bignum" id="scoreNum">–</div>
+            <div><div class="lbl" id="scoreLabel">correct lately</div><div class="hint" id="scoreSub" style="margin:0">Press a button above to start. Guessing scores 50%.</div></div>
+          </div>
+          <canvas id="chart" width="600" height="150" aria-label="How often the fly has been right over time"></canvas>
+          <p class="note" id="trainNote"></p>
+        </div>
+
+        <div class="card">
+          <h2><span class="num">4</span>Final exam</h2>
+          <p class="hint" style="margin-top:0">Test the fly on pictures it has never seen, with learning switched off.</p>
+          <div class="row" style="margin-top:10px"><button class="btn" id="btnExam"><i data-icon="exam"></i>Take the exam</button></div>
+          <div class="exam" id="examResult"></div>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <button class="btn" id="btnSave"><i data-icon="save"></i>Save fly</button>
+            <button class="btn" id="btnLoad"><i data-icon="open"></i>Load fly</button>
+            <span style="flex:1"></span>
+            <button class="link danger" id="btnReset">Start over with a new fly</button>
+            <input type="file" id="fileLoad" accept=".json" hidden>
+          </div>
+          <p class="hint">Your fly is also saved in this browser automatically while it trains.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ COMPARE -->
+  <section class="tab" id="tab-compare">
+    <div class="grid-2">
+      <div class="stack">
+        <div class="card">
+          <h2>Is it worth it?</h2>
+          <p class="hint" style="margin-top:0">Train several flies with and without something, each pair starting from the same luck, and see whether the difference is bigger than chance. Everything else matches your current fly.</p>
+          <div class="form" style="margin-top:14px">
+            <label class="f">Challenge <select id="cmpTask"></select></label>
+            <label class="f">What to test <select id="cmpAbility"></select></label>
+            <label class="f">Training <div class="seg" id="cmpMethod"><button data-v="quick" class="on">Quick learn</button><button data-v="thorough">Evolve</button></div></label>
+            <label class="f">Repeats <div class="seg" id="cmpSeeds"><button data-v="3">3</button><button data-v="5" class="on">5</button><button data-v="8">8</button></div></label>
+          </div>
+          <div id="cmpCustom" hidden style="margin-top:14px">
+            <div class="grid-2"><div><h3 class="grp">Setup A</h3><div class="abilities" id="cmpA"></div></div><div><h3 class="grp">Setup B</h3><div class="abilities" id="cmpB"></div></div></div>
+          </div>
+          <p class="note" id="cmpHint"></p>
+          <div class="row" style="margin-top:14px">
+            <button class="btn primary" id="btnCompare"><i data-icon="scales"></i>Run comparison</button>
+            <button class="btn" id="btnCmpCancel" hidden>Cancel</button>
+            <span class="hint" id="cmpEta" style="margin:0"></span>
+          </div>
+          <div class="progress" id="cmpProgress" hidden><div class="bar"><i></i></div><span></span></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card" id="cmpResultCard">
+          <h2>Result</h2>
+          <canvas id="cmpChart" width="620" height="280"></canvas>
+          <p class="verdict" id="cmpVerdict">Run a comparison to see a result here.</p>
+          <p class="hint" id="cmpDetail"></p>
+        </div>
+        <div class="card">
+          <h2>What we measured</h2>
+          <p class="hint" style="margin-top:0">Built-in results from running exactly these comparisons (5 paired repeats each) while building the app.</p>
+          <div id="measuredTable" style="margin-top:10px;overflow-x:auto"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ BRAIN -->
+  <section class="tab" id="tab-brain">
+    <div class="grid-2">
+      <div class="stack">
+        <div class="card">
+          <div class="card-h"><h2>Live activity</h2><span class="pill" id="brainSize"></span></div>
+          <canvas id="neuronView" width="620" height="330"></canvas>
+          <div class="legend">
+            <span><i style="background:var(--amber)"></i>eye cells</span>
+            <span><i style="background:var(--red)"></i>brain cell active</span>
+            <span><i style="background:var(--accent)"></i>brain cell suppressed</span>
+          </div>
+          <p class="hint">Press Play on the Train tab to see it move.</p>
+        </div>
+        <div class="card">
+          <h2>Where the points came from</h2>
+          <p class="hint" style="margin-top:0">What the current fly earned and lost in an average 12-second session.</p>
+          <table id="ledger" style="margin-top:8px"><tbody><tr><td class="mut">Appears once training starts.</td></tr></tbody></table>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <h2>What evolution chose</h2>
+          <div class="hist">
+            <div><canvas id="histLeak" width="300" height="150"></canvas><p class="hint">How long each brain cell holds a thought (left: long memory, right: short).</p></div>
+            <div><canvas id="histSens" width="300" height="150"></canvas><p class="hint">How much each cell listens to the mood chemical (0 = ignores it).</p></div>
+          </div>
+          <div id="ruleBox" style="margin-top:12px"></div>
+        </div>
+        <div class="card">
+          <h2>How much can this eye see?</h2>
+          <p class="hint" style="margin-top:0">Checks how much of the answer is even visible in what the eye sends to the brain, before any learning. If this is near 50%, no brain could do much better.</p>
+          <div class="row" style="margin-top:10px"><button class="btn" id="btnProbe"><i data-icon="eye"></i>Check the eye</button></div>
+          <div id="probeResult" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ SETTINGS -->
+  <section class="tab" id="tab-settings">
+    <div class="grid-2">
+      <div class="stack">
+        <div class="card">
+          <h2>Brain build</h2>
+          <p class="hint" style="margin-top:0">Changing these gives the fly a differently shaped brain, so it starts over.</p>
+          <div class="form" style="margin-top:10px">
+            <label class="f">Eyes <select id="eyes"><option value="1">1 (right)</option><option value="2">2</option></select></label>
+            <label class="f">With 2 eyes <select id="eyeLayout"><option value="overlap">both see everything</option><option value="split">each sees its own side</option></select></label>
+            <label class="f">Eye sharpness <select id="eyeRes"><option value="std">standard 14×20 (fast)</option><option value="fine">fine 28×40 (~3× slower)</option></select></label>
+            <label class="f">Brain cells <input id="core" type="number" min="16" max="1024" step="16"></label>
+            <label class="f">Parallel workers <input id="workers" type="number" min="1" max="32"></label>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Evolution</h2>
+          <div class="form">
+            <label class="f">Pairs per generation <input id="pairs" type="number" min="4" max="256"></label>
+            <label class="f">Mutation size <input id="sigma" type="number" step="0.01" min="0.005"></label>
+            <label class="f">Learning rate <input id="lr" type="number" step="0.005" min="0.001"></label>
+            <label class="f">Sessions per candidate <input id="eps" type="number" min="1" max="32"></label>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Faces</h2>
+          <p class="hint" style="margin-top:0" id="faceSrc">The app uses 1,000 bundled photos (500 per class).</p>
+          <div class="row" style="margin-top:10px"><button class="btn" id="btnFullFaces" hidden>Use my full local photo folder</button></div>
+        </div>
+        <div class="card">
+          <h2>Log</h2>
+          <pre id="log"></pre>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="card-h"><h2>Every number</h2><button class="link" id="btnRewardDefaults">Reset all to defaults</button></div>
+          <p class="hint" style="margin-top:0">For tinkerers: every reward, penalty and setting the fly is scored and built with. Changes apply immediately, even mid-training. The ability switches on the Train tab just set some of these.</p>
+          <div id="rewardRows"></div>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
+<div class="toast" id="toast" hidden></div>
 <script type="module" src="src/app.js"></script>
 </body>
 </html>

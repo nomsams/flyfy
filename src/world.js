@@ -50,6 +50,8 @@ export class TrialWorld {
     this.serial = 0; // bumps whenever a new image is put on screen
     this.jitterStep = 0;
     this.gazeAz = 0; this.gazeEl = 0; // active vision: where the eye is currently panned to
+    this.pos = new Float32Array(2);   // the same, as the brain feels it (efference copy), each axis in [-1, 1]
+    this.trail = new Float32Array(2 * 48); this.trailN = 0; // recent gaze positions, for drawing
   }
 
   reset(seed, stim) {
@@ -92,6 +94,7 @@ export class TrialWorld {
     this.serial++;
     this.jitterStep = 0; // each image gets the jitter scan from the same starting phase
     this.gazeAz = 0; this.gazeEl = 0; // each image starts with the eye looking at the centre
+    this.pos[0] = this.pos[1] = 0; this.trailN = 0;
   }
 
   _endTrial() {
@@ -119,7 +122,12 @@ export class TrialWorld {
       this.gazeEl = Math.max(-e.gazeRangeDeg, Math.min(e.gazeRangeDeg, this.gazeEl + gazeDy * e.gazeStepDeg));
       const m = rw.movePerSec * t.dt * (Math.abs(gazeDx) + Math.abs(gazeDy));
       reward += m; P.move += m;
-    }
+      this.pos[0] = this.gazeAz / e.gazeRangeDeg; this.pos[1] = this.gazeEl / e.gazeRangeDeg;
+      if (this.phase === 'stim') {
+        const cap = this.trail.length / 2, k = this.trailN % cap;
+        this.trail[2 * k] = this.gazeAz; this.trail[2 * k + 1] = this.gazeEl; this.trailN++;
+      }
+    } else { this.pos[0] = this.pos[1] = 0; }
 
     // Dense teaching signal: while a cue is up, reward pushing the correct
     // foot above the wrong one. Far lower-variance than the +-10 outcome,

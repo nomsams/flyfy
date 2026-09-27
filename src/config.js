@@ -80,7 +80,12 @@ export const DEFAULTS = {
   // Fast learning inside the fly's lifetime (no evolution, no backprop): each answer changes the
   // synapses from the eye's static LC cells onto the two feet. A wrong answer's pain weakens the foot
   // that fired and strengthens the other; a correct answer's reward does the opposite. eta 0 = off.
-  learn: { eta: 0.2, anneal: 400, reward: 1.0, gain: 1.0, wmax: 4 }, // anneal: the speed halves after this many answers
+  // evolveRule: let evolution tune this rule itself (speed, reward/pain weights, forgetting, and a
+  // speed per feature) instead of the hand-set numbers here -- evolution learns how to learn.
+  learn: { eta: 0.2, anneal: 400, reward: 1.0, gain: 1.0, wmax: 4, evolveRule: 0 }, // anneal: the speed halves after this many answers
+  // Mushroom body: a big sparse layer of Kenyon cells between the eye and the pain-learning
+  // synapses (see brain.js). cells = how many, fanIn = inputs each, sparsity = fraction that fire.
+  mb: { enabled: 0, cells: 400, fanIn: 6, sparsity: 0.05 },
   brain: {
     core: 128,           // recurrent neurons
     kIn: 10,             // inputs per core neuron
@@ -93,9 +98,12 @@ export const DEFAULTS = {
     // time (a running average) before deciding, so jittered frames actually get summed/averaged
     // like the pasted algorithm's logits, instead of each being judged alone. 1 = off (instant).
     decisionAlpha: 1,
+    neuromod: 1,         // 1 = dopamine adjusts every neuron's leak live; 0 = leak stays at its evolved baseline
     netSeed: 12345,      // fixes the (random) wiring, not the weights
   },
-  es: { pairs: 32, sigma: 0.08, lr: 0.03, weightDecay: 0.005, episodesPerCandidate: 4 },
+  // rewire: every rewireEvery generations, the weakest rewireFrac of the core's wires are moved to
+  // new random sources ("use it or lose it"), so evolution shapes the wiring, not just the weights.
+  es: { pairs: 32, sigma: 0.08, lr: 0.03, weightDecay: 0.005, episodesPerCandidate: 4, rewire: 0, rewireEvery: 10, rewireFrac: 0.05 },
 };
 
 export function mergeConfig(user, base = DEFAULTS) {

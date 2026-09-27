@@ -6,7 +6,7 @@ export const IMG = 32;
 export const LABEL_NAMES = ['man', 'woman'];
 
 export class StimulusSet {
-  // mode: 'brightness' | 'gratings' | 'faint' | 'faces'. For 'faces', `images` is a
+  // mode: 'brightness' | 'gratings' | 'faint' | 'spot' | 'faces'. For 'faces', `images` is a
   // Float32Array(n*IMG*IMG) and `labels` a Uint8Array(n).
   constructor(mode, images = null, labels = null) {
     this.mode = mode;
@@ -48,6 +48,23 @@ export class StimulusSet {
           out[y * IMG + x] = 0.5 + amp * Math.sin(2 * Math.PI * cycles * t + phase) + (rng() - 0.5) * noise;
         }
       }
+    } else if (this.mode === 'spot') {
+      // "Find the spot": faint clutter everywhere, plus one small high-contrast patch of fine
+      // stripes at a different place on every image. Only the stripes' direction carries the
+      // label, and they are too fine for an even retina to resolve from the centre -- the fly has
+      // to look at the patch (active vision) and/or see it sharply there (fovea). The patch is
+      // bright and busy compared to the clutter, so it is findable from the corner of the eye.
+      const P = 12, half = P / 2, reach = 7;
+      const cx = IMG / 2 + Math.round((rng() * 2 - 1) * reach), cy = IMG / 2 + Math.round((rng() * 2 - 1) * reach);
+      const phase = rng() * 2 * Math.PI;
+      for (let y = 0; y < IMG; y++) {
+        for (let x = 0; x < IMG; x++) {
+          const inPatch = Math.abs(x + 0.5 - cx) <= half && Math.abs(y + 0.5 - cy) <= half;
+          out[y * IMG + x] = inPatch
+            ? 0.5 + 0.42 * Math.sign(Math.sin((2 * Math.PI * (label === 1 ? y : x)) / 5 + phase))
+            : 0.5 + (rng() - 0.5) * 0.22;
+        }
+      }
     } else {
       throw new Error('unknown stimulus mode ' + this.mode);
     }
@@ -82,4 +99,34 @@ export function splitFaces(images, labels, heldOutFraction = 0.15, seed = 7) {
     return new StimulusSet('faces', im, lb);
   };
   return { train: pack(parts.train), test: pack(parts.test) };
+}
+
+// ---------------------------------------------------------------- packed faces
+// The bundled faces ship as one file of raw 32x32 grayscale bytes (data/faces32.bin, labels in
+// data/faces32.json) instead of 1,000 JPEGs: one download in the browser, and Node can read it
+// without a JPEG decoder, so the real photos can be tested from the command line too.
+
+// Exposure normalisation shared by every face path: mean 0.5, fixed contrast (the fly's early
+// vision adapts to this anyway, and it stops "brighter photo" standing in for "woman").
+export function normalizeFace(g) {
+  let m = 0;
+  for (let i = 0; i < g.length; i++) m += g[i] / g.length;
+  let v = 0;
+  for (let i = 0; i < g.length; i++) v += (g[i] - m) ** 2 / g.length;
+  const k = 0.2 / (Math.sqrt(v) + 0.02);
+  for (let i = 0; i < g.length; i++) g[i] = Math.max(0, Math.min(1, 0.5 + (g[i] - m) * k));
+  return g;
+}
+
+// bytes: Uint8Array(n * IMG * IMG); labels: array of 0/1. Returns { train, test } StimulusSets.
+export function unpackFaces(bytes, labels, cap = Infinity) {
+  const per = [0, 0], keep = [];
+  labels.forEach((l, i) => { if (per[l] < cap) { per[l]++; keep.push(i); } });
+  const images = new Float32Array(keep.length * IMG * IMG);
+  const g = new Float32Array(IMG * IMG);
+  keep.forEach((src, k) => {
+    for (let p = 0; p < IMG * IMG; p++) g[p] = bytes[src * IMG * IMG + p] / 255;
+    images.set(normalizeFace(g), k * IMG * IMG);
+  });
+  return splitFaces(images, Uint8Array.from(keep, (i) => labels[i]));
 }

@@ -1,7 +1,18 @@
-// Canvas drawing: the scene, what the eye sees, the neurons, the learning curve.
-// Everything is cheap (small canvases, no per-frame allocation to speak of).
+// Canvas drawing: the scene, what the eye sees, the neurons, and the charts. Colours come from the
+// page's CSS variables (readTheme), so everything follows light/dark mode. All cheap: small
+// canvases, no per-frame allocation to speak of.
 
-const BLUE = '#58a6ff', PINK = '#f778ba', GREEN = '#3fb950', RED = '#f85149', AMBER = '#d29922';
+export function readTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  const v = (n) => cs.getPropertyValue(n).trim();
+  return {
+    bg: v('--panel2'), panel: v('--panel'), line: v('--line'), fg: v('--fg'), mut: v('--mut'),
+    accent: v('--accent'), green: v('--green'), red: v('--red'), amber: v('--amber'), pink: v('--pink'),
+    dark: matchMedia('(prefers-color-scheme: dark)').matches,
+  };
+}
+
+const FONT = '12px system-ui, -apple-system, Segoe UI, sans-serif';
 
 export function makeImageCanvas(img, size) {
   const c = document.createElement('canvas');
@@ -17,81 +28,87 @@ export function makeImageCanvas(img, size) {
   return c;
 }
 
-// Front view: the screen (with its expanding onset), the eye(s), two feet.
-export function drawScene(ctx, W, H, world, imgCanvas, flash) {
-  ctx.fillStyle = '#0d1117';
+// Front view: the screen (with its expanding onset), where the eye is looking, the head, two feet.
+// answers: the task's two answers, e.g. ['man', 'woman'] -> left foot, right foot.
+export function drawScene(ctx, W, H, world, imgCanvas, flash, answers, T) {
+  ctx.fillStyle = T.bg;
   ctx.fillRect(0, 0, W, H);
-  const cx = W / 2, sy = 92, fw = 210, fh = 140;
+  ctx.font = FONT;
+  const cx = W / 2, sy = 100, fw = 230, fh = 150;
+  const sc = world.cfg.screen;
 
-  ctx.strokeStyle = '#30363d';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(cx - fw / 2, sy - fh / 2, fw, fh);
+  ctx.strokeStyle = T.line; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(cx - fw / 2 - 6, sy - fh / 2 - 6, fw + 12, fh + 12, 8); ctx.stroke();
   const s = world.scale();
   if (s > 0 && imgCanvas) {
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(imgCanvas, cx - (fw * s) / 2, sy - (fh * s) / 2, fw * s, fh * s);
-    // Active vision: where on the image the eye is currently panned to.
     if (world.cfg.eye.activeVision) {
-      const sc = world.cfg.screen;
-      const gx = cx - (world.gazeAz / sc.azDeg) * fw * s, gy = sy - (world.gazeEl / sc.elDeg) * fh * s;
-      ctx.strokeStyle = '#3fb950'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(gx, gy, 7, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(gx - 10, gy); ctx.lineTo(gx + 10, gy); ctx.moveTo(gx, gy - 10); ctx.lineTo(gx, gy + 10); ctx.stroke();
+      // where the eye has been looking at this picture (fading trail), and where it looks now
+      const toX = (az) => cx - (az / sc.azDeg) * fw * s, toY = (el) => sy - (el / sc.elDeg) * fh * s;
+      const cap = world.trail.length / 2, n = Math.min(world.trailN, cap);
+      for (let j = 1; j < n; j++) {
+        const a = (world.trailN - n + j - 1) % cap, b = (world.trailN - n + j) % cap;
+        ctx.strokeStyle = T.green; ctx.globalAlpha = 0.15 + 0.6 * (j / n); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(toX(world.trail[2 * a]), toY(world.trail[2 * a + 1])); ctx.lineTo(toX(world.trail[2 * b]), toY(world.trail[2 * b + 1])); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      const gx = toX(world.gazeAz), gy = toY(world.gazeEl);
+      ctx.strokeStyle = T.green; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(gx, gy, 8, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(gx - 12, gy); ctx.lineTo(gx - 5, gy); ctx.moveTo(gx + 5, gy); ctx.lineTo(gx + 12, gy);
+      ctx.moveTo(gx, gy - 12); ctx.lineTo(gx, gy - 5); ctx.moveTo(gx, gy + 5); ctx.lineTo(gx, gy + 12); ctx.stroke();
     }
+  } else {
+    ctx.fillStyle = T.mut; ctx.textAlign = 'center';
+    ctx.fillText('(screen blank between pictures)', cx, sy + 4);
   }
-  ctx.fillStyle = '#8b949e';
-  ctx.font = '12px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(s > 0 ? `cue: ${world.label === 0 ? 'man' : 'woman'}` : 'screen blank', cx, sy + fh / 2 + 16);
 
-  // gaze
-  const ey = 226;
-  ctx.strokeStyle = 'rgba(88,166,255,0.18)';
-  ctx.lineWidth = 1;
-  for (const ex of world.nEyes === 2 ? [cx - 16, cx + 16] : [cx + 16]) {
-    ctx.beginPath(); ctx.moveTo(ex, ey - 8); ctx.lineTo(cx - fw / 2, sy + fh / 2);
-    ctx.moveTo(ex, ey - 8); ctx.lineTo(cx + fw / 2, sy + fh / 2); ctx.stroke();
-  }
-  // head + eyes
-  ctx.fillStyle = '#21262d';
-  ctx.beginPath(); ctx.ellipse(cx, ey + 6, 34, 20, 0, 0, Math.PI * 2); ctx.fill();
-  const eyeAt = (x, on) => { ctx.fillStyle = on ? '#58a6ff' : '#30363d'; ctx.beginPath(); ctx.arc(x, ey, 10, 0, Math.PI * 2); ctx.fill(); };
+  // head + eye(s)
+  const ey = 222;
+  ctx.fillStyle = T.line;
+  ctx.beginPath(); ctx.ellipse(cx, ey + 6, 36, 21, 0, 0, Math.PI * 2); ctx.fill();
+  const eyeAt = (x, on) => { ctx.fillStyle = on ? T.accent : T.mut; ctx.beginPath(); ctx.arc(x, ey, 10, 0, Math.PI * 2); ctx.fill(); };
   eyeAt(cx - 16, world.nEyes === 2);
   eyeAt(cx + 16, true);
 
-  // feet: left = man (blue), right = woman (pink)
-  const feet = [[cx - 110, BLUE, 'left foot = man'], [cx + 110, PINK, 'right foot = woman']];
+  // feet: left = first answer, right = second
+  const feet = [[cx - 120, T.accent, answers[0]], [cx + 120, T.pink, answers[1]]];
+  ctx.textAlign = 'center';
   feet.forEach(([x, col, name], i) => {
     const down = world.pressed[i];
-    const y = 268 + (down ? 8 : 0);
-    ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2);
-    ctx.fillStyle = down ? col : 'rgba(255,255,255,0.05)';
-    ctx.fill();
-    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = '#8b949e'; ctx.fillText(name, x, y + 36);
+    const y = 272 + (down ? 6 : 0);
+    ctx.beginPath(); ctx.arc(x, y, 19, 0, Math.PI * 2);
+    ctx.fillStyle = down ? col : T.panel; ctx.fill();
+    ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = T.fg; ctx.font = '600 12.5px system-ui, sans-serif';
+    ctx.fillText(`${i ? 'right' : 'left'} foot: ${name}`, x, y + 36);
+    ctx.font = FONT;
     const pain = world.pain[i];
     if (pain > 0.03) {
-      ctx.strokeStyle = `rgba(248,81,73,${Math.min(1, pain)})`; ctx.lineWidth = 6;
-      ctx.beginPath(); ctx.arc(x, y, 27, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = '#f85149'; ctx.fillText('pain', x, y - 30);
+      ctx.strokeStyle = T.red; ctx.globalAlpha = Math.min(1, pain); ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.fillStyle = T.red; ctx.fillText('ouch', x, y - 31);
     }
   });
   if (flash && flash.until > performance.now()) {
     ctx.strokeStyle = flash.color; ctx.lineWidth = 6;
     ctx.strokeRect(3, 3, W - 6, H - 6);
+    ctx.fillStyle = flash.color; ctx.font = '700 15px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(flash.text, 14, 24);
   }
 }
 
 // The retina(s): blocky on purpose -- this is all the fly gets to see.
-export function drawEye(ctx, W, H, world, tmp) {
-  ctx.fillStyle = '#0d1117';
+export function drawEye(ctx, W, H, world, tmp, T) {
+  ctx.fillStyle = T.bg;
   ctx.fillRect(0, 0, W, H);
   const n = world.nEyes, R = world.R, C = world.C;
   tmp.width = C; tmp.height = R;
   const tctx = tmp.getContext('2d');
   const d = tctx.createImageData(C, R);
-  const cellW = Math.floor((W - 10 * (n - 1)) / n / C), cellH = Math.floor(H / R);
-  const cell = Math.min(cellW, cellH);
+  const cell = Math.min(Math.floor((W - 10 * (n - 1)) / n / C), Math.floor(H / R));
+  const x0 = Math.floor((W - n * C * cell - 10 * (n - 1)) / 2);
   ctx.imageSmoothingEnabled = false;
   for (let e = 0; e < n; e++) {
     const L = world.retinas[e];
@@ -100,111 +117,155 @@ export function drawEye(ctx, W, H, world, tmp) {
       d.data[4 * i] = d.data[4 * i + 1] = d.data[4 * i + 2] = v; d.data[4 * i + 3] = 255;
     }
     tctx.putImageData(d, 0, 0);
-    const x0 = e * (C * cell + 10);
-    ctx.drawImage(tmp, x0, 0, C * cell, R * cell);
-    ctx.strokeStyle = '#30363d'; ctx.strokeRect(x0 + 0.5, 0.5, C * cell - 1, R * cell - 1);
+    const x = x0 + e * (C * cell + 10);
+    ctx.drawImage(tmp, x, 0, C * cell, R * cell);
+    ctx.strokeStyle = T.line; ctx.strokeRect(x + 0.5, 0.5, C * cell - 1, R * cell - 1);
   }
 }
 
-const amber = (v) => `rgb(${Math.round(255 * v)},${Math.round(170 * v)},${Math.round(40 * v)})`;
-const signed = (v) => (v >= 0 ? `rgb(${Math.round(60 + 195 * v)},${Math.round(40 * v)},${Math.round(50 * v)})`
-  : `rgb(${Math.round(50 * -v)},${Math.round(80 * -v)},${Math.round(60 + 195 * -v)})`);
+const amber = (v, T) => (T.dark ? `rgb(${Math.round(255 * v)},${Math.round(170 * v)},${Math.round(40 * v)})`
+  : `rgb(${Math.round(255 - 30 * v)},${Math.round(255 - 110 * v)},${Math.round(255 - 215 * v)})`);
+const signed = (v, T) => {
+  const a = Math.abs(v);
+  if (T.dark) return v >= 0 ? `rgb(${Math.round(40 + 200 * a)},${Math.round(40 + 20 * a)},${Math.round(45 + 20 * a)})` : `rgb(${Math.round(40 + 10 * a)},${Math.round(45 + 70 * a)},${Math.round(55 + 200 * a)})`;
+  return v >= 0 ? `rgb(255,${Math.round(255 - 170 * a)},${Math.round(255 - 170 * a)})` : `rgb(${Math.round(255 - 180 * a)},${Math.round(255 - 110 * a)},255)`;
+};
 
-// LC units by type, then the recurrent core (red = +, blue = -), then feet.
-export function drawNeurons(ctx, W, H, brain) {
-  ctx.fillStyle = '#0d1117';
+// LC units by type, then the recurrent core, then feet, the mood chemical and the eye motor.
+export function drawNeurons(ctx, W, H, brain, T) {
+  ctx.fillStyle = T.bg;
   ctx.fillRect(0, 0, W, H);
-  ctx.font = '11px system-ui, sans-serif';
-  ctx.textAlign = 'left';
+  ctx.font = FONT; ctx.textAlign = 'left';
   const cell = 13;
-  let y = 6;
+  let y = 8;
   for (let e = 0; e < brain.nEyes; e++) {
     const lc = brain.lc[e];
-    let x = 8;
+    let x = 10;
     for (const t of lc.types) {
       const [nr, nc] = t.grid;
-      ctx.fillStyle = '#8b949e';
+      ctx.fillStyle = T.mut;
       ctx.fillText(t.name + (brain.nEyes === 2 ? (e ? ' R' : ' L') : ''), x, y + 9);
-      for (let i = 0; i < nr; i++) {
-        for (let j = 0; j < nc; j++) {
-          ctx.fillStyle = amber(Math.min(1, lc.out[t.start + i * nc + j]));
-          ctx.fillRect(x + j * (cell + 1), y + 14 + i * (cell + 1), cell, cell);
-        }
+      for (let i = 0; i < nr; i++) for (let j = 0; j < nc; j++) {
+        ctx.fillStyle = amber(Math.min(1, lc.out[t.start + i * nc + j]), T);
+        ctx.fillRect(x + j * (cell + 1), y + 14 + i * (cell + 1), cell, cell);
       }
       x += nc * (cell + 1) + 14;
     }
-    y += 14 + 6 * (cell + 1) + 4;
+    y += 14 + Math.max(...lc.types.map((t) => t.grid[0])) * (cell + 1) + 8;
   }
-  ctx.fillStyle = '#8b949e';
-  ctx.fillText(`core (${brain.N})   red = active, blue = suppressed`, 8, y + 9);
+  ctx.fillStyle = T.mut;
+  ctx.fillText(`brain cells (${brain.N})`, 10, y + 9);
   const cols = 16, cc = 11;
   for (let i = 0; i < brain.N; i++) {
-    ctx.fillStyle = signed(Math.max(-1, Math.min(1, brain.h[i])));
-    ctx.fillRect(8 + (i % cols) * (cc + 1), y + 14 + Math.floor(i / cols) * (cc + 1), cc, cc);
+    ctx.fillStyle = signed(Math.max(-1, Math.min(1, brain.h[i])), T);
+    ctx.fillRect(10 + (i % cols) * (cc + 1), y + 14 + Math.floor(i / cols) * (cc + 1), cc, cc);
   }
-  const bx = 8 + cols * (cc + 1) + 30;
-  ['L foot', 'R foot'].forEach((name, m) => {
+  const bx = 10 + cols * (cc + 1) + 26;
+  const names = ['left foot', 'right foot'];
+  names.forEach((name, m) => {
     const v = brain.out[m];
-    const x = bx + m * 64;
-    ctx.fillStyle = '#21262d'; ctx.fillRect(x, y + 14, 26, 90);
-    ctx.fillStyle = m === 0 ? BLUE : PINK;
+    const x = bx + m * 54;
+    ctx.fillStyle = T.panel; ctx.fillRect(x, y + 14, 24, 90);
+    ctx.strokeStyle = T.line; ctx.strokeRect(x + 0.5, y + 14.5, 23, 89);
+    ctx.fillStyle = m === 0 ? T.accent : T.pink;
     const h = Math.abs(v) * 45;
-    ctx.fillRect(x, v >= 0 ? y + 14 + 45 - h : y + 14 + 45, 26, h);
-    ctx.fillStyle = '#8b949e'; ctx.fillText(name, x - 4, y + 120);
+    ctx.fillRect(x, v >= 0 ? y + 14 + 45 - h : y + 14 + 45, 24, h);
+    ctx.fillStyle = T.mut; ctx.fillText(name, x - 8, y + 118);
   });
-  // Neuromodulation: the shared "dopamine" level everyone's leak rate is nudged by this frame.
-  const mx = bx + 150;
-  ctx.fillStyle = '#8b949e'; ctx.fillText('dopamine', mx, y + 9);
-  ctx.fillStyle = '#21262d'; ctx.fillRect(mx, y + 14, 90, 14);
-  ctx.fillStyle = AMBER; ctx.fillRect(mx, y + 14, 90 * brain.dopamine, 14);
-  // Active vision: this frame's motor command (dx, dy), tanh-bounded to [-1, 1].
-  ctx.fillStyle = '#8b949e'; ctx.fillText('gaze motor (dx, dy)', mx, y + 40);
-  const gcx = mx + 30, gcy = y + 66, gr = 24;
-  ctx.strokeStyle = '#30363d'; ctx.beginPath(); ctx.arc(gcx, gcy, gr, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = GREEN; ctx.lineWidth = 2;
+  const mx = bx + 120;
+  ctx.fillStyle = T.mut; ctx.fillText('mood chemical', mx, y + 9);
+  ctx.fillStyle = T.panel; ctx.fillRect(mx, y + 14, 100, 14);
+  ctx.fillStyle = T.amber; ctx.fillRect(mx, y + 14, 100 * brain.dopamine, 14);
+  ctx.strokeStyle = T.line; ctx.strokeRect(mx + 0.5, y + 14.5, 99, 13);
+  ctx.fillStyle = T.mut; ctx.fillText('eye motor', mx, y + 48);
+  const gcx = mx + 26, gcy = y + 76, gr = 22;
+  ctx.strokeStyle = T.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(gcx, gcy, gr, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = T.green; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.moveTo(gcx, gcy); ctx.lineTo(gcx + brain.gaze[0] * gr, gcy - brain.gaze[1] * gr); ctx.stroke();
+  ctx.lineWidth = 1;
 }
 
-export function drawChart(ctx, W, H, hist, unit = 'generation') {
-  ctx.fillStyle = '#0d1117';
-  ctx.fillRect(0, 0, W, H);
-  ctx.font = '11px system-ui, sans-serif';
-  const pl = 44, pr = 40, pt = 10, pb = 22;
-  const w = W - pl - pr, h = H - pt - pb;
+// How often the fly has been right, 0-100%, with a dashed "guessing" line at 50%.
+export function drawAccuracy(ctx, W, H, hist, unit, T) {
+  ctx.fillStyle = T.bg; ctx.fillRect(0, 0, W, H);
+  ctx.font = FONT;
+  const pl = 40, pr = 14, pt = 12, pb = 24, w = W - pl - pr, h = H - pt - pb;
+  const gy = (v) => pt + h - v * h;
+  ctx.strokeStyle = T.line; ctx.fillStyle = T.mut; ctx.textAlign = 'right'; ctx.lineWidth = 1;
+  for (const v of [0, 0.5, 1]) {
+    ctx.beginPath(); if (v === 0.5) ctx.setLineDash([4, 4]); ctx.moveTo(pl, gy(v)); ctx.lineTo(pl + w, gy(v)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillText(`${v * 100}%`, pl - 6, gy(v) + 4);
+  }
+  ctx.textAlign = 'left'; ctx.fillText('guessing', pl + 6, gy(0.5) - 5);
   if (hist.length < 2) {
-    ctx.fillStyle = '#8b949e'; ctx.textAlign = 'center';
-    ctx.fillText('the learning curve appears once training has started', W / 2, H / 2);
+    ctx.textAlign = 'center'; ctx.fillText('the learning curve appears here once training starts', pl + w / 2, gy(0.78));
     return;
   }
-  const series = [
-    ['popMean', '#6e7681'], ['best', AMBER], ['theta', GREEN],
-  ];
-  let lo = Infinity, hi = -Infinity;
-  for (const p of hist) for (const [k] of series) { if (p[k] < lo) lo = p[k]; if (p[k] > hi) hi = p[k]; }
-  if (hi - lo < 1) { hi = lo + 1; }
   const gx = (i) => pl + (i / (hist.length - 1)) * w;
+  // smoothed line (running mean over a few points) for a calmer, readable curve
+  const k = Math.max(1, Math.round(hist.length / 40));
+  ctx.strokeStyle = T.accent; ctx.lineWidth = 2.5; ctx.beginPath();
+  hist.forEach((p, i) => {
+    let s = 0, c = 0;
+    for (let j = Math.max(0, i - k); j <= i; j++) { s += hist[j].acc; c++; }
+    const yy = gy(s / c);
+    i ? ctx.lineTo(gx(i), yy) : ctx.moveTo(gx(i), yy);
+  });
+  ctx.stroke(); ctx.lineWidth = 1;
+  ctx.fillStyle = T.mut; ctx.textAlign = 'center';
+  ctx.fillText(`${unit} ${hist[0].gen} → ${hist[hist.length - 1].gen}`, pl + w / 2, H - 6);
+}
+
+export function drawHistogram(ctx, W, H, values, { min, max, bins = 20, color, title }, T) {
+  ctx.fillStyle = T.bg; ctx.fillRect(0, 0, W, H);
+  ctx.font = FONT;
+  const pl = 10, pr = 10, pt = 26, pb = 22, w = W - pl - pr, h = H - pt - pb;
+  ctx.fillStyle = T.fg; ctx.textAlign = 'left'; ctx.fillText(title, pl, 16);
+  if (!values || !values.length) { ctx.fillStyle = T.mut; ctx.fillText('no data yet', pl, pt + h / 2); return; }
+  const counts = new Array(bins).fill(0);
+  for (const v of values) counts[Math.max(0, Math.min(bins - 1, Math.floor(((v - min) / (max - min)) * bins)))]++;
+  const top = Math.max(...counts);
+  const bw = w / bins;
+  ctx.fillStyle = color || T.accent;
+  counts.forEach((c, i) => { const bh = (c / top) * h; ctx.fillRect(pl + i * bw + 1, pt + h - bh, bw - 2, bh); });
+  const lbl = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1)).replace('-', '−');
+  ctx.fillStyle = T.mut; ctx.textAlign = 'left'; ctx.fillText(lbl(min), pl, H - 6);
+  ctx.textAlign = 'center'; if (min < 0 && max > 0) ctx.fillText('0', pl + w * (-min / (max - min)), H - 6);
+  ctx.textAlign = 'right'; ctx.fillText(lbl(max), pl + w, H - 6);
+}
+
+// Two setups: each run as a dot, the average as a bar, and the typical spread.
+export function drawCompare(ctx, W, H, data, T) {
+  ctx.fillStyle = T.bg; ctx.fillRect(0, 0, W, H);
+  ctx.font = FONT;
+  const pl = 44, pr = 16, pt = 16, pb = 44, w = W - pl - pr, h = H - pt - pb;
+  const all = [...data.a, ...data.b].filter((x) => x != null);
+  let lo = Math.min(0.4, ...all), hi = Math.max(0.6, ...all);
+  lo = Math.max(0, Math.floor(lo * 10) / 10 - 0.05); hi = Math.min(1, Math.ceil(hi * 10) / 10 + 0.02);
   const gy = (v) => pt + h - ((v - lo) / (hi - lo)) * h;
-  ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1;
-  ctx.fillStyle = '#8b949e'; ctx.textAlign = 'right';
-  for (let k = 0; k <= 4; k++) {
-    const v = lo + ((hi - lo) * k) / 4, yy = gy(v);
-    ctx.beginPath(); ctx.moveTo(pl, yy); ctx.lineTo(pl + w, yy); ctx.stroke();
-    ctx.fillText(v.toFixed(0), pl - 6, yy + 4);
+  ctx.strokeStyle = T.line; ctx.fillStyle = T.mut; ctx.textAlign = 'right';
+  for (let v = Math.ceil(lo * 10) / 10; v <= hi + 1e-9; v += 0.1) {
+    ctx.beginPath(); if (Math.abs(v - 0.5) < 1e-6) ctx.setLineDash([4, 4]); ctx.moveTo(pl, gy(v)); ctx.lineTo(pl + w, gy(v)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillText(`${Math.round(v * 100)}%`, pl - 6, gy(v) + 4);
   }
-  for (const [k, col] of series) {
-    ctx.strokeStyle = col; ctx.lineWidth = k === 'theta' ? 2 : 1;
-    ctx.beginPath();
-    hist.forEach((p, i) => (i ? ctx.lineTo(gx(i), gy(p[k])) : ctx.moveTo(gx(i), gy(p[k]))));
-    ctx.stroke();
-  }
-  // accuracy of the current policy, right axis 0-100%
-  ctx.strokeStyle = BLUE; ctx.lineWidth = 2; ctx.beginPath();
-  hist.forEach((p, i) => { const yy = pt + h - p.acc * h; i ? ctx.lineTo(gx(i), yy) : ctx.moveTo(gx(i), yy); });
-  ctx.stroke();
-  ctx.textAlign = 'left'; ctx.fillStyle = BLUE;
-  ctx.fillText('100%', pl + w + 4, pt + 8); ctx.fillText('50%', pl + w + 4, pt + h / 2 + 4); ctx.fillText('0%', pl + w + 4, pt + h);
-  ctx.strokeStyle = '#30363d'; ctx.setLineDash([4, 4]);
-  ctx.beginPath(); ctx.moveTo(pl, pt + h / 2); ctx.lineTo(pl + w, pt + h / 2); ctx.stroke(); ctx.setLineDash([]);
-  ctx.textAlign = 'center'; ctx.fillStyle = '#8b949e';
-  ctx.fillText(`${unit} ${hist[0].gen} → ${hist[hist.length - 1].gen}`, pl + w / 2, H - 5);
+  const groups = [[data.nameA, data.a, T.mut], [data.nameB, data.b, T.accent]];
+  groups.forEach(([name, xs, col], g) => {
+    const cx = pl + w * (g === 0 ? 0.3 : 0.7), bw = w * 0.22;
+    const done = xs.filter((x) => x != null);
+    if (done.length) {
+      const m = done.reduce((s, x) => s + x, 0) / done.length;
+      ctx.fillStyle = col; ctx.globalAlpha = 0.28;
+      ctx.fillRect(cx - bw / 2, gy(m), bw, gy(lo) - gy(m));
+      ctx.globalAlpha = 1; ctx.fillRect(cx - bw / 2, gy(m) - 1.5, bw, 3);
+      ctx.fillStyle = T.fg; ctx.textAlign = 'center'; ctx.font = '700 14px system-ui, sans-serif';
+      ctx.fillText(`${(m * 100).toFixed(1)}%`, cx, gy(m) - 8); ctx.font = FONT;
+      done.forEach((x, i) => {
+        const jitter = ((i % 5) - 2) * (bw / 7);
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx + jitter, gy(x), 4.5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = T.bg; ctx.stroke();
+      });
+    }
+    ctx.fillStyle = T.fg; ctx.textAlign = 'center'; ctx.fillText(name, cx, H - 24);
+    ctx.fillStyle = T.mut; ctx.fillText(`${done.length}/${xs.length} runs`, cx, H - 8);
+  });
 }
