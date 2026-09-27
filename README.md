@@ -69,7 +69,7 @@ that answered only the images it was sure of looked 100% accurate.
 |---|---|---|
 | **LPLC2, LC4** | looming / outward-motion detectors (Hassenstein-Reichardt correlators on ON/OFF signals). Fire when the image expands into view; ~20x quieter on a static image | no (fixed) |
 | **LC11, LC_ON, LUM** | small dark object, small bright object, coarse luminance. Carry the image content | no (fixed) |
-| **core** | 128 sparse leaky tanh neurons (10 inputs + 12 recurrent connections each) | by evolution |
+| **core** | 128 sparse leaky tanh neurons (10 inputs + 12 recurrent connections, own leak rate each) | by evolution |
 | **fast synapses** | static LC cells -> the two feet | by reward and pain, during life |
 | **feet** | 2 outputs; a press above 0.3 is an answer | - |
 | **touch / pain inputs** | what each foot feels (pain input optional, off by default) | - |
@@ -96,17 +96,23 @@ Two places it is implemented:
 
 - **Probe the eye** does this literally, the way the idea is usually described: a linear
   classifier is trained once on centred looks, then scored on held-out images two ways --
-  a single centred look, and 10 independently jittered sub-receptor looks with their scores
-  summed. On faint, noisy stripes this took a probe from 70% to 78% held-out; see the results
-  table below for more. It costs nothing during training, only a few extra (cheap) evaluation
-  passes.
+  a single centred look, and 10 jittered sub-receptor looks with their scores summed. On faint,
+  noisy stripes this took a probe from 70% to 84% held-out; see the results table below for
+  more. It costs nothing during training, only a few extra (cheap) evaluation passes.
 - **Eye jitter (microsaccades)** does the "shift" part live, every simulation frame, the way a
   real fly's fixational eye movements might: while an image is on screen for up to 60 frames,
   each frame samples the retina at a slightly different sub-receptor offset instead of the exact
   same pixels every time, echoing real insects' compensatory head/eye micro-movements.
   **Decide from a running average** is the matching "sum before deciding" half: it averages the
   foot signal over recent frames instead of betting everything on one frame's instantaneous
-  read. Both are off by default (`0` / `1`) and live in the settings panel.
+  read (a genuine exponential decay/leaky integrator, not a flat average). Both are off by
+  default (`0` / `1`) and live in the settings panel.
+
+The jitter steps around a small circle rather than picking a random offset each frame: with
+only a handful of frames to a decision, a random walk can land on the same side twice and never
+sample the other side, where an even circular spacing guarantees full coverage in the fewest
+possible looks (confirmed on the probe: 4 evenly-spaced looks already recover most of the gain
+that 10 random ones used to).
 
 Honestly reported: turning those two on together did **not** clearly help the live, playing fly
 in my tests. The window between the reaction-time delay and the forced-choice deadline is short
@@ -114,7 +120,19 @@ in my tests. The window between the reaction-time delay and the forced-choice de
 decision is forced either way, and a single jittered frame right at decision time can still be
 an unlucky one. The trick reliably pays off where it is evaluating a fixed classifier over many
 looks with no deadline (**Probe the eye**), not yet where the decision itself is fast and time
--pressured.
+-pressured. It is also worth saying what was *already* true before any of this: the core was
+already a trained recurrent network (each neuron's state already carries forward a leaky memory
+of previous frames, so it never saw a frame "in a vacuum"), and a press already fires the instant
+its threshold is crossed, any frame after the reaction-time delay -- both already do part of what
+"summing over time" and "early exit" are asking for.
+
+One more small change in the same spirit: each core neuron's leak rate (how much of every step
+is "new" vs "carried over") used to be one fixed number shared by all 128 neurons. It is now
+evolved per neuron, so evolution can give some neurons a short memory and others a long one if
+that turns out to help. Measured on stripes it landed at about the same place as the shared
+constant (~91-93% either way) -- a wash on this task, not a clear win -- but it costs 128 extra
+parameters (about 4% more) and next to nothing to run, so it stays: harmless, and available for
+whatever task might actually need it.
 
 ## Eyes
 
@@ -134,7 +152,8 @@ looks with no deadline (**Probe the eye**), not yet where the decision itself is
 Faces are limited by the fixed eye: a linear probe on its static LC features tops out around
 63-65% on a single look (also with two eyes or the fine retina), and the photo labels are
 noisy. Use **Probe the eye** to see this ceiling for any setting, and how far "the loop trick"
-(above) closes the gap: +8 points on faint stripes, +4-6 on stripes already near the ceiling.
+(above) closes the gap: +14 points on faint stripes (70% -> 84%), +4-6 on stripes already near
+the ceiling.
 
 What did not work (kept out of the app, findings from testing): feeding pain into the
 recurrent core as a sensory input slowed evolution (available, off by default:

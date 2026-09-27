@@ -44,6 +44,7 @@ export class TrialWorld {
     this.rng = null;
     this.stim = null;
     this.serial = 0; // bumps whenever a new image is put on screen
+    this.jitterStep = 0;
   }
 
   reset(seed, stim) {
@@ -84,6 +85,7 @@ export class TrialWorld {
     this.label = this.rng() < 0.5 ? 0 : 1;
     this.image = this.stim.sample(this.rng, this.label);
     this.serial++;
+    this.jitterStep = 0; // each image gets the jitter scan from the same starting phase
   }
 
   _endTrial() {
@@ -181,12 +183,19 @@ export class TrialWorld {
     const s = this.scale();
     const bg = e.background;
     const R = this.R, C = this.C;
-    // Automatic fixational jitter, a fresh draw every frame the image is visible (see
-    // eye.jitterFrac in config.js). Uses the world's own RNG, so it stays deterministic per seed.
+    // Automatic fixational jitter (see eye.jitterFrac in config.js): a deterministic scan around
+    // a small circle, one step per frame, rather than a random offset. Random jitter can land on
+    // the same side twice in a row and never visit the other side within the few frames a
+    // decision actually has to be made in; stepping evenly around a circle guarantees every look
+    // covers new ground, in the fewest possible frames, every time.
+    const JITTER_POINTS = 6;
     let jAz = 0, jEl = 0;
     if (s > 0 && e.jitterFrac) {
-      jAz = (this.rng() - 0.5) * e.jitterFrac * (e.fovAzDeg / C);
-      jEl = (this.rng() - 0.5) * e.jitterFrac * (e.fovElDeg / R);
+      const ang = (this.jitterStep % JITTER_POINTS) / JITTER_POINTS * 2 * Math.PI;
+      const r = 0.5 * e.jitterFrac;
+      jAz = Math.cos(ang) * r * (e.fovAzDeg / C);
+      jEl = Math.sin(ang) * r * (e.fovElDeg / R);
+      this.jitterStep++;
     }
     for (let eye = 0; eye < this.nEyes; eye++) {
       const L = this.retinas[eye];

@@ -169,6 +169,18 @@ ok('ledger adds up to the return; repeat penalty only after repeatFree in a row'
   assert.equal(w.parts.repeat, cfg.reward.repeat * (4 - cfg.reward.repeatFree), 'answers 3 and 4 with the same foot are charged');
 });
 
+ok('each core neuron has its own evolvable leak (not one shared constant)', () => {
+  const b = new Brain(cfg);
+  const p = b.initParams(3);
+  b.setParams(p);
+  assert.equal(b.alpha.length, b.N);
+  for (const a of b.alpha) assert.ok(a > 0 && a < 1, 'a leak rate is a probability, not a raw logit');
+  const min = Math.min(...b.alpha), max = Math.max(...b.alpha);
+  assert.ok(max - min > 0.3, 'neurons should start spread out, not all identical');
+  const mean = b.alpha.reduce((s, v) => s + v, 0) / b.alpha.length;
+  assert.ok(Math.abs(mean - cfg.brain.alpha) < 0.1, 'centred near the configured default');
+});
+
 ok('size + speed', () => {
   const r = new Runner(cfg, stim);
   const p = r.brain.initParams(1);

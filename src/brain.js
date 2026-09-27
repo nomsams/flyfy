@@ -153,7 +153,7 @@ export class Brain {
     this.kIn = Math.min(b.kIn, this.nIn);
     this.kRec = Math.min(b.kRec, this.N);
     this.M = 2;
-    this.alpha = b.alpha;
+    this.alphaCentre = b.alpha; // where each neuron's evolved leak starts out, before evolution spreads them
 
     // Fixed random wiring (distinct sources per neuron).
     const rng = mulberry32(b.netSeed);
@@ -176,6 +176,12 @@ export class Brain {
     this.sizes = {
       win: this.N * this.kIn, wrec: this.N * this.kRec, b: this.N,
       wout: this.M * this.N, bout: this.M,
+      // Each core neuron's own leak rate (how much of each step is "new" vs "memory"), evolved
+      // rather than the single shared constant every neuron used to have. This is what lets
+      // evolution give some neurons a short memory (react to the instant) and others a long one
+      // (integrate evidence over the whole time a cue is up) -- the brain learning, on its own,
+      // how to piece together information across frames instead of everyone forgetting alike.
+      alpha: this.N,
     };
     this.paramCount = Object.values(this.sizes).reduce((a, b2) => a + b2, 0);
     this.x = new Float32Array(this.nIn);
@@ -212,6 +218,10 @@ export class Brain {
     fill(this.sizes.wout, 2 / Math.sqrt(this.N));
     // resting bias: a naive fly keeps its feet up (below the press threshold) until it has a reason to press
     for (let m = 0; m < this.M; m++) p[o + m] = -0.6;
+    // per-neuron leak, centred on the config default but already spread out (as logit(alpha)) so
+    // evolution has some neurons on each side of it to start differentiating from
+    const centreLogit = Math.log(this.alphaCentre / (1 - this.alphaCentre));
+    for (let i = 0; i < this.sizes.alpha; i++) p[o + i] = centreLogit + gauss(rng) * 1.0;
     return p;
   }
 
@@ -224,6 +234,9 @@ export class Brain {
     this.b = take(this.sizes.b);
     this.Wout = take(this.sizes.wout);
     this.bout = take(this.sizes.bout);
+    const alphaRaw = take(this.sizes.alpha);
+    if (!this.alpha) this.alpha = new Float32Array(this.N);
+    for (let i = 0; i < this.N; i++) this.alpha[i] = 1 / (1 + Math.exp(-alphaRaw[i])); // logistic sigmoid -> (0,1)
   }
 
   // keepPlastic: keep what the fly has learned (the fast synapses) across episodes.
@@ -294,7 +307,7 @@ export class Brain {
       const ib = i * kIn, rb = i * kRec;
       for (let k = 0; k < kIn; k++) s += Win[ib + k] * x[inIdx[ib + k]];
       for (let k = 0; k < kRec; k++) s += Wrec[rb + k] * h[recIdx[rb + k]];
-      hn[i] = (1 - alpha) * h[i] + alpha * Math.tanh(s);
+      hn[i] = (1 - alpha[i]) * h[i] + alpha[i] * Math.tanh(s);
     }
     h.set(hn);
     const z = this.z;

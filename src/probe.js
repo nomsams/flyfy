@@ -7,23 +7,26 @@
 //
 // It also implements "the loop trick" (test-time jitter ensembling): the classifier is
 // trained once on a single centred look at each image, exactly as before. At *test* time,
-// instead of one look, each held-out image is rendered `ensemble` times at a small random
-// sub-receptor offset, the linear classifier scores each jittered look, and the raw scores
-// (logits) are summed before deciding -- the same idea as shifting, downsampling and
-// re-classifying a photo several times and adding up the results. This only ever touches
-// evaluation, never training, so it costs nothing during learning and nothing at inference
-// time beyond a few extra (cheap) forward passes of the fixed LC layer.
+// instead of one look, each held-out image is rendered `ensemble` times at a small sub-receptor
+// offset, the linear classifier scores each jittered look, and the raw scores (logits) are
+// summed before deciding -- the same idea as shifting, downsampling and re-classifying a photo
+// several times and adding up the results. The `ensemble` looks are spaced evenly around a
+// circle (not random): with only a handful of looks, random jitter can land on the same side
+// twice and miss the other side entirely, while even spacing guarantees full, non-overlapping
+// coverage every time. This only ever touches evaluation, never training, so it costs nothing
+// during learning and nothing at inference time beyond a few extra (cheap) forward passes of
+// the fixed LC layer.
 
 import { TrialWorld } from './world.js';
 import { Brain } from './brain.js';
 import { mulberry32 } from './rng.js';
 
-// Renders `img` through the LC layer's static units, settling a few frames first. jRng, when
-// given, draws a fresh sub-receptor jitter offset (independent of the world's own RNG stream).
-function staticFeatures(world, brain, staticIdx, img, jRng, jitterRecep) {
+// Renders `img` through the LC layer's static units, settling a few frames first. `offset`, when
+// given, is a [az, el] sub-receptor jitter (as a fraction of receptor spacing) for this look.
+function staticFeatures(world, brain, staticIdx, img, offset) {
   world.image = img;
-  const az = jRng ? (jRng() - 0.5) * jitterRecep * (world.cfg.eye.fovAzDeg / world.C) : 0;
-  const el = jRng ? (jRng() - 0.5) * jitterRecep * (world.cfg.eye.fovElDeg / world.R) : 0;
+  const az = offset ? offset[0] * (world.cfg.eye.fovAzDeg / world.C) : 0;
+  const el = offset ? offset[1] * (world.cfg.eye.fovElDeg / world.R) : 0;
   for (const lc of brain.lc) lc.reset();
   let out = new Float32Array(brain.nLC);
   for (let f = 0; f < 3; f++) { // a few frames so any history-dependent state settles
@@ -59,7 +62,7 @@ export function probeFrontEnd(cfg, stim, perClass = 200, seed = 5, ensemble = 1,
   for (let i = 0; i < perClass * 2; i++) {
     const label = i % 2;
     const img = Float32Array.from(stim.sample(rng, label)); // cloned: procedural stimuli reuse their buffer
-    X.push(staticFeatures(world, brain, staticIdx, img, null, 0));
+    X.push(staticFeatures(world, brain, staticIdx, img, null));
     Y.push(label);
     IMAGES.push(img);
   }
@@ -96,12 +99,15 @@ export function probeFrontEnd(cfg, stim, perClass = 200, seed = 5, ensemble = 1,
 
   let testEnsembled = null;
   if (ensemble > 1) {
-    // Independent jitter draws from the labels/split RNG, so this is deterministic per seed too.
-    const jRng = mulberry32(seed + 1e6);
+    const r = 0.5 * jitterRecep;
+    const offsets = Array.from({ length: ensemble }, (_, k) => {
+      const ang = (k / ensemble) * 2 * Math.PI;
+      return [Math.cos(ang) * r, Math.sin(ang) * r];
+    });
     let ok = 0;
     for (let i = split; i < X.length; i++) {
       let sum = 0;
-      for (let k = 0; k < ensemble; k++) sum += logit(z(staticFeatures(world, brain, staticIdx, IMAGES[i], jRng, jitterRecep)));
+      for (const offset of offsets) sum += logit(z(staticFeatures(world, brain, staticIdx, IMAGES[i], offset)));
       ok += (sum > 0) === (Y[i] === 1) ? 1 : 0;
     }
     testEnsembled = ok / (X.length - split);
