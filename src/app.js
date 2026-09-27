@@ -108,11 +108,12 @@ class WorkerPool {
 // Default: the 1,000 bundled photos, pre-packed as one small file (fast, and identical to what
 // the command-line tools test on). Optional: a full local photo folder, via node server.js.
 async function loadPackedFaces() {
-  const [meta, buf] = await Promise.all([
+  const [meta, buf, cbuf] = await Promise.all([
     fetch('data/faces32.json').then((r) => { if (!r.ok) throw new Error('data/faces32.json missing'); return r.json(); }),
     fetch('data/faces32.bin').then((r) => { if (!r.ok) throw new Error('data/faces32.bin missing'); return r.arrayBuffer(); }),
+    fetch('data/faces32c.bin').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null),
   ]);
-  return unpackFaces(new Uint8Array(buf), meta.labels);
+  return unpackFaces(new Uint8Array(buf), meta.labels, Infinity, cbuf && meta.chromaSize ? new Uint8Array(cbuf) : null, meta.chromaSize);
 }
 
 async function loadFacesFromFolder(cap, status) {
@@ -194,6 +195,7 @@ const REWARD_UI = [
   ['eye.gazeStepDeg', '...step size (deg)', 'How far the eye can move in one moment.', 0.5],
   ['eye.gazeRangeDeg', '...range (deg)', 'How far from the centre of the screen the eye may look.', 1],
   ['eye.acceptance', 'Lens blur', 'How wide a cone of light each sensor averages, in sensor gaps (real flies: about 1). Makes pictures smooth instead of full of false moire patterns. 0 = pinhole (reads one exact point).', 0.1],
+  ['eye.colour', 'Colour vision', '1 = each sensor also reports red-green and blue-yellow; reaches the brain through the memory centre (ability switch).', 1],
   ['eye.reflex', 'Look at what stands out', 'Strength of the innate turn-toward-and-approach reflex (0 = off; ability switch sets 1). Moves the eye and legs even without the learned abilities.', 0.1],
   ['eye.activeZoom', 'Step closer or back', '1 = a third eye-motor output moves toward or away from the picture (ability switch).', 1],
   ['eye.zoomStep', '...speed', 'How much the picture can grow or shrink per moment (0.06 = 6%).', 0.01],
@@ -299,7 +301,7 @@ async function newBrain(seed = Date.now() % 100000) {
 
 // Only a few things change the structure of the simulation without changing its parameters:
 // right now that is the memory centre (it adds or removes a layer of cells).
-const structKey = (c) => JSON.stringify([c.mb.enabled ? c.mb.cells : 0, c.mb.enabled ? c.mb.retina : 0]);
+const structKey = (c) => JSON.stringify([c.mb.enabled ? c.mb.cells : 0, c.mb.enabled ? c.mb.retina : 0, c.mb.enabled ? c.eye.colour : 0]);
 
 // The Settings table changed (directly, or via an ability switch / task card).
 async function applySettings() {
@@ -797,7 +799,7 @@ async function main() {
   });
   // the full-folder option only makes sense when node server.js is serving a bigger folder
   fetch('api/dataset').then((r) => (r.ok ? r.json() : null)).then((l) => {
-    if (l && l.men.length + l.women.length > 1000) { $('btnFullFaces').hidden = false; $('faceSrc').textContent += ` Your local folder has ${l.men.length + l.women.length}.`; }
+    if (l && l.men.length + l.women.length > 3330) { $('btnFullFaces').hidden = false; $('faceSrc').textContent += ` Your local folder has ${l.men.length + l.women.length}.`; }
   }).catch(() => {});
   startWatchLoop();
   window.__fly = S; // handy for debugging in the console

@@ -121,13 +121,29 @@ ok('find the spot: the answer lives only inside the patch', () => {
   assert.ok(Math.max(...xs) - Math.min(...xs) < 16 && Math.max(...ys) - Math.min(...ys) < 16, 'and only within a small patch');
 });
 
-ok('packed faces load in Node, normalised, split into practice and exam', () => {
+ok('packed faces load in Node: all originals, in colour, normalised, split into practice and exam', () => {
   const f = loadFacesNode();
-  assert.equal(f.train.size + f.test.size, 1000);
-  assert.ok(f.test.size >= 100);
+  assert.equal(f.train.size + f.test.size, 3330);
+  assert.ok(f.test.size >= 400);
+  assert.equal(f.train.planes, 3, 'brightness + two colour-opponent planes');
   let m = 0;
   for (let i = 0; i < IMG * IMG; i++) m += f.train.images[i] / (IMG * IMG);
   assert.ok(Math.abs(m - 0.5) < 0.1, 'exposure normalised: ' + m);
+  // colour planes carry real colour (not all zero), in a sensible range
+  const rg = f.train.images.subarray(IMG * IMG, 2 * IMG * IMG);
+  assert.ok(rg.some((v) => Math.abs(v) > 0.02) && rg.every((v) => Math.abs(v) <= 1.01));
+});
+
+ok('colour vision: sensors report colour only when it is switched on, and it reaches the Kenyon cells', () => {
+  const f = loadFacesNode();
+  const img = f.train.images.subarray(0, 3 * IMG * IMG);
+  const off = showing({}, img), on = showing({ eye: { colour: 1 } }, img);
+  assert.ok(off.chroma[0].every((v) => v === 0));
+  assert.ok(on.chroma[0].some((v) => Math.abs(v) > 0.01));
+  assert.deepEqual(Array.from(on.retinas[0]), Array.from(off.retinas[0]), 'brightness is unchanged by colour vision');
+  const b = new Brain(mergeConfig({ eye: { colour: 1 }, mb: { enabled: 1, retina: 1 } }));
+  assert.equal(b.nSrc, 3 * cfg.eye.rows * cfg.eye.cols);
+  assert.equal(b.paramCount, new Brain(cfg).paramCount, 'colour does not reshape the evolved brain');
 });
 
 ok('comparison statistics tell a clear win from luck', () => {

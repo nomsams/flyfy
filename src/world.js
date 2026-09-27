@@ -4,7 +4,7 @@
 // (left foot = label 0, right foot = label 1) -> blank again.
 
 import { mulberry32 } from './rng.js';
-import { IMG } from './stimuli.js';
+import { IMG, lumOf, hasColour } from './stimuli.js';
 import { Mipmap, PAD } from './optics.js';
 
 export const EVENT = { NONE: 0, CORRECT: 1, WRONG: 2, PREMATURE: 3, MISS: 4 };
@@ -30,6 +30,8 @@ export class TrialWorld {
     this.C = e.cols;
     this.retinas = [];
     for (let i = 0; i < this.nEyes; i++) this.retinas.push(new Float32Array(this.R * this.C));
+    // colour receptors (eye.colour): red-green then blue-yellow opponent signal per sensor, per eye
+    this.chroma = Array.from({ length: this.nEyes }, () => new Float32Array(2 * this.R * this.C));
     // Angular position (degrees) of every receptor column/row. Uniform spacing by default; with
     // eye.fovea > 0, a tangent warp packs receptors densest at the centre of gaze (t=0) and
     // sparsest at the field's edges (t=+-1), same receptor count either way.
@@ -254,7 +256,7 @@ export class TrialWorld {
     }
     for (let eye = 0; eye < this.nEyes; eye++) {
       const L = this.retinas[eye];
-      if (s <= 0) { L.fill(bg); continue; }
+      if (s <= 0) { L.fill(bg); this.chroma[eye].fill(0); continue; }
       // With two eyes the screen lands off-axis in opposite directions (a little for
       // 'overlap'; a lot for 'split', where each eye sees mostly its own half).
       const half = e.layout === 'split' ? (e.fovAzDeg - e.splitOverlapDeg) / 2 : e.binocularShiftDeg;
@@ -265,7 +267,7 @@ export class TrialWorld {
       const hw = aw / 2, he = ah / 2;
       if (e.acceptance > 0) {
         // Real optics: each receptor averages the picture over its own acceptance cone.
-        if (this.image !== this.mipImg || this.mipDirty || this.mip.bg !== bg) { this.mip.build(this.image, bg); this.mipImg = this.image; this.mipDirty = false; }
+        if (this.image !== this.mipImg || this.mipDirty || this.mip.bg !== bg) { this.mip.build(lumOf(this.image), bg); this.mipImg = this.image; this.mipDirty = false; }
         const pxPerDeg = Math.sqrt(((IMG - 1) / aw) * ((IMG - 1) / ah));
         const k = (e.acceptance / 2.355) * pxPerDeg; // cone width (FWHM) -> Gaussian sigma, in pixels
         for (let r = 0; r < R; r++) {
@@ -283,11 +285,24 @@ export class TrialWorld {
           for (let c = 0; c < C; c++) {
             const dx = this.az[c] - cAz;
             L[r * C + c] = inRow && dx >= -hw && dx <= hw
-              ? sample(this.image, (dx + hw) / (2 * hw), 1 - (dy + he) / (2 * he))
+              ? sample(lumOf(this.image), (dx + hw) / (2 * hw), 1 - (dy + he) / (2 * he))
               : bg;
           }
         }
       }
+      // Colour (eye.colour): the same spots, read through the two colour-opponent channels.
+      const Q = this.chroma[eye];
+      if (e.colour && hasColour(this.image)) {
+        const P = IMG * IMG, rgP = this.image.subarray(P, 2 * P), byP = this.image.subarray(2 * P, 3 * P);
+        for (let r = 0; r < R; r++) {
+          const dy = this.el[r] - cEl, inRow = dy >= -he && dy <= he, v = 1 - (dy + he) / (2 * he);
+          for (let c = 0; c < C; c++) {
+            const dx = this.az[c] - cAz, i = r * C + c;
+            if (inRow && dx >= -hw && dx <= hw) { const u = (dx + hw) / (2 * hw); Q[i] = sample(rgP, u, v); Q[R * C + i] = sample(byP, u, v); }
+            else { Q[i] = 0; Q[R * C + i] = 0; }
+          }
+        }
+      } else Q.fill(0);
       // Lateral inhibition (see eye.lateralInhib): each receptor minus its immediate neighbours'
       // average, amplified. A fixed, untrained edge/contrast enhancement at native receptor
       // resolution -- LC11/LC_ON do this too, but only over whole tiles of several receptors;

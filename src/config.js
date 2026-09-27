@@ -54,6 +54,10 @@ export const DEFAULTS = {
     // _reflex). The strength of the pull (0 = off). Moves the eye and legs even if the learned
     // Smart eye / Step closer abilities are off.
     reflex: 0,
+    // Colour vision: each sensor also reports two colour-opponent signals (red-green, blue-yellow),
+    // like a fly's colour photoreceptors (R7/R8). They reach the brain through the memory centre's
+    // Kenyon cells. 0 = brightness only.
+    colour: 0,
     zoomStep: 0.06,    // the picture's size can change by up to ~6% per moment
     zoomMin: 0.6, zoomMax: 2.5,
   },
@@ -106,7 +110,7 @@ export const DEFAULTS = {
   // synapses (see brain.js). cells = how many, fanIn = inputs each, sparsity = fraction that fire.
   // retina: 1 = each Kenyon cell samples a few raw light sensors directly, instead of the coarse eye-cell
   // tiles -- more detail reaches memory (a linear reader gets ~65% on faces from raw sensors vs ~57% from tiles).
-  mb: { enabled: 0, cells: 400, fanIn: 6, sparsity: 0.05, retina: 1 },
+  mb: { enabled: 0, cells: 400, fanIn: 6, fanInColour: 3, sparsity: 0.05, retina: 1 }, // fanInColour: extra colour inputs per cell (colour vision)
   brain: {
     core: 128,           // recurrent neurons
     kIn: 10,             // inputs per core neuron

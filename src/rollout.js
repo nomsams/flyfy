@@ -16,7 +16,7 @@ export class Runner {
   // One simulation step: brain -> feet -> world -> (reward or pain) -> fast learning.
   step() {
     const { world, brain } = this;
-    const o = brain.step(world.retinas, world.touch, world.pain, world.pos);
+    const o = brain.step(world.retinas, world.touch, world.pain, world.pos, world.chroma);
     const r = world.step(o[0], o[1], brain.gaze[0], brain.gaze[1], brain.gaze[2]);
     const ev = world.lastEvent;
     if (ev === EVENT.CORRECT || ev === EVENT.WRONG) brain.learn(world.lastFoot, ev === EVENT.CORRECT);

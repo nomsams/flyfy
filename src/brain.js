@@ -206,16 +206,25 @@ export class Brain {
       // raw light sensors of every eye -- finer detail, the way real Kenyon cells get fairly direct
       // sensory input rather than a pre-digested summary
       this.kcRetina = !!mb.retina;
-      this.nSrc = this.kcRetina ? this.nEyes * cfg.eye.rows * cfg.eye.cols : this.nS;
+      // with colour vision, each sensor also offers its two colour-opponent signals to the Kenyon cells
+      this.kcColour = this.kcRetina && !!cfg.eye.colour;
+      this.nSrc = this.kcRetina ? this.nEyes * cfg.eye.rows * cfg.eye.cols * (this.kcColour ? 3 : 1) : this.nS;
       if (this.kcRetina) { this.rv = new Float32Array(this.nSrc); this.rc = new Float32Array(this.nSrc); this.rmean = new Float32Array(this.nSrc); }
-      this.kcFan = Math.min(mb.fanIn, this.nSrc);
+      // Every Kenyon cell gets fanIn brightness inputs; with colour vision it gets fanInColour colour
+      // inputs *on top* (never instead), so on grey pictures -- where colour is all zero -- each cell
+      // still works exactly as it would without colour vision. (Mixing them freely starved the
+      // memory centre on grey challenges: faint stripes -14 points.)
+      const nLum = this.kcRetina ? this.nEyes * cfg.eye.rows * cfg.eye.cols : this.nS;
+      const fanL = Math.min(mb.fanIn, nLum), fanC = this.kcColour ? Math.min(mb.fanInColour ?? 3, this.nSrc - nLum) : 0;
+      this.kcFan = fanL + fanC;
       this.kcIdx = new Int32Array(this.nKC * this.kcFan);
       this.kcW = new Float32Array(this.nKC * this.kcFan);
       for (let k = 0; k < this.nKC; k++) {
         const used = new Set();
         for (let j = 0; j < this.kcFan; j++) {
+          const lo = j < fanL ? 0 : nLum, span = j < fanL ? nLum : this.nSrc - nLum;
           let s;
-          do { s = Math.floor(r2() * this.nSrc); } while (used.has(s));
+          do { s = lo + Math.floor(r2() * span); } while (used.has(s));
           used.add(s);
           this.kcIdx[k * this.kcFan + j] = s;
           this.kcW[k * this.kcFan + j] = r2() < 0.5 ? -1 : 1;
@@ -453,9 +462,10 @@ export class Brain {
     for (let k = 0; k < nKC && n < this.kActive; k++) if (!kc[k] && kcAct[k] === thr && kcAct[k] > 1e-6) { kc[k] = 1; n++; }
   }
 
+  // chroma (optional): per eye, the colour-opponent signals of every sensor (see world.js).
   // retinas: array of Float32Array; touch, pain: Float32Array(2) (pain optional); pos: where the eye
   // points, each axis in [-1, 1] (optional, 0 when active vision is off). Returns this.out.
-  step(retinas, touch, pain, pos) {
+  step(retinas, touch, pain, pos, chroma) {
     const x = this.x;
     let o = 0;
     for (let e = 0; e < this.nEyes; e++) {
@@ -472,7 +482,11 @@ export class Brain {
     // centre the static LC features on the average image the fly has answered on (adaptation), so
     // both classes sit either side of zero; the mean is updated in learn(), at answer time
     const nS = this.nS, xc = this.xc, fm = this.fmean, sidx = this.staticIdx;
-    if (this.kcRetina) { let q = 0; for (let e = 0; e < this.nEyes; e++) { this.rv.set(retinas[e], q); q += retinas[e].length; } }
+    if (this.kcRetina) {
+      let q = 0;
+      for (let e = 0; e < this.nEyes; e++) { this.rv.set(retinas[e], q); q += retinas[e].length; }
+      if (this.kcColour) for (let e = 0; e < this.nEyes; e++) { if (chroma) this.rv.set(chroma[e], q); else this.rv.fill(0, q, q + 2 * retinas[e].length); q += 2 * retinas[e].length; }
+    }
     if (!this.fmeanInit) {
       for (let j = 0; j < nS; j++) fm[j] = x[sidx[j]];
       if (this.kcRetina) this.rmean.set(this.rv);

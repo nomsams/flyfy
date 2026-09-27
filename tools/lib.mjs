@@ -6,11 +6,13 @@ import { StimulusSet, unpackFaces } from '../src/stimuli.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-// The bundled faces, from data/faces32.bin (no JPEG decoding needed).
+// The bundled faces, from data/faces32.bin (+ colour in faces32c.bin), no JPEG decoding needed.
 export function loadFacesNode(cap = Infinity) {
   const meta = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'faces32.json'), 'utf8'));
   const bytes = new Uint8Array(fs.readFileSync(path.join(ROOT, 'data', 'faces32.bin')));
-  return unpackFaces(bytes, meta.labels, cap);
+  const cpath = path.join(ROOT, 'data', 'faces32c.bin');
+  const chroma = meta.chromaSize && fs.existsSync(cpath) ? new Uint8Array(fs.readFileSync(cpath)) : null;
+  return unpackFaces(bytes, meta.labels, cap, chroma, meta.chromaSize);
 }
 
 // { train, test } for any task.

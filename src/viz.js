@@ -18,10 +18,15 @@ export function makeImageCanvas(img, size) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const ctx = c.getContext('2d');
-  const d = ctx.createImageData(size, size);
-  for (let i = 0; i < size * size; i++) {
-    const v = Math.max(0, Math.min(255, Math.round(img[i] * 255)));
-    d.data[4 * i] = d.data[4 * i + 1] = d.data[4 * i + 2] = v;
+  const d = ctx.createImageData(size, size), P = size * size, colour = img.length >= 3 * P;
+  const px = (v) => Math.max(0, Math.min(255, Math.round(v * 255)));
+  for (let i = 0; i < P; i++) {
+    const L = img[i];
+    if (colour) {
+      // back from luminance + opponent signals to red/green/blue (solving the three definitions)
+      const rg = img[P + i], by = img[2 * P + i], G = L - 0.356 * rg - 0.114 * by;
+      d.data[4 * i] = px(G + rg); d.data[4 * i + 1] = px(G); d.data[4 * i + 2] = px(by + G + rg / 2);
+    } else d.data[4 * i] = d.data[4 * i + 1] = d.data[4 * i + 2] = px(L);
     d.data[4 * i + 3] = 255;
   }
   ctx.putImageData(d, 0, 0);

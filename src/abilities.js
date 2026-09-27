@@ -76,6 +76,12 @@ export const ABILITIES = [
     on: { learn: { evolveRule: 1 } }, off: { learn: { evolveRule: 0 } }, needsEvolve: true,
   },
   {
+    id: 'colour', name: 'Colour vision', icon: 'palette',
+    short: 'Sees colours, not just light and dark.',
+    long: 'Real flies have colour photoreceptors. With this on, every light sensor also reports how red-versus-green and blue-versus-yellow its spot is, and the memory centre\u2019s Kenyon cells can listen to that too (so it works together with Memory centre). Only the face photos are in colour; the drawn challenges are grey.',
+    on: { eye: { colour: 1 } }, off: { eye: { colour: 0 } },
+  },
+  {
     id: 'reflex', name: 'Look at what stands out', icon: 'target',
     short: 'Born knowing to turn toward and walk up to anything striking.',
     long: 'An innate reflex, like real flies turning toward and approaching small objects: the eye cells that detect small dark or bright spots are compared across the view; if one spot stands out, the fly turns its eye toward it and, once it is straight ahead, steps closer. Needs no training at all, so it works with Quick learn. The learned Smart eye and Step closer outputs add on top.',
@@ -104,7 +110,8 @@ export const ABILITIES = [
 // What a new fly starts with. Memory centre + edge boost: measured clear wins, never worse where tested
 // (stripes with Quick learn: 82.9% -> 99.5%; light or dark stays at 100%). Smart eye + mood chemical:
 // what this branch is exploring; free until evolved (a new fly's eye holds still).
-export const DEFAULT_ABILITIES = { smartEye: true, mood: true, memory: true, edges: true };
+// Colour vision: the biggest measured gain on faces (+6.8 points), no loss on grey challenges.
+export const DEFAULT_ABILITIES = { smartEye: true, mood: true, memory: true, edges: true, colour: true };
 
 // Config overrides for a task + a set of abilities ({ id: true/false }).
 export function setupConfig(taskId, abilities) {
