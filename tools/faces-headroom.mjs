@@ -193,6 +193,27 @@ if (process.argv.includes('--orient-kc')) {
   stages['edge cells, gain-adapted'] = oriN;
   const kc = stages['memory centre (400 Kenyon cells)'];
   for (const w of [0.1, 0.3, 1]) stages[`KC 400 + gain-adapted edge cells x${w}`] = kc.map((k, i) => { const x = new Float32Array(k.length + d); x.set(k); for (let j = 0; j < d; j++) x[k.length + j] = oriN[i][j] * w; return x; });
+  if (process.argv.includes('--second-layer')) {
+    // C: a second, non-straight-line stage on top of the gain-adapted edge cells
+    const adapt = (V) => { const dd = V[0].length, mm = new Float64Array(dd), ss = new Float64Array(dd); for (const v of V) for (let j = 0; j < dd; j++) mm[j] += v[j] / V.length; for (const v of V) for (let j = 0; j < dd; j++) ss[j] += (v[j] - mm[j]) ** 2 / V.length; return V.map((v) => Float32Array.from(v, (x, j) => (x - mm[j]) / (Math.sqrt(ss[j]) + 1e-3))); };
+    const kcOf = (V, cells, fan, seed) => { // random +-1 fan-in, top 5% fire
+      const r = mulberry32(seed), dd = V[0].length, k = Math.round(cells * 0.05);
+      const W = Array.from({ length: cells }, () => Array.from({ length: fan }, () => [Math.floor(r() * dd), r() < 0.5 ? -1 : 1]));
+      return V.map((v) => { const a = Float32Array.from(W, (w) => w.reduce((s, [j, g]) => s + g * v[j], 0)); const th = Float32Array.from(a).sort()[cells - k]; return Float32Array.from(a, (x) => (x >= th ? 1 : 0)); });
+    };
+    const cat = (...parts) => parts[0].map((_, i) => { const n = parts.reduce((s, p) => s + p[i].length, 0), x = new Float32Array(n); let o = 0; for (const p of parts) { x.set(p[i], o); o += p[i].length; } return x; });
+    const ori4 = adapt(std.eye.map((v) => orientationEnergy(v, c.rows, c.cols, 4, 8)));
+    const kcE = kcOf(oriN, 400, 6, 21), kcE2k = kcOf(oriN, 2000, 6, 22), kcE3 = kcOf(oriN, 2000, 3, 23);
+    for (const k of Object.keys(stages)) if (!k.startsWith('eye (') && !k.startsWith('KC 400 + gain-adapted edge cells x1')) delete stages[k];
+    stages['edges pool 2 + pool 4 (adapted)'] = cat(oriN, ori4);
+    stages['KC 400 on adapted edges'] = kcE;
+    stages['KC 2000 on adapted edges'] = kcE2k;
+    stages['KC 2000 on adapted edges, 3 inputs'] = kcE3;
+    stages['current fly + KC 400 on adapted edges'] = cat(kc, oriN, kcE);
+    stages['current fly + KC 2000 on adapted edges'] = cat(kc, oriN, kcE2k);
+    stages['current fly + edges pool 4'] = cat(kc, oriN, ori4);
+    stages['current fly + pool 4 + KC 2000 on edges'] = cat(kc, oriN, ori4, kcE2k);
+  }
 }
 if (process.argv.includes('--orient')) { for (const k of Object.keys(stages)) if (!k.includes('edge dirs') && !k.startsWith('eye (')) delete stages[k]; }
 if (!process.argv.includes('--quick')) {

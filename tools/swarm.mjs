@@ -10,9 +10,11 @@
 //        [--with a,b] (abilities; default = the app's defaults) [--cfg JSON] [--episodes 150]
 //        [--circle R] (each fly its own centre of gaze on a circle, degrees) [--lookset tolerance|jitter] [--rings 0,5,10,15]
 //        [--judge] (20% of the training photos set aside to fit a judge that combines the votes)
+//        [--judge-sizes 5,9,25] (team sizes to judge; small teams drawn several times and averaged)
 //        [--out file.json] (raw table, for re-analysis) [--jobs N]
 import os from 'node:os';
 import fs from 'node:fs';
+import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { mergeConfig } from '../src/config.js';
@@ -109,8 +111,11 @@ export function judge(cfg, test, fly, nLooks, seed = 1) {
   return { foot: Array.from(foot), margin: Array.from(margin) };
 }
 
+// run as a program (not imported by another tool)
+const isMain = !!process.argv[1] && fileURLToPath(import.meta.url).toLowerCase() === path.resolve(process.argv[1]).toLowerCase();
+
 // ---------------------------------------------------------------- child: one fly
-if (args.fly) {
+if (isMain && args.fly) {
   const job = JSON.parse(args.fly);
   LOOKSET = LOOKSETS[job.lookset || 'default'];
   const { train, test } = taskSets(job.task);
@@ -185,6 +190,7 @@ export function analyse(labels, flies, nLooks, log = console.log) {
 }
 
 // ---------------------------------------------------------------- parent
+if (isMain) {
 const task = args.task || 'faces', K = +(args.flies || 9), nLooks = args.lookset && args.lookset !== 'default' ? LOOKSETS[args.lookset].length : Math.min(LOOKS.length, +(args.looks || 4));
 const abil = args.with ? Object.fromEntries(args.with.split(',').map((k) => [k, true])) : DEFAULT_ABILITIES;
 const base = mergeConfig(JSON.parse(args.cfg || '{}'), mergeConfig(setupConfig(task, abil)));
@@ -230,12 +236,26 @@ let jl = null;
 if (args.judge) { // the judge: fitted on the set-aside photos, scored on the exam, for a few swarm sizes
   jl = Array.from(splitForJudge(taskSets(task).train).judgeSet.labels);
   const jf = results.map((r) => r.judge), rng = mulberry32(8);
-  for (const k of [9, 25, K].filter((k, i, a) => k <= K && a.indexOf(k) === i)) {
-    const idx = Array.from({ length: K }, (_, i) => i);
-    for (let i = K - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
-    const team = idx.slice(0, k);
-    console.log('\nswarm of ' + k + ':');
-    judges(jl, team.map((i) => jf[i]), Array.from(test.labels), team.map((i) => testFlies[i]), nLooks);
+  // --judge-sizes 5,9,25: team sizes to judge; small teams are drawn several times and averaged
+  const sizes = (args['judge-sizes'] || '9,25,' + K).split(',').map(Number).filter((k, i, a) => k <= K && a.indexOf(k) === i);
+  const summary = [];
+  for (const k of sizes) {
+    const reps = k === K ? 1 : k <= 25 ? 5 : 3, sum = {};
+    for (let rep = 0; rep < reps; rep++) {
+      const idx = Array.from({ length: K }, (_, i) => i);
+      for (let i = K - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+      const team = idx.slice(0, k);
+      const quiet = reps > 1 && rep > 0 ? () => {} : console.log;
+      if (rep === 0) console.log('\nswarm of ' + k + (reps > 1 ? ' (first of ' + reps + ' random teams shown; averages below)' : '') + ':');
+      const r = judges(jl, team.map((i) => jf[i]), Array.from(test.labels), team.map((i) => testFlies[i]), nLooks, quiet);
+      for (const [name, v] of Object.entries(r)) { const key = name.replace(/ \(L2 [^)]*\)/, ''); sum[key] = (sum[key] || 0) + v / reps; }
+    }
+    summary.push([k, reps, sum]);
   }
+  console.log('\naverage over random teams (balanced exam accuracy):');
+  const names = Object.keys(summary[0][2]);
+  console.log('  ' + 'flies'.padEnd(8) + names.map((n) => n.slice(0, 22).padStart(24)).join(''));
+  for (const [k, reps, sum] of summary) console.log('  ' + (k + ' (x' + reps + ')').padEnd(8) + names.map((n) => ((sum[n] * 100).toFixed(1) + '%').padStart(24)).join(''));
 }
 if (args.out) fs.writeFileSync(args.out, JSON.stringify({ labels: Array.from(test.labels), nLooks, flies: testFlies, judgeLabels: jl, judgeFlies: args.judge ? results.map((r) => r.judge) : null, args }));
+}

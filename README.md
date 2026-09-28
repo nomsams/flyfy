@@ -233,6 +233,22 @@ What it shows:
   planned, the fixed-distance training is the better choice; for cameras whose distance can drift,
   the practised flies are the safer one.
 
+### Pushing past 66%
+
+| idea | what was done | result |
+|---|---|---|
+| align the photos | `tools/align-faces.mjs`: shift (and zoom) each photo until it best matches a learned average face, no labels used | worse: 55.6% (zoom, cuts off hair) and 56.5% (shift only) vs 58.7% for the plain upper crop; with edge directions 65.0% vs 66.0% |
+| a sharper eye | 20 x 28 and 28 x 40 sensors, a stronger fovea (1.4) | 57.8% (clearly worse), 60.8%, 60.4% vs 60.7% |
+| a second, nonlinear layer | Kenyon cells reading the gain-adapted edge cells, a second patch size (`tools/faces-headroom.mjs --orient-kc --second-layer`) | fly-style ceiling 63.3% vs 62.8%: not worth building |
+| longer practice | 600 sessions instead of 150 | 60.7% -> 62.9% (+2.2, all 5 flies better, just short of clear) |
+| **boosting swarm** | `tools/boost.mjs`: flies join in rounds of 5; the photos the swarm so far gets wrong are shown more often to the next round (AdaBoost weights, capped at 4x) | **25 flies: 66.6% and 68.0%** in two runs vs 65.7% and 65.3% for the same swarm without boosting; best 70.6% at 20 flies with AdaBoost vote weights |
+
+Boosting is the first result above the 66% straight-line ceiling, which fits: a swarm of specialists
+is not a single straight-line reader. The boosted newcomers are poor on their own (49-54% on the
+exam after round 2) and valuable only together. Two runs, each good to about +-2 points: promising,
+not proven. Also checked: only 6 of the 500 exam photos (1.2%) have a near-copy among the training
+photos, so duplicate leakage flatters results by at most about half a point.
+
 ### On a microcontroller (ESP32-CAM)
 
 One fly is small. Measured in this code: 4,452 evolved parameters, 1,920 learned synapses, 400
