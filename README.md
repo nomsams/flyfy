@@ -3,7 +3,7 @@
 Teach a tiny simulated fly brain to tell pictures apart - right in your browser. No install, no
 account, no server needed.
 
-**Try it:** https://nomsams.github.io/flyfy/ (this `active-vision` branch: run it locally, below)
+**Try it:** https://nomsams.github.io/flyfy/ (or run it locally, below)
 
 A picture appears in front of the fly. Its eye turns it into a few hundred blurry dots, fixed eye
 cells modelled on real fly neurons pick out edges, spots and motion, and a small brain of 128
