@@ -114,7 +114,7 @@ export const DEFAULTS = {
   // speed per feature) instead of the hand-set numbers here -- evolution learns how to learn.
   // surprise: 1 = learn in proportion to how unexpected each outcome was (dopamine as reward prediction
   // error), instead of the same amount every time.
-  learn: { eta: 0.2, anneal: 400, reward: 1.0, gain: 1.0, wmax: 4, evolveRule: 0, surprise: 0 }, // anneal: the speed halves after this many answers
+  learn: { eta: 0.2, anneal: 400, reward: 1.0, gain: 1.0, wmax: 4, evolveRule: 0, surprise: 0, keepAdapting: 0 }, // anneal: the speed halves after this many answers
   // Mushroom body: a big sparse layer of Kenyon cells between the eye and the pain-learning
   // synapses (see brain.js). cells = how many, fanIn = inputs each, sparsity = fraction that fire.
   // retina: 1 = each Kenyon cell samples a few raw light sensors directly, instead of the coarse eye-cell

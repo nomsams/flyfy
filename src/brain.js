@@ -413,7 +413,9 @@ export class Brain {
   // Reinforcement from the answer just given: reward if correct, pain if wrong. With two choices a
   // wrong answer also says the other foot was right, so both feet's synapses move.
   learn(foot, correct) {
-    if (!this.cfg.learn.eta) return;
+    // Sensory adaptation (_adapt) needs no reward or label, and real sense organs never stop doing
+    // it: with learn.keepAdapting it carries on even while learning is frozen (the exam).
+    if (!this.cfg.learn.eta) { if (this.cfg.learn.keepAdapting) this._adapt(); return; }
     const R = this.ruleNow();
     let sig = correct ? R.reward : -R.pain;
     if (this.cfg.learn.surprise) {
@@ -425,6 +427,10 @@ export class Brain {
       sig *= 2 * (correct ? 1 - conf : conf);
     }
     this._plasticUpdate(foot, sig, true);
+    this._adapt();
+  }
+
+  _adapt() {
     // adapt the reference to what an answered image looks like (fast at first, then slow)
     const rate = Math.max(0.05, 1 / (1 + this.nAnswers++)), fm = this.fmean, sidx = this.staticIdx, x = this.x;
     for (let j = 0; j < this.nS; j++) fm[j] += rate * (x[sidx[j]] - fm[j]);

@@ -178,6 +178,74 @@ What this says:
   its eye (62.7%), and about 5 below the best reader on full-resolution photos (66%). Going much
   further would take better-aligned photos (a real face/eye finder) or a sharper eye.
 
+## A swarm of flies
+
+Can many flies decide together better than one? `tools/swarm.mjs` trains a swarm with Quick learn and
+shows every fly the same 500 held-out face photos, recording each answer and its margin (how far
+one foot's drive led the other's). All flies have the app's default abilities (memory centre, colour
+vision, edge-direction cells, edge boost), plus the sharp centre where marked.
+
+| swarm (faces) | one fly | mistakes alike* | 9 flies | 101 flies |
+|---|---|---|---|---|
+| every fly sees the same view | 60% | 0.61-0.63 | 60-62% | |
+| ...each fly with its own random wiring | 60% | 0.61 | 61% | |
+| **sharp centre + each fly its own centre of gaze on a 10-15 degree circle** | 59-61% | 0.36-0.42 | **65-66%** | |
+| ...the same on rings of 0, 5, 10, 15 degrees | 60% | 0.41-0.42 | 65.0% | 65.4-65.6% |
+| circle without the sharp centre | 59% | 0.48 | 61% | |
+
+\Swarm columns: margins summed, each fly also taking a mirrored look. * correlation of right/wrong
+between two flies: 0 = independent mistakes, 1 = identical.
+
+What it shows:
+- **A swarm only helps if its flies see differently.** Flies that all look at the same spot make
+  the same mistakes, so voting gains about a point. Giving each fly its own centre of gaze on a
+  circle around the picture's middle - with the sharp centre, so each one sees a *different part*
+  of the face in detail - makes their mistakes differ, and the vote gains 5-6 points.
+- **How to vote matters.** Summing each fly's margin beats a plain majority by 1-3 points; scaling
+  each margin by that fly's typical margin adds up to half a point more.
+- **Size:** 3 flies 63%, 9 flies 65%, 25 flies 65%, 101 flies 65.5%. Past about 9-15 flies the
+  vote levels off near 66% - the same as the best straight-line reader on the full-resolution
+  photos, so the swarm is extracting about all a simple reader can get from these pictures. With
+  101 flies only 2% of photos are ones nearly all get wrong, but 47% split the swarm almost evenly.
+- **Several looks per fly** (the "loop trick" as whole looks: the view nudged half a sensor gap
+  around a small circle, margins summed) lifts one fly from 61% to 63.4%, but adds nothing on top of
+  a circle swarm - the circle already supplies that variety. Jittering *within* one look (with the
+  foot signals averaged) did not help (-2.2 and +0.1 points), as before: there is no time to average.
+- **Viewpoint tolerance:** a fly shrugs off sideways shifts up to a full sensor gap, but seeing the
+  picture 10% nearer or further than in training drops it to chance - every answer tips to one
+  foot, because its adapted "average picture" no longer fits. Letting adaptation continue during
+  the exam (`learn.keepAdapting`) softened that (44% -> 52% at 1.1x) but cost 2.4 points at the
+  trained distance, so it stays off.
+
+### On a microcontroller (ESP32-CAM)
+
+One fly is small. Measured in this code: 4,452 evolved parameters, 1,920 learned synapses, 400
+Kenyon cells with 9 inputs each, a 14 x 20 eye, 20 steps per simulated second, and roughly 40-50
+thousand simple operations per step (about a third of them the Kenyon cells). As 32-bit floats the
+whole brain is ~120 KB, most of it regenerable: the wiring comes from one seed, and a Quick-learn
+fly's core weights from another. What a fly actually *learns* is ~3,900 numbers (learned synapses,
+adapted averages and spreads): ~16 KB as floats, ~8 KB as 16-bit.
+
+A rough budget for an AI-Thinker ESP32-CAM (dual-core 240 MHz, 520 KB internal SRAM of which a
+few hundred KB are free next to the camera driver, 4 MB PSRAM, OV2640 camera):
+- **Camera:** the lowest frame sizes (96 x 96 or 160 x 120, RGB565 for colour vision) are plenty -
+  the eye has 14 x 20 sensors. One frame is 18-38 KB.
+- **One fly:** ~60-80 KB of working memory - fits in internal SRAM; ~0.3-0.5 ms per step, about 1% of
+  one core at 20 steps per second.
+- **A virtual swarm on one board:** measured above, flies can share one wiring without losing
+  anything, so each extra fly costs only its learned ~8-16 KB and its own centre of gaze is just a
+  different crop of the same frame. About 10-15 flies fit in internal SRAM (16-bit); 101 fit in PSRAM (~1-1.6 MB).
+  One decision is ~10 steps per fly: roughly 0.1 s for 9-25 flies and about a second for 101.
+- **A physical swarm** (one board per fly, answers exchanged by ESP-NOW broadcast, a few bytes
+  each) gets truly different viewpoints for free, but each fly then has to be trained from where it
+  stands - and, given the distance cliff above, the rig must keep the distance fixed or the flies
+  must practise at many distances.
+- **Training** can stay on a PC (this code) with the learned state flashed per fly, or run on the
+  board: one learning update is ~2,000 multiply-adds.
+
+Given the measurements, a single ESP32-CAM (or the roomier ESP32-S3 camera boards, with 8 MB PSRAM
+and vector instructions) running 9-25 virtual flies gets nearly everything 101 flies do.
+
 ## Distance and lenses (the billboard question)
 
 Up close a billboard is a grid of dots; from further away the dots melt into a clean picture, but
@@ -239,6 +307,12 @@ Compare any two setups from the command line (runs in parallel, one process per 
 ```bash
 node tools/compare.mjs --task faint --method quick --seeds 5 --test memory
 node tools/compare.mjs --task spot --method thorough --seeds 5 --test smartEye --with fovea
+```
+
+A swarm - many flies, each with its own centre of gaze, voting on the same held-out photos:
+
+```bash
+node tools/swarm.mjs --flies 9 --with smartEye,mood,memory,edges,colour,orient,fovea --circle 10
 ```
 
 `--task` brightness | gratings | faint | spot | faces, `--method` quick | thorough, `--test` an
