@@ -9,6 +9,7 @@
 // Usage: node tools/swarm.mjs [--flies 9] [--looks 4] [--wiring same|own] [--task faces]
 //        [--with a,b] (abilities; default = the app's defaults) [--cfg JSON] [--episodes 150]
 //        [--circle R] (each fly its own centre of gaze on a circle, degrees) [--lookset tolerance|jitter] [--rings 0,5,10,15]
+//        [--judge] (20% of the training photos set aside to fit a judge that combines the votes)
 //        [--out file.json] (raw table, for re-analysis) [--jobs N]
 import os from 'node:os';
 import fs from 'node:fs';
@@ -20,6 +21,7 @@ import { IMG } from '../src/stimuli.js';
 import { mulberry32 } from '../src/rng.js';
 import { setupConfig, DEFAULT_ABILITIES } from '../src/abilities.js';
 import { taskSets } from './lib.mjs';
+import { splitForJudge, judges } from './swarm-judge.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => {
   if (a.startsWith('--')) acc.push([a.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : 'true']);
@@ -112,25 +114,36 @@ if (args.fly) {
   const job = JSON.parse(args.fly);
   LOOKSET = LOOKSETS[job.lookset || 'default'];
   const { train, test } = taskSets(job.task);
-  const fly = trainFly(job.cfg, train, job.seed, job.episodes);
-  process.stdout.write(JSON.stringify(judge(job.cfg, test, fly, job.looks, job.seed)));
+  if (job.judge) { // train on 80% of the training photos; answer the other 20% (for the judge) and the exam
+    const { flyTrain, judgeSet } = splitForJudge(train);
+    const fly = trainFly(job.cfg, flyTrain, job.seed, job.episodes);
+    process.stdout.write(JSON.stringify({ test: judge(job.cfg, test, fly, job.looks, job.seed), judge: judge(job.cfg, judgeSet, fly, job.looks, job.seed + 5000) }));
+  } else {
+    const fly = trainFly(job.cfg, train, job.seed, job.episodes);
+    process.stdout.write(JSON.stringify(judge(job.cfg, test, fly, job.looks, job.seed)));
+  }
   process.exit(0);
 }
 
 // ---------------------------------------------------------------- analysis (exported for re-use)
 export function analyse(labels, flies, nLooks, log = console.log) {
+  log('(all accuracies balanced: men and women count equally, guessing = 50%)');
   const n = labels.length, K = flies.length, pct = (x) => (x * 100).toFixed(1) + '%';
   const says = (fly, i, looks, weighted) => { // the fly's answer on photo i from its first `looks` looks
     let s = 0;
     for (let l = 0; l < looks; l++) { const k = i * nLooks + l; if (fly.foot[k] >= 0) s += weighted ? fly.margin[k] : fly.foot[k] ? 1 : -1; }
     return s > 0 ? 1 : s < 0 ? 0 : fly.foot[i * nLooks]; // a tie: the first look decides
   };
-  const acc = (fn) => { let ok = 0; for (let i = 0; i < n; i++) ok += fn(i) === labels[i] ? 1 : 0; return ok / n; };
+  // balanced accuracy: men and women count equally (the held-out photos keep the dataset's 57% women,
+  // so plain accuracy would reward leaning on "woman"; this way guessing scores 50%, as in the exam)
+  const perClass = [0, 0];
+  for (const y of labels) perClass[y]++;
+  const acc = (fn) => { const ok = [0, 0]; for (let i = 0; i < n; i++) if (fn(i) === labels[i]) ok[labels[i]]++; return (ok[0] / perClass[0] + ok[1] / perClass[1]) / 2; };
   const res = { single: [], looks: {}, swarm: {}, corr: 0 };
   res.single = flies.map((f) => acc((i) => says(f, i, 1, false)));
   const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length, sd = (a) => Math.sqrt(mean(a.map((x) => (x - mean(a)) ** 2)));
   log(`one fly, one look:  ${pct(mean(res.single))} (flies ${res.single.map((a) => (a * 100).toFixed(0)).join(' ')}, sd ${(sd(res.single) * 100).toFixed(1)})`);
-  const lookAcc = (l) => mean(flies.map((f) => { let ok = 0, ans = 0; for (let i = 0; i < n; i++) { const k = i * nLooks + l; if (f.foot[k] >= 0) ans++; ok += f.foot[k] === labels[i] ? 1 : 0; } return ok / n; }));
+  const lookAcc = (l) => mean(flies.map((f) => acc((i) => f.foot[i * nLooks + l])));
   const ansRate = (l) => mean(flies.map((f) => { let a = 0; for (let i = 0; i < n; i++) a += f.foot[i * nLooks + l] >= 0 ? 1 : 0; return a / n; }));
   const names = LOOKSETS[args.lookset || 'default'].slice(0, nLooks).map((l) => (l.shift || l.shiftEl) ? `shift ${(l.shift || 0).toFixed(1)},${(l.shiftEl || 0).toFixed(1)}deg` : (l.mirror ? 'mirror ' : '') + 'x' + (l.dist || 1));
   log('each look alone: ' + Array.from({ length: nLooks }, (_, l) => names[l] + ' ' + pct(lookAcc(l))).join(', '));
@@ -196,7 +209,7 @@ if (args.rings) {
 } else for (let s = 0; s < K; s++) spots.push(R ? [R * Math.cos((2 * Math.PI * s) / K), R * Math.sin((2 * Math.PI * s) / K)] : [0, 0]);
 const view = (s) => (spots[s][0] || spots[s][1] ? { screen: { centerAzDeg: spots[s][0], centerElDeg: spots[s][1] } } : {});
 const jobs = Array.from({ length: K }, (_, s) => ({
-  task, seed: s + 1 + (+args.seedbase || 0), looks: nLooks, lookset: args.lookset, episodes: +(args.episodes || 150),
+  task, seed: s + 1 + (+args.seedbase || 0), looks: nLooks, lookset: args.lookset, episodes: +(args.episodes || 150), judge: !!args.judge,
   cfg: mergeConfig({ ...view(s), ...(args.wiring === 'own' ? { brain: { netSeed: 12345 + 7919 * (s + 1) } } : {}) }, base),
 }));
 const self = fileURLToPath(import.meta.url);
@@ -211,5 +224,18 @@ let next = 0;
 await Promise.all(Array.from({ length: Math.min(jobsMax, K) }, async () => { while (next < K) { const j = next++; results[j] = await runOne(jobs[j]); } }));
 const { test } = taskSets(task);
 console.log(`${task}: ${K} flies (${args.wiring === 'own' ? 'each its own wiring' : 'shared wiring'}${args.rings ? ', gaze centres on rings ' + args.rings + ' deg' : R ? ', gaze centres on a circle of ' + R + ' deg' : ''}), ${test.labels.length} test photos x ${nLooks} looks, ${((Date.now() - t0) / 1000).toFixed(0)}s`);
-analyse(Array.from(test.labels), results, nLooks);
-if (args.out) fs.writeFileSync(args.out, JSON.stringify({ labels: Array.from(test.labels), nLooks, flies: results, args }));
+const testFlies = args.judge ? results.map((r) => r.test) : results;
+analyse(Array.from(test.labels), testFlies, nLooks);
+let jl = null;
+if (args.judge) { // the judge: fitted on the set-aside photos, scored on the exam, for a few swarm sizes
+  jl = Array.from(splitForJudge(taskSets(task).train).judgeSet.labels);
+  const jf = results.map((r) => r.judge), rng = mulberry32(8);
+  for (const k of [9, 25, K].filter((k, i, a) => k <= K && a.indexOf(k) === i)) {
+    const idx = Array.from({ length: K }, (_, i) => i);
+    for (let i = K - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    const team = idx.slice(0, k);
+    console.log('\nswarm of ' + k + ':');
+    judges(jl, team.map((i) => jf[i]), Array.from(test.labels), team.map((i) => testFlies[i]), nLooks);
+  }
+}
+if (args.out) fs.writeFileSync(args.out, JSON.stringify({ labels: Array.from(test.labels), nLooks, flies: testFlies, judgeLabels: jl, judgeFlies: args.judge ? results.map((r) => r.judge) : null, args }));

@@ -183,17 +183,19 @@ What this says:
 Can many flies decide together better than one? `tools/swarm.mjs` trains a swarm with Quick learn and
 shows every fly the same 500 held-out face photos, recording each answer and its margin (how far
 one foot's drive led the other's). All flies have the app's default abilities (memory centre, colour
-vision, edge-direction cells, edge boost), plus the sharp centre where marked.
+vision, edge-direction cells, edge boost), plus the sharp centre where marked. Scores are balanced
+(men and women count equally, guessing = 50%): the held-out photos keep the dataset's 57% women,
+and re-scoring every run this way moved results by under a point.
 
 | swarm (faces) | one fly | mistakes alike* | 9 flies | 101 flies |
 |---|---|---|---|---|
 | every fly sees the same view | 60% | 0.61-0.63 | 60-62% | |
 | ...each fly with its own random wiring | 60% | 0.61 | 61% | |
 | **sharp centre + each fly its own centre of gaze on a 10-15 degree circle** | 59-61% | 0.36-0.42 | **65-66%** | |
-| ...the same on rings of 0, 5, 10, 15 degrees | 60% | 0.41-0.42 | 65.0% | 65.4-65.6% |
+| ...the same on rings of 0, 5, 10, 15 degrees | 60-61% | 0.39-0.42 | 65.0% | 65.3-66.4% (3 runs) |
 | circle without the sharp centre | 59% | 0.48 | 61% | |
 
-\Swarm columns: margins summed, each fly also taking a mirrored look. * correlation of right/wrong
+Swarm columns: margins summed, each fly also taking a mirrored look. * correlation of right/wrong
 between two flies: 0 = independent mistakes, 1 = identical.
 
 What it shows:
@@ -203,7 +205,16 @@ What it shows:
   of the face in detail - makes their mistakes differ, and the vote gains 5-6 points.
 - **How to vote matters.** Summing each fly's margin beats a plain majority by 1-3 points; scaling
   each margin by that fly's typical margin adds up to half a point more.
-- **Size:** 3 flies 63%, 9 flies 65%, 25 flies 65%, 101 flies 65.5%. Past about 9-15 flies the
+- **A learned judge doesn't beat equal votes.** With `--judge`, 20% of the training photos are set
+  aside: the flies never train on them, a judge learns from the flies' answers on them, and the exam
+  photos stay untouched. Four judges - a fitted threshold, Hebbian trust (each fly weighted by how
+  well it leaned the right way), and logistic regression with and without negative weights - landed
+  from 4 points below to 1.7 above plain equal votes, with no consistent winner (a 500-photo exam is
+  good to about +-2 points). Every learned judge scored higher on its own photos than on the exam: it
+  overfits. So the simplest rule - add up the scaled margins - is also the best one found, which
+  suits small hardware. (Hint for later: at 101 flies, the judge that could only trust or ignore
+  flies used just 10 of them and still scored 67.1%.)
+- **Size:** 3 flies 63-64%, 9 flies 65%, 25 flies 65-66%, 101 flies 65.3-66.4%. Past about 9-15 flies the
   vote levels off near 66% - the same as the best straight-line reader on the full-resolution
   photos, so the swarm is extracting about all a simple reader can get from these pictures. With
   101 flies only 2% of photos are ones nearly all get wrong, but 47% split the swarm almost evenly.
@@ -215,7 +226,12 @@ What it shows:
   picture 10% nearer or further than in training drops it to chance - every answer tips to one
   foot, because its adapted "average picture" no longer fits. Letting adaptation continue during
   the exam (`learn.keepAdapting`) softened that (44% -> 52% at 1.1x) but cost 2.4 points at the
-  trained distance, so it stays off.
+  trained distance, so it stays off. *Practising at many distances* removes the cliff entirely - a
+  fly then scores 55-57% at every distance from 0.9x to 1.1x - but costs about 4 points at the
+  trained distance (60% -> 56%), since the same number of practice pictures is spread over many sizes;
+  summing 10 looks wins it back (61.5% either way). For a swarm that only ever looks sideways, as
+  planned, the fixed-distance training is the better choice; for cameras whose distance can drift,
+  the practised flies are the safer one.
 
 ### On a microcontroller (ESP32-CAM)
 
