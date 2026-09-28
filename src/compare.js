@@ -145,7 +145,7 @@ export function initCompare(ctx) {
   // the built-in measured results
   const m = MEASURED;
   $('measuredTable').innerHTML = m.length ? `<table><thead><tr><th>Ability</th><th>Challenge</th><th>Training</th><th class="v">Without</th><th class="v">With</th><th>Verdict</th></tr></thead><tbody>${
-    m.map((r) => `<tr><td>${ABILITIES.find((a) => a.id === r.ability).name}${r.with ? ` <span class="mut">(+ ${r.with})</span>` : ''}</td><td>${TASKS.find((t) => t.id === r.task).name}</td><td>${r.method === 'quick' ? 'Quick' : 'Evolve'}</td>`
+    m.map((r) => `<tr><td>${ABILITIES.find((a) => a.id === r.ability).name}${r.with ? ` <span class="mut">(+ ${r.with})</span>` : ''}</td><td>${TASKS.find((t) => t.id === r.task).name}</td><td>${r.method === 'quick' ? 'Quick' : 'Evolve' + (r.gens ? ` (${r.gens} gen.)` : '')}</td>`
       + `<td class="v">${(r.a * 100).toFixed(1)}%</td><td class="v">${(r.b * 100).toFixed(1)}%</td>`
       + `<td class="${r.clear ? (r.diff > 0 ? 'pos' : 'neg') : 'mut'}">${r.clear ? (r.diff > 0 ? 'better' : 'worse') + ` by ${(Math.abs(r.diff) * 100).toFixed(0)} pts` : 'no clear difference'}</td></tr>`).join('')
   }</tbody></table>` : '<p class="hint">No measurements bundled yet.</p>';

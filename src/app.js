@@ -196,6 +196,11 @@ const REWARD_UI = [
   ['eye.gazeRangeDeg', '...range (deg)', 'How far from the centre of the screen the eye may look.', 1],
   ['eye.acceptance', 'Lens blur', 'How wide a cone of light each sensor averages, in sensor gaps (real flies: about 1). Makes pictures smooth instead of full of false moire patterns. 0 = pinhole (reads one exact point).', 0.1],
   ['eye.colour', 'Colour vision', '1 = each sensor also reports red-green and blue-yellow; reaches the brain through the memory centre (ability switch).', 1],
+  ['eye.orient', 'Edge-direction cells', '1 = pooled edge energy in several directions reaches the memory centre (ability switch).', 1],
+  ['eye.orientBins', 'Edge directions', 'how many edge directions are told apart (8 = every 22.5 degrees).', 1],
+  ['eye.orientPool', 'Edge-direction patch', 'patch size in sensors that each edge-direction cell sums over.', 1],
+  ['mb.fanInOrient', 'Kenyon edge inputs', 'edge-direction inputs mixed into each Kenyon cell, on top of brightness (0 = none; they reach learning directly anyway).', 1],
+  ['eye.orientGain', 'Edge cells to learning', 'weight of the gain-adapted edge-direction cells read straight by the learning synapses (0 = only via Kenyon cells).', 0.1],
   ['eye.reflex', 'Look at what stands out', 'Strength of the innate turn-toward-and-approach reflex (0 = off; ability switch sets 1). Moves the eye and legs even without the learned abilities.', 0.1],
   ['eye.activeZoom', 'Step closer or back', '1 = a third eye-motor output moves toward or away from the picture (ability switch).', 1],
   ['eye.zoomStep', '...speed', 'How much the picture can grow or shrink per moment (0.06 = 6%).', 0.01],
@@ -301,7 +306,7 @@ async function newBrain(seed = Date.now() % 100000) {
 
 // Only a few things change the structure of the simulation without changing its parameters:
 // right now that is the memory centre (it adds or removes a layer of cells).
-const structKey = (c) => JSON.stringify([c.mb.enabled ? c.mb.cells : 0, c.mb.enabled ? c.mb.retina : 0, c.mb.enabled ? c.eye.colour : 0]);
+const structKey = (c) => JSON.stringify([c.mb.enabled ? c.mb.cells : 0, c.mb.enabled ? c.mb.retina : 0, c.mb.enabled ? c.eye.colour : 0, c.mb.enabled ? [c.eye.orient, c.eye.orientPool, c.eye.orientBins, c.eye.orientGain > 0] : 0]);
 
 // The Settings table changed (directly, or via an ability switch / task card).
 async function applySettings() {
@@ -674,7 +679,7 @@ function checkpoint() {
     build: { eyes: $('eyes').value, eyeLayout: $('eyeLayout').value, eyeRes: $('eyeRes').value, core: $('core').value },
     settings: readRewards(),
     gen: S.gen, theta: Array.from(S.es.theta), hist: S.hist.slice(-400), histKind: S.histKind, lifeEp: S.lifeEp || 0,
-    life: S.lifeState ? { Wp: Array.from(S.lifeState.Wp), fmean: Array.from(S.lifeState.fmean), rmean: S.lifeState.rmean ? Array.from(S.lifeState.rmean) : null, n: S.lifeState.n } : null,
+    life: S.lifeState ? { Wp: Array.from(S.lifeState.Wp), fmean: Array.from(S.lifeState.fmean), rmean: S.lifeState.rmean ? Array.from(S.lifeState.rmean) : null, ovar: S.lifeState.ovar ? Array.from(S.lifeState.ovar) : null, n: S.lifeState.n } : null,
     wiring: S.wiring, shape: { key: shapeKey(S.cfg), paramCount: S.es.n },
   };
 }
@@ -714,7 +719,7 @@ async function restore(ck) {
     if (ck.shape.paramCount !== S.runner.brain.paramCount) throw new Error('this fly\'s brain doesn\'t fit these settings');
     S.es = new ES(Float32Array.from(ck.theta), { ...S.cfg.es, seed: Date.now() % 100000 });
     S.gen = ck.gen; S.hist = ck.hist || []; S.histKind = ck.histKind || null; S.lifeEp = ck.lifeEp || 0;
-    S.lifeState = ck.life ? { Wp: Float32Array.from(ck.life.Wp), fmean: Float32Array.from(ck.life.fmean), rmean: ck.life.rmean ? Float32Array.from(ck.life.rmean) : null, n: ck.life.n } : null;
+    S.lifeState = ck.life ? { Wp: Float32Array.from(ck.life.Wp), fmean: Float32Array.from(ck.life.fmean), rmean: ck.life.rmean ? Float32Array.from(ck.life.rmean) : null, ovar: ck.life.ovar ? Float32Array.from(ck.life.ovar) : null, n: ck.life.n } : null;
     S.watchParams = Float32Array.from(ck.theta); S.watchStarted = false;
     syncAbilitySwitches();
     const last = S.hist[S.hist.length - 1];

@@ -82,6 +82,12 @@ export const ABILITIES = [
     on: { eye: { colour: 1 } }, off: { eye: { colour: 0 } },
   },
   {
+    id: 'orient', name: 'Edge-direction cells', icon: 'orient',
+    short: 'Notices which way the edges run, not exactly where.',
+    long: 'Fly visual neurons are tuned to the direction of edges. These cells report how strongly edges run in each of 8 directions in each small patch of the eye, adding up over the patch so a small shift of the picture barely changes them. Each cell also adapts its sensitivity to its own typical signal (as real sensory neurons do), so weak but telling edges count as much as strong ones, and the learning synapses read them directly, beside the memory centre’s Kenyon cells (so it works together with Memory centre). Photos of faces are never lined up exactly, which is where this tolerance helps most.',
+    on: { eye: { orient: 1 } }, off: { eye: { orient: 0 } },
+  },
+  {
     id: 'reflex', name: 'Look at what stands out', icon: 'target',
     short: 'Born knowing to turn toward and walk up to anything striking.',
     long: 'An innate reflex, like real flies turning toward and approaching small objects: the eye cells that detect small dark or bright spots are compared across the view; if one spot stands out, the fly turns its eye toward it and, once it is straight ahead, steps closer. Needs no training at all, so it works with Quick learn. The learned Smart eye and Step closer outputs add on top.',
@@ -111,7 +117,7 @@ export const ABILITIES = [
 // (stripes with Quick learn: 82.9% -> 99.5%; light or dark stays at 100%). Smart eye + mood chemical:
 // what this branch is exploring; free until evolved (a new fly's eye holds still).
 // Colour vision: the biggest measured gain on faces (+6.8 points), no loss on grey challenges.
-export const DEFAULT_ABILITIES = { smartEye: true, mood: true, memory: true, edges: true, colour: true };
+export const DEFAULT_ABILITIES = { smartEye: true, mood: true, memory: true, edges: true, colour: true, orient: true };
 
 // Config overrides for a task + a set of abilities ({ id: true/false }).
 export function setupConfig(taskId, abilities) {
@@ -152,12 +158,108 @@ export const MEASURED = [
     ability: "memory",
     task: "faces",
     method: "quick",
-    a: 0.542,
-    b: 0.5952,
-    diff: 0.0532,
-    margin: 0.0396,
+    with: "Colour vision",
+    a: 0.53,
+    b: 0.604,
+    diff: 0.074,
+    margin: 0.067,
     clear: true,
-    summary: "On faces with Quick learn: 54.2% without vs 59.5% with - better by 5.3 points (clear)."
+    summary: "On faces with Quick learn (and Colour vision on): 53.0% without vs 60.4% with - better by 7.4 points (clear)."
+  },
+  {
+    ability: "memory",
+    task: "faces",
+    method: "quick",
+    a: 0.53,
+    b: 0.536,
+    diff: 0.006,
+    margin: 0.058,
+    clear: false,
+    summary: "On faces with Quick learn: 53.0% without vs 53.6% with - no clear difference (+0.6 ± 5.8 points)."
+  },
+  {
+    ability: "colour",
+    task: "faces",
+    method: "quick",
+    with: "Memory centre",
+    a: 0.536,
+    b: 0.604,
+    diff: 0.068,
+    margin: 0.042,
+    clear: true,
+    summary: "On faces with Quick learn (and Memory centre on): 53.6% without vs 60.4% with - better by 6.8 points (clear)."
+  },
+  {
+    ability: "colour",
+    task: "faint",
+    method: "quick",
+    with: "Memory centre",
+    a: 0.927,
+    b: 0.935,
+    diff: 0.008,
+    margin: 0.013,
+    clear: false,
+    summary: "On faint stripes with Quick learn (and Memory centre on): 92.7% without vs 93.5% with - no clear difference (+0.8 ± 1.3 points)."
+  },
+  {
+    ability: "orient",
+    task: "faces",
+    method: "quick",
+    with: "Memory centre",
+    a: 0.536,
+    b: 0.612,
+    diff: 0.076,
+    margin: 0.029,
+    clear: true,
+    summary: "On faces with Quick learn (and Memory centre on): 53.6% without vs 61.2% with - better by 7.6 points (clear)."
+  },
+  {
+    ability: "orient",
+    task: "faces",
+    method: "quick",
+    with: "Memory centre and Colour vision",
+    a: 0.604,
+    b: 0.616,
+    diff: 0.012,
+    margin: 0.037,
+    clear: false,
+    summary: "On faces with Quick learn (and Memory centre and Colour vision on): 60.4% without vs 61.6% with - no clear difference (+1.2 ± 3.7 points)."
+  },
+  {
+    ability: "orient",
+    task: "faint",
+    method: "quick",
+    with: "Memory centre",
+    a: 0.927,
+    b: 1,
+    diff: 0.073,
+    margin: 0.022,
+    clear: true,
+    summary: "On faint stripes with Quick learn (and Memory centre on): 92.7% without vs 100.0% with - better by 7.3 points (clear)."
+  },
+  {
+    ability: "orient",
+    task: "spot",
+    method: "quick",
+    with: "Memory centre",
+    a: 0.823,
+    b: 0.861,
+    diff: 0.038,
+    margin: 0.065,
+    clear: false,
+    summary: "On find the spot with Quick learn (and Memory centre on): 82.3% without vs 86.1% with - no clear difference (+3.8 ± 6.5 points)."
+  },
+  {
+    ability: "orient",
+    task: "gratings",
+    method: "quick",
+    with: "Memory centre",
+    a: 0.99,
+    b: 1,
+    diff: 0.01,
+    margin: 0.003,
+    clear: true,
+    summary: "On stripes with Quick learn (and Memory centre on): 99.0% without vs 100.0% with - better by 1.0 points (clear)."
   },
   {
     ability: "edges",
@@ -174,23 +276,12 @@ export const MEASURED = [
     ability: "edges",
     task: "faces",
     method: "quick",
-    a: 0.542,
-    b: 0.555,
-    diff: 0.013,
-    margin: 0.0246,
+    a: 0.53,
+    b: 0.535,
+    diff: 0.005,
+    margin: 0.017,
     clear: false,
-    summary: "On faces with Quick learn: 54.2% without vs 55.5% with - no clear difference (+1.3 ± 2.5 points)."
-  },
-  {
-    ability: "fovea",
-    task: "faces",
-    method: "quick",
-    a: 0.542,
-    b: 0.5395,
-    diff: -0.0025,
-    margin: 0.0368,
-    clear: false,
-    summary: "On faces with Quick learn: 54.2% without vs 54.0% with - no clear difference (-0.2 ± 3.7 points)."
+    summary: "On faces with Quick learn: 53.0% without vs 53.5% with - no clear difference (+0.5 ± 1.7 points)."
   },
   {
     ability: "fovea",
@@ -202,6 +293,17 @@ export const MEASURED = [
     margin: 0.0196,
     clear: true,
     summary: "On find the spot with Quick learn: 59.9% without vs 72.0% with - better by 12.1 points (clear)."
+  },
+  {
+    ability: "fovea",
+    task: "faces",
+    method: "quick",
+    a: 0.53,
+    b: 0.536,
+    diff: 0.006,
+    margin: 0.029,
+    clear: false,
+    summary: "On faces with Quick learn: 53.0% without vs 53.6% with - no clear difference (+0.6 ± 2.9 points)."
   },
   {
     ability: "smartEye",
@@ -238,6 +340,19 @@ export const MEASURED = [
     summary: "On find the spot with Evolve (60 generations) (and Sharp centre on): 59.5% without vs 65.3% with - no clear difference (+5.8 ± 11.0 points)."
   },
   {
+    ability: "smartEye",
+    task: "spot",
+    method: "thorough",
+    with: "Sharp centre",
+    gens: 150,
+    a: 0.709,
+    b: 0.765,
+    diff: 0.056,
+    margin: 0.127,
+    clear: false,
+    summary: "On find the spot with Evolve (150 generations) (and Sharp centre on): 70.9% without vs 76.5% with - no clear difference (+5.6 ± 12.7 points)."
+  },
+  {
     ability: "mood",
     task: "gratings",
     method: "thorough",
@@ -249,6 +364,18 @@ export const MEASURED = [
     summary: "On stripes with Evolve (30 generations): 75.5% without vs 76.9% with - no clear difference (+1.3 ± 6.0 points)."
   },
   {
+    ability: "mood",
+    task: "gratings",
+    method: "thorough",
+    gens: 150,
+    a: 0.917,
+    b: 0.929,
+    diff: 0.012,
+    margin: 0.029,
+    clear: false,
+    summary: "On stripes with Evolve (150 generations): 91.7% without vs 92.9% with - no clear difference (+1.2 ± 2.9 points)."
+  },
+  {
     ability: "selfTune",
     task: "faint",
     method: "thorough",
@@ -258,6 +385,18 @@ export const MEASURED = [
     margin: 0.0715,
     clear: false,
     summary: "On faint stripes with Evolve (30 generations): 55.4% without vs 54.1% with - no clear difference (-1.3 ± 7.1 points)."
+  },
+  {
+    ability: "selfTune",
+    task: "faint",
+    method: "thorough",
+    gens: 150,
+    a: 0.582,
+    b: 0.608,
+    diff: 0.026,
+    margin: 0.086,
+    clear: false,
+    summary: "On faint stripes with Evolve (150 generations): 58.2% without vs 60.8% with - no clear difference (+2.6 ± 8.6 points)."
   },
   {
     ability: "rewire",
@@ -272,17 +411,6 @@ export const MEASURED = [
   },
   {
     ability: "sizeVary",
-    task: "faces",
-    method: "quick",
-    a: 0.542,
-    b: 0.5367,
-    diff: -0.0053,
-    margin: 0.0298,
-    clear: false,
-    summary: "On faces with Quick learn: 54.2% without vs 53.7% with - no clear difference (-0.5 ± 3.0 points)."
-  },
-  {
-    ability: "sizeVary",
     task: "gratings",
     method: "quick",
     a: 0.8291,
@@ -291,6 +419,29 @@ export const MEASURED = [
     margin: 0.0785,
     clear: false,
     summary: "On stripes with Quick learn: 82.9% without vs 84.7% with - no clear difference (+1.8 ± 7.9 points)."
+  },
+  {
+    ability: "sizeVary",
+    task: "faces",
+    method: "quick",
+    a: 0.53,
+    b: 0.532,
+    diff: 0.002,
+    margin: 0.038,
+    clear: false,
+    summary: "On faces with Quick learn: 53.0% without vs 53.2% with - no clear difference (+0.2 ± 3.8 points)."
+  },
+  {
+    ability: "reflex",
+    task: "faces",
+    method: "quick",
+    with: "Memory centre and Colour vision",
+    a: 0.604,
+    b: 0.584,
+    diff: -0.02,
+    margin: 0.049,
+    clear: false,
+    summary: "On faces with Quick learn (and Memory centre and Colour vision on): 60.4% without vs 58.4% with - no clear difference (-2.0 ± 4.9 points)."
   },
   {
     ability: "zoom",
@@ -331,12 +482,12 @@ export const MEASURED = [
     ability: "surprise",
     task: "faces",
     method: "quick",
-    with: "Memory centre",
-    a: 0.5952,
-    b: 0.5514,
-    diff: -0.0438,
-    margin: 0.0554,
+    with: "Memory centre and Colour vision",
+    a: 0.604,
+    b: 0.585,
+    diff: -0.019,
+    margin: 0.075,
     clear: false,
-    summary: "On faces with Quick learn (and Memory centre on): 59.5% without vs 55.1% with - no clear difference (-4.4 ± 5.5 points)."
+    summary: "On faces with Quick learn (and Memory centre and Colour vision on): 60.4% without vs 58.5% with - no clear difference (-1.9 ± 7.5 points)."
   }
 ];

@@ -18,6 +18,7 @@ export const ICONS = {
   sizes: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1.5" opacity=".7"/><rect x="10" y="10" width="4" height="4" rx="1" opacity=".5"/>'),
   spark: svg('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>'),
   palette: svg('<path d="M12 3a9 9 0 100 18c1.5 0 2-1 2-2s-1-1.5-1-2.5 1-1.5 2-1.5h2a4 4 0 004-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10" cy="7" r="1.2" fill="currentColor"/><circle cx="15" cy="7.5" r="1.2" fill="currentColor"/>'),
+  orient: svg('<path d="M4 12h16M12 4v16"/><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" opacity=".55"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/>'),
   play: svg('<path d="M7 4l13 8-13 8z" fill="currentColor"/>'),
   pause: svg('<path d="M7 4h3v16H7zM14 4h3v16h-3z" fill="currentColor"/>'),
   bolt: svg('<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>'),

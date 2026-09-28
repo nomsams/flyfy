@@ -14,6 +14,9 @@
 // means only the core + readout are trained: ~3k parameters, ~250 neurons.
 
 import { mulberry32, gauss } from './rng.js';
+import { orientationEnergy, orientSize } from './orient.js';
+
+const OVAR0 = 0.005; // starting guess for an edge-direction cell's variance (typical spread ~0.07)
 
 export const LC_TYPES = [
   { name: 'LPLC2', group: 'loom', gain: 800 }, // x(1 + 2 * lens blur): calibrated so onset responses match with or without the lens
@@ -208,21 +211,28 @@ export class Brain {
       this.kcRetina = !!mb.retina;
       // with colour vision, each sensor also offers its two colour-opponent signals to the Kenyon cells
       this.kcColour = this.kcRetina && !!cfg.eye.colour;
-      this.nSrc = this.kcRetina ? this.nEyes * cfg.eye.rows * cfg.eye.cols * (this.kcColour ? 3 : 1) : this.nS;
+      // with orientation cells, each eye also offers its pooled edge-direction energies (after colour)
+      this.kcOrient = this.kcRetina && !!cfg.eye.orient;
+      this.nOri = this.kcOrient ? orientSize(cfg.eye.rows, cfg.eye.cols, cfg.eye.orientPool, cfg.eye.orientBins) : 0;
+      this.nSrc = this.kcRetina ? this.nEyes * (cfg.eye.rows * cfg.eye.cols * (this.kcColour ? 3 : 1) + this.nOri) : this.nS;
+      this.oriStart = this.nSrc - this.nEyes * this.nOri; // the edge-direction block is last
       if (this.kcRetina) { this.rv = new Float32Array(this.nSrc); this.rc = new Float32Array(this.nSrc); this.rmean = new Float32Array(this.nSrc); }
       // Every Kenyon cell gets fanIn brightness inputs; with colour vision it gets fanInColour colour
       // inputs *on top* (never instead), so on grey pictures -- where colour is all zero -- each cell
       // still works exactly as it would without colour vision. (Mixing them freely starved the
       // memory centre on grey challenges: faint stripes -14 points.)
       const nLum = this.kcRetina ? this.nEyes * cfg.eye.rows * cfg.eye.cols : this.nS;
-      const fanL = Math.min(mb.fanIn, nLum), fanC = this.kcColour ? Math.min(mb.fanInColour ?? 3, this.nSrc - nLum) : 0;
-      this.kcFan = fanL + fanC;
+      const nCol = this.kcColour ? 2 * nLum : 0, nOriAll = this.nEyes * this.nOri;
+      const fanL = Math.min(mb.fanIn, nLum), fanC = this.kcColour ? Math.min(mb.fanInColour ?? 3, nCol) : 0;
+      const fanO = this.kcOrient ? Math.min(mb.fanInOrient ?? 6, nOriAll) : 0;
+      this.kcFan = fanL + fanC + fanO;
       this.kcIdx = new Int32Array(this.nKC * this.kcFan);
       this.kcW = new Float32Array(this.nKC * this.kcFan);
       for (let k = 0; k < this.nKC; k++) {
         const used = new Set();
         for (let j = 0; j < this.kcFan; j++) {
-          const lo = j < fanL ? 0 : nLum, span = j < fanL ? nLum : this.nSrc - nLum;
+          const lo = j < fanL ? 0 : j < fanL + fanC ? nLum : nLum + nCol;
+          const span = j < fanL ? nLum : j < fanL + fanC ? nCol : nOriAll;
           let s;
           do { s = lo + Math.floor(r2() * span); } while (used.has(s));
           used.add(s);
@@ -235,8 +245,14 @@ export class Brain {
       this.kc = new Float32Array(this.nKC);
       this.kActive = Math.max(1, Math.round(mb.sparsity * this.nKC));
     } else this.nKC = 0;
-    this.nP = this.mbOn ? this.nKC : this.nS; // inputs to the plastic (learn-by-pain) synapses
-    this.pv = this.mbOn ? this.kc : this.xc;
+    // Edge-direction cells also reach the learning synapses directly, beside the Kenyon cells, each
+    // gain-adapted: divided by its own running spread, as sensory neurons adapt their sensitivity. Reward
+    // and pain learning weighs inputs by their raw size, so without this the weak but telling edges
+    // count for little (faces, fly-style readout: 56% raw vs 63% adapted; tools/faces-headroom.mjs).
+    this.nOD = this.mbOn && this.kcOrient && cfg.eye.orientGain > 0 ? this.nEyes * this.nOri : 0;
+    if (this.nOD) this.ovar = new Float32Array(this.nOD);
+    this.nP = this.mbOn ? this.nKC + this.nOD : this.nS; // inputs to the plastic (learn-by-pain) synapses
+    this.pv = this.mbOn ? (this.nOD ? new Float32Array(this.nP) : this.kc) : this.xc;
     this.Wp = new Float32Array(this.M * this.nP);
 
     this.sizes = {
@@ -365,11 +381,12 @@ export class Brain {
     this.fmeanInit = keepPlastic && this.nAnswers > 0; // keep the adapted mean when continuing a life
   }
 
-  getPlastic() { return { Wp: Float32Array.from(this.Wp), fmean: Float32Array.from(this.fmean), rmean: this.rmean ? Float32Array.from(this.rmean) : null, n: this.nAnswers }; }
+  getPlastic() { return { Wp: Float32Array.from(this.Wp), fmean: Float32Array.from(this.fmean), rmean: this.rmean ? Float32Array.from(this.rmean) : null, ovar: this.ovar ? Float32Array.from(this.ovar) : null, n: this.nAnswers }; }
   setPlastic(p) {
     if (!p || p.Wp.length !== this.Wp.length || p.fmean.length !== this.fmean.length) { this.Wp.fill(0); this.nAnswers = 0; this.fmeanInit = false; return; }
     if (this.rmean && !(p.rmean && p.rmean.length === this.rmean.length)) { this.Wp.fill(0); this.nAnswers = 0; this.fmeanInit = false; return; }
     this.Wp.set(p.Wp); this.fmean.set(p.fmean); if (this.rmean) this.rmean.set(p.rmean); this.nAnswers = p.n; this.fmeanInit = p.n > 0;
+    if (this.ovar) { if (p.ovar && p.ovar.length === this.ovar.length) this.ovar.set(p.ovar); else this.ovar.fill(OVAR0); }
   }
 
   _plasticUpdate(foot, sig, both) {
@@ -412,6 +429,10 @@ export class Brain {
     const rate = Math.max(0.05, 1 / (1 + this.nAnswers++)), fm = this.fmean, sidx = this.staticIdx, x = this.x;
     for (let j = 0; j < this.nS; j++) fm[j] += rate * (x[sidx[j]] - fm[j]);
     if (this.kcRetina) { const rm = this.rmean, rv = this.rv; for (let j = 0; j < rm.length; j++) rm[j] += rate * (rv[j] - rm[j]); }
+    if (this.ovar) { // running spread of each edge-direction cell, for its gain
+      const ov = this.ovar, rm = this.rmean, rv = this.rv, o0 = this.oriStart, r = Math.min(rate, 0.5);
+      for (let j = 0; j < ov.length; j++) { const d = rv[o0 + j] - rm[o0 + j]; ov[j] += r * (d * d - ov[j]); }
+    }
   }
 
   // Innate orienting and approach (eye.reflex): real flies turn toward and walk up to small,
@@ -486,15 +507,30 @@ export class Brain {
       let q = 0;
       for (let e = 0; e < this.nEyes; e++) { this.rv.set(retinas[e], q); q += retinas[e].length; }
       if (this.kcColour) for (let e = 0; e < this.nEyes; e++) { if (chroma) this.rv.set(chroma[e], q); else this.rv.fill(0, q, q + 2 * retinas[e].length); q += 2 * retinas[e].length; }
+      if (this.kcOrient) {
+        const E = this.cfg.eye, P = E.orientPool, sc = 1 / (P * P); // mean edge strength per sensor
+        for (let e = 0; e < this.nEyes; e++) {
+          const o = this.rv.subarray(q, q + this.nOri);
+          orientationEnergy(retinas[e], E.rows, E.cols, P, E.orientBins, o);
+          for (let j = 0; j < o.length; j++) o[j] *= sc;
+          q += this.nOri;
+        }
+      }
     }
     if (!this.fmeanInit) {
       for (let j = 0; j < nS; j++) fm[j] = x[sidx[j]];
       if (this.kcRetina) this.rmean.set(this.rv);
+      if (this.ovar) this.ovar.fill(OVAR0);
       this.fmeanInit = true;
     }
     for (let j = 0; j < nS; j++) xc[j] = x[sidx[j]] - fm[j];
     if (this.kcRetina) { const rc = this.rc, rv = this.rv, rm = this.rmean; for (let j = 0; j < rc.length; j++) rc[j] = rv[j] - rm[j]; }
     if (this.mbOn) this._mushroomBody();
+    if (this.nOD) {
+      const pv = this.pv, rc = this.rc, ov = this.ovar, o0 = this.oriStart, g = this.cfg.eye.orientGain, nK = this.nKC;
+      pv.set(this.kc);
+      for (let j = 0; j < this.nOD; j++) pv[nK + j] = g * clamp(rc[o0 + j] / Math.sqrt(ov[j] + 1e-4), -3, 3);
+    }
 
     const { N, kIn, kRec, Win, Wrec, b, inIdx, recIdx, h, hn, baseAlpha, sens, Wpos } = this;
 

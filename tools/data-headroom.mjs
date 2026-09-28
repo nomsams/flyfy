@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { normalizeFace } from '../src/stimuli.js';
 import { mulberry32 } from '../src/rng.js';
+import { orientationEnergy, orientSize } from '../src/orient.js';
 
 const dir = process.argv[2];
 const meta = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8').replace(/^﻿/, ''));
@@ -94,7 +95,86 @@ const row = (label, X, per) => {
 console.log(`${N} original photos (${Y.filter((y) => y === 0).length} men, ${Y.filter((y) => y === 1).length} women)\n`);
 const ALL = Math.min(Y.filter((y) => y === 0).length, Y.filter((y) => y === 1).length); // balanced: guessing = 50%
 console.log('setup'.padEnd(40) + '  photos  averages       LDA');
+// Beyond straight lines: is the raw-pixel ceiling the true limit, or can a nonlinear code do better?
+//   kc   - the fly's own mushroom body: 2,000 Kenyon cells, each summing 6 random brightness + 3
+//          random colour inputs, only the top 5% fire. Read by class averages (what reward/pain
+//          Hebbian learning amounts to) and by LDA (the best straight line on the KC code).
+//   ori  - orientation energy: brightness gradients split into 4 directions, pooled in 4x4 cells
+//          (a crude version of orientation-tuned visual neurons / HOG), plus pooled colour.
+function kcCode(X, cells = 2000, nLum = P, fanL = 6, fanC = 3, sparsity = 0.05) {
+  // like the fly's: inputs centred on the average photo, random +-1 weights, top 5% fire
+  const r = mulberry32(5), k = Math.round(cells * sparsity), d = X[0].length, mean = new Float64Array(d);
+  for (const x of X) for (let j = 0; j < d; j++) mean[j] += x[j] / X.length;
+  const W = Array.from({ length: cells }, () => [
+    ...Array.from({ length: fanL }, () => Math.floor(r() * nLum)),
+    ...(d > nLum ? Array.from({ length: fanC }, () => nLum + Math.floor(r() * (d - nLum))) : []),
+  ].map((j) => [j, r() < 0.5 ? -1 : 1]));
+  return X.map((x) => {
+    const a = Float32Array.from(W, (w) => w.reduce((s, [j, g]) => s + g * (x[j] - mean[j]), 0));
+    const th = Float32Array.from(a).sort()[cells - k];
+    return Float32Array.from(a, (v) => (v >= th ? 1 : 0));
+  });
+}
+function oriCode(X) {
+  const S = meta.size, C = 4, n = S / C, out = [];
+  for (const x of X) {
+    const f = new Float32Array(n * n * 4 + (x.length > P ? 2 * n * n : 0));
+    for (let y = 1; y < S - 1; y++) for (let xx = 1; xx < S - 1; xx++) {
+      const gx = x[y * S + xx + 1] - x[y * S + xx - 1], gy = x[(y + 1) * S + xx] - x[(y - 1) * S + xx];
+      const mag = Math.hypot(gx, gy), ang = (Math.atan2(gy, gx) + Math.PI) % Math.PI; // 0..pi
+      const b = Math.floor((ang / Math.PI) * 4) % 4, cell = Math.floor(y / C) * n + Math.floor(xx / C);
+      f[cell * 4 + b] += mag;
+    }
+    if (x.length > P) for (let p = 0; p < P; p++) {
+      const cell = Math.floor(Math.floor(p / S) / C) * n + Math.floor((p % S) / C);
+      f[n * n * 4 + cell] += x[P + p]; f[n * n * 5 + cell] += x[2 * P + p];
+    }
+    out.push(f);
+  }
+  return out;
+}
+
+// the app's orientation cells (src/orient.js), plus the colour pooled over the same patches
+function orientCode(X, pool) {
+  const S = meta.size, n = Math.ceil(S / pool);
+  return X.map((x) => {
+    const e = orientationEnergy(x.subarray(0, P), S, S, pool, 8);
+    if (x.length === P) return e;
+    const f = new Float32Array(e.length + 2 * n * n);
+    f.set(e);
+    for (let p = 0; p < P; p++) {
+      const cell = Math.floor(Math.floor(p / S) / pool) * n + Math.floor((p % S) / pool);
+      f[e.length + cell] += x[P + p]; f[e.length + n * n + cell] += x[2 * P + p];
+    }
+    return f;
+  });
+}
+
 const grey = load('center', false);
+if (process.argv[3] === 'orient') { // node tools/data-headroom.mjs <dir> orient [crop]
+  const crop = process.argv[4] || 'upper';
+  for (const colour of [false, true]) {
+    const X = load(crop, colour), tag = `${crop}, ${colour ? 'colour' : 'grey'}, orient. `;
+    for (const pool of [2, 4, 8]) row(tag + `pool ${pool}`, orientCode(X, pool), ALL);
+    row(tag + 'pool 4 + Kenyon cells', kcCode(orientCode(X, 4), 2000, orientSize(meta.size, meta.size, 4, 8)), ALL);
+  }
+  process.exit(0);
+}
+if (process.argv[3] === 'nonlinear') { // node tools/data-headroom.mjs <dir> nonlinear [crop]
+  const crop = process.argv[4] || 'upper';
+  for (const colour of [false, true]) {
+    const X = load(crop, colour), tag = `${crop} crop, ${colour ? 'colour' : 'grey'}, `;
+    row(tag + 'raw pixels', X, ALL);
+    row(tag + 'Kenyon cells (2,000)', kcCode(X), ALL);
+    row(tag + 'Kenyon cells (8,000)', kcCode(X, 8000), ALL);
+    row(tag + 'orientation energy', oriCode(X), ALL);
+  }
+  process.exit(0);
+}
+if (process.argv[3]) { // just compare the named crops, grey and colour: node tools/data-headroom.mjs <dir> upper,skin
+  for (const c of process.argv[3].split(',')) { row(c + ' crop, grey, all balanced', load(c, false), ALL); row(c + ' crop, colour, all balanced', load(c, true), ALL); }
+  process.exit(0);
+}
 row('centre crop, grey, 500 per class', grey, 500);
 row('centre crop, grey, 200 per class', grey, 200);
 row('centre crop, grey, all balanced', grey, ALL);

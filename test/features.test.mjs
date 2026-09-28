@@ -12,6 +12,7 @@ import { mulberry32 } from '../src/rng.js';
 import { loadFacesNode } from '../tools/lib.mjs';
 import { TrialWorld } from '../src/world.js';
 import { exam } from '../src/experiment.js';
+import { orientationEnergy, orientSize } from '../src/orient.js';
 
 let passed = 0;
 const ok = (name, fn) => { fn(); passed++; console.log('ok  -', name); };
@@ -144,6 +145,27 @@ ok('colour vision: sensors report colour only when it is switched on, and it rea
   const b = new Brain(mergeConfig({ eye: { colour: 1 }, mb: { enabled: 1, retina: 1 } }));
   assert.equal(b.nSrc, 3 * cfg.eye.rows * cfg.eye.cols);
   assert.equal(b.paramCount, new Brain(cfg).paramCount, 'colour does not reshape the evolved brain');
+});
+
+ok('edge-direction cells: tuned to direction, tolerant to small shifts, read by the Kenyon cells', () => {
+  const R = 8, C = 8, edge = (x0) => Float32Array.from({ length: R * C }, (_, i) => (i % C >= x0 ? 1 : 0));
+  const e = orientationEnergy(edge(3), R, C, 4);
+  assert.ok(e[0] > 0 && e.subarray(1, 8).every((v) => v === 0), 'a vertical edge excites only its own direction');
+  const shifted = orientationEnergy(edge(2), R, C, 4);
+  assert.deepEqual(Array.from(shifted.subarray(0, 8)), Array.from(e.subarray(0, 8)), 'a one-sensor shift inside the patch changes nothing');
+  const b = new Brain(mergeConfig({ eye: { orient: 1 }, mb: { enabled: 1, retina: 1, fanInOrient: 6 } }));
+  const nOri = orientSize(cfg.eye.rows, cfg.eye.cols, cfg.eye.orientPool, cfg.eye.orientBins), nLum = cfg.eye.rows * cfg.eye.cols;
+  assert.equal(b.nSrc, nLum + nOri);
+  assert.equal(b.kcFan, cfg.mb.fanIn + 6, 'optionally mixed into the Kenyon cells too');
+  for (let k = 0; k < b.nKC; k++) assert.ok(b.kcIdx[k * b.kcFan + b.kcFan - 1] >= nLum, 'the last inputs of each cell are edge-direction cells');
+  b.step(stripes(b), new Float32Array(2), null, null, null);
+  assert.ok(b.rv.subarray(nLum).some((v) => v > 0), 'stripes excite edge-direction cells');
+  assert.equal(b.nP, b.nKC + nOri, 'the learning synapses read the Kenyon cells and, directly, the edge-direction cells');
+  assert.ok(b.pv.every(Number.isFinite) && b.pv.subarray(b.nKC).every((v) => Math.abs(v) <= 3), 'gain-adapted, bounded');
+  b.learn(0, true);
+  const kcOnly = new Brain(mergeConfig({ eye: { orient: 1, orientGain: 0 }, mb: { enabled: 1, retina: 1 } }));
+  assert.equal(kcOnly.nP, kcOnly.nKC, 'orientGain 0 = only through the Kenyon cells');
+  assert.equal(b.paramCount, new Brain(cfg).paramCount, 'edge-direction cells do not reshape the evolved brain');
 });
 
 ok('comparison statistics tell a clear win from luck', () => {
