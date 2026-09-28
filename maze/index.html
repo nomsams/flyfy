@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fly Lab · Maze</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c222b; --line:#2a313c; --fg:#e8edf3; --mut:#93a0b0;
+    --accent:#4f9dff; --accent-fg:#fff; --green:#3fb950; --red:#f0605a; --amber:#e3a23b;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+  }
+  @media (prefers-color-scheme: light) {
+    :root { color-scheme: light; --bg:#f4f6f9; --panel:#ffffff; --panel2:#f5f7fa; --line:#dde3ea; --fg:#18202b; --mut:#5b6878;
+      --accent:#2f6fe0; --green:#1f9a44; --red:#d23f39; --amber:#b87700; --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 18px rgba(20,30,50,.06); }
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  a { color:var(--accent); }
+  .top { position:sticky; top:0; z-index:5; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line); padding:10px 16px; padding-top:calc(10px + env(safe-area-inset-top, 0px)); display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:17px; }
+  .brand .logo { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; background:var(--accent); color:var(--accent-fg); }
+  .top nav { margin-left:auto; display:flex; gap:14px; font-size:14px; }
+  .wrap { max-width:1280px; margin:0 auto; padding:16px; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr); gap:16px; align-items:start; }
+  @media (max-width:900px) { .wrap { grid-template-columns:minmax(0,1fr); } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:var(--shadow); display:grid; gap:12px; }
+  .card h2 { margin:0; font-size:16px; display:flex; align-items:center; gap:10px; }
+  .card h2 .num { width:24px; height:24px; border-radius:50%; background:var(--accent); color:var(--accent-fg); display:grid; place-items:center; font-size:13px; flex:none; }
+  .col { display:grid; gap:16px; }
+  .hint { color:var(--mut); font-size:13.5px; margin:0; }
+  .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  label.f { display:grid; gap:4px; font-size:13px; color:var(--mut); }
+  label.f output { color:var(--fg); font-variant-numeric:tabular-nums; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  input[type=number] { width:90px; background:var(--panel2); color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:6px 8px; font:inherit; }
+  .grid2 { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px 14px; }
+  @media (max-width:420px) { .grid2 { grid-template-columns:minmax(0,1fr); } }
+  .btn { font:600 14px/1 system-ui,sans-serif; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:var(--panel2); color:var(--fg); cursor:pointer; }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:var(--accent-fg); }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .seg { display:inline-flex; flex-wrap:wrap; gap:4px; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:3px; }
+  .seg button { font:600 13px/1 system-ui,sans-serif; padding:7px 10px; border-radius:7px; border:0; background:none; color:var(--fg); cursor:pointer; }
+  .seg button.on { background:var(--accent); color:var(--accent-fg); }
+  .switch { display:flex; align-items:center; gap:10px; font-size:14px; cursor:pointer; }
+  .switch input { position:absolute; opacity:0; }
+  .switch span { width:38px; height:22px; border-radius:11px; background:var(--line); position:relative; flex:none; transition:background .2s; }
+  .switch span::after { content:""; position:absolute; left:3px; top:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:left .2s; }
+  .switch input:checked + span { background:var(--accent); }
+  .switch input:checked + span::after { left:19px; }
+  .switch input:focus-visible + span { outline:2px solid var(--accent); outline-offset:2px; }
+  .checks { display:flex; flex-wrap:wrap; gap:8px; }
+  .checks label { display:flex; align-items:center; gap:6px; font-size:13.5px; background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:6px 9px; cursor:pointer; }
+  .mapcard { position:relative; padding:10px; }
+  #map { width:100%; height:auto; aspect-ratio:1; display:block; border-radius:10px; background:var(--panel2); cursor:crosshair; touch-action:manipulation; }
+  .maptools { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; padding:4px 4px 0; }
+  .legend { display:flex; flex-wrap:wrap; gap:12px; font-size:12.5px; color:var(--mut); }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+  .overlay { position:absolute; inset:10px 10px auto 10px; aspect-ratio:1; display:grid; place-items:center; pointer-events:none; }
+  .overlay div { background:color-mix(in srgb, var(--panel) 90%, transparent); border:1px solid var(--line); border-radius:12px; padding:12px 16px; font-weight:600; }
+  .live { display:grid; grid-template-columns:auto minmax(0,1fr); gap:14px; align-items:start; }
+  @media (max-width:520px) { .live { grid-template-columns:minmax(0,1fr); } }
+  #view, #fan { border-radius:8px; background:var(--panel2); display:block; max-width:100%; height:auto; }
+  .stats { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px 14px; }
+  .stat { display:grid; gap:1px; }
+  .stat small { color:var(--mut); font-size:12px; }
+  .stat b { font-size:20px; font-variant-numeric:tabular-nums; }
+  .pill { display:inline-block; padding:4px 9px; border-radius:999px; font-size:12.5px; font-weight:700; background:var(--panel2); border:1px solid var(--line); }
+  .pill.following { color:var(--accent); border-color:var(--accent); }
+  .pill.casting { color:var(--amber); border-color:var(--amber); }
+  .pill.reached { color:var(--green); border-color:var(--green); }
+  .pill.lost, .pill.tired { color:var(--red); border-color:var(--red); }
+  .bar { height:8px; border-radius:4px; background:var(--panel2); border:1px solid var(--line); overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; background:var(--accent); transition:width .2s; }
+  .err { color:var(--red); font-size:13.5px; }
+  details.about summary { cursor:pointer; color:var(--accent); font-size:13.5px; }
+  details.about p { font-size:14px; color:var(--mut); margin:8px 0 0; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><div class="logo" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h6v6H4zM14 14h6v6h-6zM10 7h7v7"/></svg></div>Fly Lab · Maze</div>
+  <nav><a href="../">Faces</a><a href="../guide.html">Guide</a></nav>
+</header>
+
+<main class="wrap">
+  <section class="card mapcard" aria-label="The maze from above">
+    <canvas id="map" width="900" height="900" aria-label="Map of the maze, the route and the fly"></canvas>
+    <div class="overlay" id="overlay"><div id="overlay-t">Building the maze…</div></div>
+    <div class="maptools">
+      <label class="switch"><input type="checkbox" id="show-route" checked><span></span>Show the route (the fly never sees it)</label>
+      <div class="legend"><span><i style="background:#39d353"></i>start</span><span><i style="background:#f0605a"></i>goal</span><span><i style="background:var(--accent)"></i>following</span><span><i style="background:var(--amber)"></i>casting</span></div>
+    </div>
+    <p class="hint" style="padding:0 4px 4px">Tap or click on the map to release the fly there. It gets a wrong heading on purpose and has to find the way by what looks familiar.</p>
+  </section>
+
+  <div class="col">
+    <section class="card">
+      <h2><span class="num">1</span>The maze</h2>
+      <div class="grid2">
+        <label class="f">Maze number <input type="number" id="seed" value="1" min="1" max="9999"></label>
+        <div class="f" style="display:grid;gap:4px;font-size:13px;color:var(--mut)">Size<div class="seg" id="cells"><button data-v="4">4×4</button><button data-v="6" class="on">6×6</button><button data-v="8">8×8</button><button data-v="10">10×10</button></div></div>
+        <label class="f">Wall wobble <output id="wobble-o">0.6</output><input type="range" id="wobble" min="0" max="1" step="0.1" value="0.6"></label>
+        <label class="f">Landscape variety <output id="variety-o">0.7</output><input type="range" id="variety" min="0" max="1" step="0.1" value="0.7"></label>
+      </div>
+      <div class="row"><button class="btn primary" id="build">Build this maze</button><button class="btn" id="dice" title="A random maze number">Random maze</button></div>
+      <div class="f" style="display:grid;gap:4px;font-size:13px;color:var(--mut)">Fly over
+        <div class="seg" id="variant"><button data-v="0" class="on">The maze it learned</button><button data-v="1">Changed version 1</button><button data-v="2">Changed version 2</button></div>
+      </div>
+      <p class="hint">A changed version has the same layout and route, but flowers elsewhere, walls bent a little differently and other light.</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="num">2</span>The fly</h2>
+      <label class="switch"><input type="checkbox" id="colour" checked><span></span>Colour vision</label>
+      <div class="f" style="display:grid;gap:4px;font-size:13px;color:var(--mut)">Memory centre (Kenyon cells)
+        <div class="seg" id="kc"><button data-v="5000">5,000</button><button data-v="10000">10,000</button><button data-v="20000" class="on">20,000</button></div>
+      </div>
+      <div class="f" style="display:grid;gap:4px;font-size:13px;color:var(--mut)">Swarm: flies riding along, each looking at its own spot
+        <div class="seg" id="swarm"><button data-v="1" class="on">1 fly</button><button data-v="3">3</button><button data-v="5">5</button></div>
+      </div>
+      <label class="f">Gaze circle (how far apart their views are) <output id="gaze-o">0.25</output><input type="range" id="gaze" min="0.1" max="0.45" step="0.05" value="0.25"></label>
+      <p class="hint">Changing the fly means teaching the route again.</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="num">3</span>Teach the route</h2>
+      <div class="f" style="display:grid;gap:6px;font-size:13px;color:var(--mut)">Practise at these heights
+        <div class="checks" id="alts"><label><input type="checkbox" value="0.5" checked>low 0.5</label><label><input type="checkbox" value="0.7" checked>0.7</label><label><input type="checkbox" value="1" checked>1</label><label><input type="checkbox" value="1.4" checked>high 1.4</label></div>
+      </div>
+      <div class="grid2">
+        <label class="f">Passes per height <output id="passes-o">3</output><input type="range" id="passes" min="1" max="5" value="3"></label>
+        <label class="switch" style="align-self:end"><input type="checkbox" id="banks"><span></span>A memory per height</label>
+      </div>
+      <div class="row"><button class="btn primary" id="train" disabled>Teach the route</button><span class="hint" id="train-t">Build a maze first.</span></div>
+      <div class="bar" aria-hidden="true"><i id="train-bar"></i></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="num">4</span>Release</h2>
+      <label class="f">Flying height <output id="alt-o">1.0</output><input type="range" id="alt" min="0.4" max="1.6" step="0.05" value="1"></label>
+      <div class="grid2">
+        <label class="switch"><input type="checkbox" id="cast" checked><span></span>Cast when lost</label>
+        <label class="f">Speed <input type="range" id="speed" min="0" max="120" value="90"></label>
+      </div>
+      <div class="row"><button class="btn primary" id="release" disabled>Release at a random spot</button><button class="btn" id="stop" disabled>Stop</button></div>
+      <p class="hint">You can change the height while it flies: try taking it low halfway.</p>
+      <div class="live">
+        <div><canvas id="view" width="200" height="140" aria-label="What the fly sees straight down"></canvas><p class="hint" style="margin-top:4px">What it sees below</p></div>
+        <div><canvas id="fan" width="280" height="150" aria-label="How unfamiliar each direction looks"></canvas><p class="hint" style="margin-top:4px">How unfamiliar each direction looks (short = familiar)</p></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><small>State</small><span class="pill" id="st-state">waiting</span></div>
+        <div class="stat"><small>Route flown</small><b id="st-prog">–</b></div>
+        <div class="stat"><small>Off the route</small><b id="st-off">–</b></div>
+        <div class="stat"><small>This session</small><b id="st-tally">0 of 0</b></div>
+      </div>
+      <p class="err" id="err" hidden></p>
+      <details class="about"><summary>How does it find the way?</summary>
+        <p>Like an ant. While the route is flown a few times, every view it sees marks the memory-centre cells it uses as familiar; nothing about the route itself is stored, only what the world looked like while on it (one bit per cell). To navigate, it looks in 9 directions and flies the way that looks most familiar. A swarm adds up every member's opinion. When nothing looks familiar, it casts like a moth that lost a scent: sweeping side to side, wider each time, until something familiar comes into view.</p>
+      </details>
+    </section>
+  </div>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

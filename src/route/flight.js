@@ -49,10 +49,12 @@ export class RouteFlight {
   view(p) {
     const { R, C } = this, e = this.cfg.eye, len = this.viewLen * p.alt, wid = len * (C / R);
     const fx = Math.cos(p.th), fy = Math.sin(p.th), rx = -fy, ry = fx; // forward and right on the map
+    // optional centre of gaze (a swarm member's own viewpoint): p.gx ahead, p.gy to the right, in view lengths
+    const cx = p.x + ((p.gx || 0) * fx + (p.gy || 0) * rx) * len, cy = p.y + ((p.gx || 0) * fy + (p.gy || 0) * ry) * len;
     const L = this.retinas[0], Q = this.chroma[0], col = [0, 0, 0], spread = len / R;
     for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
       const f = this.fwd[r] * len, s = this.side[c] * wid, i = r * C + c;
-      this._sample(p.x + fx * f + rx * s, p.y + fy * f + ry * s, spread, col);
+      this._sample(cx + fx * f + rx * s, cy + fy * f + ry * s, spread, col);
       L[i] = 0.299 * col[0] + 0.587 * col[1] + 0.114 * col[2];
       Q[i] = e.colour ? col[0] - col[1] : 0;
       Q[R * C + i] = e.colour ? col[2] - (col[0] + col[1]) / 2 : 0;

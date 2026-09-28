@@ -152,6 +152,27 @@ export const BRAIN_VERSION = 6;
 const sigmoid = (x) => 1 / (1 + Math.exp(-x));
 const clamp = (x, lo, hi) => (x < lo ? lo : x > hi ? hi : x);
 
+// The k-th smallest value of a (rearranging a), without sorting all of it (quickselect with a
+// median-of-three pivot). Matters for big memory centres: 20,000 Kenyon cells, every step.
+export function selectKth(a, k) {
+  let lo = 0, hi = a.length - 1;
+  while (hi > lo) {
+    const mid = (lo + hi) >> 1;
+    if (a[mid] < a[lo]) [a[mid], a[lo]] = [a[lo], a[mid]];
+    if (a[hi] < a[lo]) [a[hi], a[lo]] = [a[lo], a[hi]];
+    if (a[hi] < a[mid]) [a[hi], a[mid]] = [a[mid], a[hi]];
+    const pivot = a[mid];
+    let i = lo, j = hi;
+    while (i <= j) {
+      while (a[i] < pivot) i++;
+      while (a[j] > pivot) j--;
+      if (i <= j) { const t = a[i]; a[i] = a[j]; a[j] = t; i++; j--; }
+    }
+    if (k <= j) hi = j; else if (k >= i) lo = i; else return a[k];
+  }
+  return a[k];
+}
+
 export class Brain {
   constructor(cfg) {
     this.cfg = cfg;
@@ -480,8 +501,7 @@ export class Brain {
       kcAct[k] = s;
     }
     kcSort.set(kcAct);
-    kcSort.sort();
-    const thr = kcSort[nKC - this.kActive];
+    const thr = selectKth(kcSort, nKC - this.kActive); // the same value a full sort would put there, found in linear time
     // strictly above the threshold fire first; ties at the threshold only fill the remaining places,
     // so exactly kActive cells (or fewer) ever fire
     let n = 0;

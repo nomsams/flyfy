@@ -65,7 +65,7 @@ const server = http.createServer((req, res) => {
     const file = safeJoin(path.join(DATASET, CLASSES[cls]), rest.join('/'));
     return file ? serveFile(res, file) : send(res, 403, 'forbidden');
   }
-  const rel = p === '/' ? 'index.html' : p.slice(1);
+  const rel = p.endsWith('/') ? p.slice(1) + 'index.html' : p.slice(1); // a folder serves its index.html (/, /maze/)
   const file = safeJoin(ROOT, rel);
   // never serve the server code, tests, or anything outside web/
   if (!file || rel.startsWith('test') || rel === 'server.js') return send(res, 404, 'not found');
