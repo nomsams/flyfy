@@ -1,0 +1,1228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fly Lab Field Guide</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#F1F4EF; --paper:#FAFCF8; --ink:#1B2320; --muted:#5A675F; --line:#D5DDD6;
+  --red:#B3261E; --red-soft:#F4D9D6; --teal:#1E6B66; --teal-soft:#D4E9E6; --amber:#9A6A00; --amber-soft:#F3E6C4;
+  --good:#1F7A3D; --bad:#B3261E; --meh:#6B7570; --body-fill:#C9B99A; --wing:#DCE7EC;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Literata", Georgia, "Times New Roman", serif;
+  --mono:"IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111613; --paper:#171D19; --ink:#E4EAE5; --muted:#9AA8A0; --line:#2C3631;
+    --red:#FF7A6E; --red-soft:#3A1F1D; --teal:#62C7BC; --teal-soft:#15302D; --amber:#E7B64A; --amber-soft:#342A12;
+    --good:#5FCB7F; --bad:#FF7A6E; --meh:#8E9A93; --body-fill:#6E6250; --wing:#2A3A41; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111613; --paper:#171D19; --ink:#E4EAE5; --muted:#9AA8A0; --line:#2C3631;
+  --red:#FF7A6E; --red-soft:#3A1F1D; --teal:#62C7BC; --teal-soft:#15302D; --amber:#E7B64A; --amber-soft:#342A12;
+  --good:#5FCB7F; --bad:#FF7A6E; --meh:#8E9A93; --body-fill:#6E6250; --wing:#2A3A41; color-scheme: dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:17px/1.62 var(--body);margin:0}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:20px;padding-block:28px 80px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:48px}
+@media (max-width:920px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}.rail{display:none}}
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;display:grid;gap:22px;font:14px/1.4 var(--display)}
+.rail b.h{display:block;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:11.5px;color:var(--muted);margin-bottom:8px}
+.toc a{display:block;color:var(--ink);text-decoration:none;padding:4px 0 4px 10px;border-left:2px solid var(--line)}
+.toc a:hover,.toc a:focus-visible{border-left-color:var(--red);color:var(--red);outline:none}
+.toc a.here{border-left-color:var(--red);font-weight:700}
+.toc small{color:var(--muted);font-family:var(--mono);font-size:11px;margin-right:6px}
+.score{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px}
+.score .num{font:800 38px/1 var(--display);font-variant-numeric:tabular-nums;color:var(--red)}
+.score .what{font-size:12.5px;color:var(--muted);margin-top:4px;min-height:34px}
+.score .meter{height:10px;border-radius:5px;background:var(--line);position:relative;margin-top:10px;overflow:visible}
+.score .meter i{position:absolute;inset:0 auto 0 0;background:var(--red);border-radius:5px;transition:width .5s}
+.score .meter span{position:absolute;top:-4px;bottom:-4px;border-left:2px dashed var(--amber)}
+.score .ticks{display:flex;justify-content:space-between;font:11px/1 var(--mono);color:var(--muted);margin-top:6px}
+main{min-width:0}
+h1,h2,h3{font-family:var(--display);line-height:1.12;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,5vw,54px);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(26px,3.4vw,34px);font-weight:800;letter-spacing:-.01em;margin-top:6px}
+h3{font-size:20px;font-weight:700;margin-top:30px}
+p,li{max-width:68ch}
+p{margin:14px 0}
+a{color:var(--teal)}
+.kicker{font:700 12px/1 var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+.lede{font-size:20px;color:var(--muted);max-width:60ch}
+.question{margin:12px 0 4px;font:600 16px/1.45 var(--display);color:var(--teal);max-width:68ch}
+.question::before{content:"This chapter's question  ";font:800 11px/1 var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+header.hero{padding-block:8px 26px;border-bottom:1px solid var(--line);display:grid;gap:14px}
+.bigq{font:700 clamp(20px,2.6vw,26px)/1.3 var(--display);max-width:40ch;border-left:4px solid var(--red);padding-left:14px;margin:6px 0}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.facts span{font:600 12.5px/1 var(--mono);padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:var(--paper)}
+section.ch{padding-block:44px 10px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.side{margin:22px 0;padding:14px 16px 14px 58px;position:relative;border-radius:10px;max-width:72ch;font-size:16px}
+.side::before{position:absolute;left:14px;top:13px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:800 15px/1 var(--display);color:var(--paper)}
+.side b.t{display:block;font:800 12px/1.2 var(--display);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.side.remember{background:var(--teal-soft)} .side.remember::before{content:"!";background:var(--teal)} .side.remember b.t{color:var(--teal)}
+.side.tech{background:var(--amber-soft)} .side.tech::before{content:"⚙";background:var(--amber)} .side.tech b.t{color:var(--amber)}
+.side.warn{background:var(--red-soft)} .side.warn::before{content:"✕";background:var(--red)} .side.warn b.t{color:var(--red)}
+.side.tip{background:var(--paper);border:1px dashed var(--line)} .side.tip::before{content:"→";background:var(--ink)} .side.tip b.t{color:var(--ink)}
+.leaves{margin:30px 0 8px;display:grid;grid-template-columns:auto 1fr;gap:4px 18px;align-items:center;padding:16px 18px;border-radius:12px;border:1px solid var(--line);background:var(--paper)}
+.leaves .n{grid-row:span 2;font:800 30px/1 var(--display);color:var(--red);font-variant-numeric:tabular-nums}
+.leaves b{font:800 12px/1.2 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.leaves div{font-size:15.5px;max-width:64ch}
+.widget{margin:26px 0;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:14px}
+.widget .wh{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.widget .wh h4{margin:0;font:800 17px/1.2 var(--display)}
+.widget .wh span{font:600 11.5px/1 var(--mono);color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px 18px}
+.controls label{display:grid;gap:4px;font:600 13px/1.2 var(--display);color:var(--muted)}
+.controls label output{font-family:var(--mono);color:var(--ink);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--red)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button,.btn{font:600 13px/1 var(--display);padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.primary{background:var(--red);color:#fff;border-color:var(--red)}
+button:focus-visible,input:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+canvas{max-width:100%;display:block;border-radius:8px;background:var(--bg)}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.cap{font:13px/1.45 var(--display);color:var(--muted);max-width:none;margin:6px 0 0}
+.readout{font:600 14px/1.5 var(--mono)}
+.big{font:800 34px/1 var(--display);font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font:14.5px/1.4 var(--display);font-variant-numeric:tabular-nums}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--mono);white-space:nowrap}
+.pill{display:inline-block;font:700 11.5px/1 var(--display);padding:5px 8px;border-radius:999px;white-space:nowrap}
+.pill.good{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
+.pill.bad{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.pill.meh{background:color-mix(in srgb,var(--meh) 16%,transparent);color:var(--meh)}
+.chain{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.chain button{display:grid;gap:4px;text-align:left;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;font:700 13.5px/1.2 var(--display)}
+.chain button small{font:500 11.5px/1.3 var(--mono);color:var(--muted)}
+.chain button[aria-pressed=true]{border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
+.chain button .dot{width:8px;height:8px;border-radius:50%;background:var(--teal)}
+.chain button.learn .dot{background:var(--red)} .chain button.evo .dot{background:var(--amber)}
+.detail{background:var(--bg);border-radius:10px;padding:14px 16px;font-size:15.5px}
+.detail h5{margin:0 0 6px;font:800 16px/1.2 var(--display)}
+.detail .ours{margin-top:8px;font:600 13.5px/1.4 var(--display);color:var(--teal)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font:12.5px/1 var(--display);color:var(--muted)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.flywrap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:700px){.flywrap{grid-template-columns:minmax(0,1fr)}}
+svg.fly{width:100%;max-width:420px;height:auto;display:block;margin:0 auto}
+svg.fly .part{cursor:pointer}
+svg.fly .part:hover > *, svg.fly .part:focus > *{stroke:var(--red);stroke-width:2.5}
+svg.fly .part.on > *{stroke:var(--red);stroke-width:3}
+svg.fly .lbl{font:600 11px var(--display);fill:var(--muted);pointer-events:none}
+.tag{display:inline-block;font:700 11px/1 var(--display);padding:4px 7px;border-radius:6px;margin-left:6px;vertical-align:middle}
+.tag.yes{background:var(--teal-soft);color:var(--teal)} .tag.no{background:var(--bg);color:var(--muted);border:1px solid var(--line)} .tag.part{background:var(--amber-soft);color:var(--amber)}
+.glossary dt{font:800 15px/1.3 var(--display);margin-top:12px}
+.glossary dd{margin:2px 0 0;max-width:68ch;color:var(--muted);font-size:15.5px}
+.where{display:grid;gap:10px;margin-top:10px}
+.stepline{display:grid;grid-template-columns:150px 1fr 64px;gap:12px;align-items:center;font:14px/1.3 var(--display)}
+.stepline .bar{height:12px;border-radius:6px;background:var(--line);position:relative;overflow:visible}
+.stepline .bar i{position:absolute;inset:0 auto 0 0;background:var(--teal);border-radius:6px}
+.stepline.now .bar i{background:var(--red)}
+@media (max-width:560px){.stepline{grid-template-columns:1fr 54px}.stepline .lbl{grid-column:1/-1}}
+.round{display:flex;align-items:baseline;gap:10px;margin-top:30px}
+.round .k{font:800 12px/1 var(--mono);color:var(--paper);background:var(--ink);padding:5px 8px;border-radius:6px}
+.round h3{margin:0}
+canvas{height:auto}
+canvas.chart{width:100%}
+#line-c{touch-action:none;cursor:crosshair}
+.mtoc,.mbar{display:none}
+.quiz{display:grid;gap:14px}
+.quiz .q{background:var(--bg);border-radius:10px;padding:12px 14px}
+.quiz .q b{display:block;font:700 15.5px/1.35 var(--display);margin-bottom:8px}
+.quiz .opts{display:flex;flex-wrap:wrap;gap:6px}
+.quiz .opts button{font:600 13.5px/1.25 var(--display);padding:8px 11px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;text-align:left}
+.quiz .opts button.right{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+.quiz .opts button.wrong{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.quiz .why{font:14px/1.45 var(--display);color:var(--muted);margin-top:8px}
+.stat{display:grid;gap:2px}
+.stat .cap{margin:0}
+@media (max-width:920px){
+  .mtoc{display:block;margin:0 0 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font:600 14px/1.4 var(--display)}
+  .mtoc summary{cursor:pointer;font-weight:800;list-style-position:inside}
+  .mtoc a{display:block;padding:8px 0;color:var(--ink);text-decoration:none;border-top:1px solid var(--line)}
+  .mtoc small{color:var(--muted);font-family:var(--mono);font-size:11px;margin-right:8px}
+  .mbar{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:center;position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--paper);border-top:1px solid var(--line);box-shadow:0 -6px 18px color-mix(in srgb,var(--ink) 8%,transparent);padding:8px 16px calc(8px + env(safe-area-inset-bottom,0px))}
+  .mbar .num{grid-row:span 2;font:800 24px/1 var(--display);color:var(--red);font-variant-numeric:tabular-nums}
+  .mbar .what{font:12.5px/1.3 var(--display);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .mbar .meter{height:6px;border-radius:3px;background:var(--line);position:relative}
+  .mbar .meter i{position:absolute;inset:0 auto 0 0;background:var(--red);border-radius:3px;transition:width .5s}
+  .mbar .meter span{position:absolute;top:-3px;bottom:-3px;border-left:2px dashed var(--amber)}
+  main{padding-bottom:76px}
+}
+@media (max-width:560px){
+  body{font-size:16px}
+  .wrap{padding-inline:16px}
+  .widget{padding:14px;gap:12px}
+  .side{padding:12px 14px 12px 50px}
+  .side::before{left:11px;width:28px;height:28px}
+  table{font-size:13.5px}
+  th,td{padding:8px 10px}
+  .tbl td:first-child,.tbl th:first-child{position:sticky;left:0;z-index:1;background:var(--paper);box-shadow:1px 0 0 var(--line);min-width:118px;max-width:46vw}
+  .tbl th:first-child{background:var(--bg)}
+  .lede{font-size:18px}
+  .bigq{font-size:19px}
+  .leaves{grid-template-columns:1fr}
+  .leaves .n{grid-row:auto}
+  .row > div,.row > canvas{flex:1 1 100%}
+  .big{font-size:28px}
+  .chain{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .controls{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+footer{padding-top:30px;color:var(--muted);font:13px/1.5 var(--display)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<aside class="rail" aria-label="Guide navigation">
+  <div class="score" aria-live="polite">
+    <b class="h">Scoreboard</b>
+    <div class="num" id="sb-num">50%</div>
+    <div class="what" id="sb-what">Guessing. The fly hasn't learned anything yet.</div>
+    <div class="meter"><i id="sb-bar" style="width:16.7%"></i><span style="left:70%" title="66% straight-line ceiling"></span></div>
+    <div class="ticks"><span>45</span><span>66 line</span><span>75</span></div>
+  </div>
+  <nav class="toc" aria-label="Chapters">
+    <b class="h">Contents</b>
+    <a href="#start"><small>00</small>The question</a>
+    <a href="#senses"><small>01</small>A real fly's senses</a>
+    <a href="#groups"><small>02</small>The fly's brain</a>
+    <a href="#brain"><small>03</small>Our fly's neuron chain</a>
+    <a href="#eye"><small>04</small>How a fly sees</a>
+    <a href="#setup"><small>05</small>The test and its limits</a>
+    <a href="#line"><small>06</small>The 66% line</a>
+    <a href="#tried"><small>07</small>Five rounds of tries</a>
+    <a href="#swarm"><small>08</small>A swarm of flies</a>
+    <a href="#hardware"><small>09</small>On a tiny computer</a>
+    <a href="#now"><small>10</small>Where we are now</a>
+    <a href="#quiz"><small>11</small>Test yourself</a>
+    <a href="#words"><small>12</small>Words to know</a>
+  </nav>
+</aside>
+
+<main>
+<details class="mtoc">
+  <summary>Contents</summary>
+  <a href="#start"><small>00</small>The question</a>
+  <a href="#senses"><small>01</small>A real fly's senses</a>
+  <a href="#groups"><small>02</small>The fly's brain</a>
+  <a href="#brain"><small>03</small>Our fly's neuron chain</a>
+  <a href="#eye"><small>04</small>How a fly sees</a>
+  <a href="#setup"><small>05</small>The test and its limits</a>
+  <a href="#line"><small>06</small>The 66% line</a>
+  <a href="#tried"><small>07</small>Five rounds of tries</a>
+  <a href="#swarm"><small>08</small>A swarm of flies</a>
+  <a href="#hardware"><small>09</small>On a tiny computer</a>
+  <a href="#now"><small>10</small>Where we are now</a>
+  <a href="#quiz"><small>11</small>Test yourself</a>
+  <a href="#words"><small>12</small>Words to know</a>
+</details>
+<div class="mbar" role="status"><div class="num" id="mb-num">50%</div><div class="what" id="mb-what">Guessing. The fly hasn't learned anything yet.</div><div class="meter"><i id="mb-bar" style="width:16.7%"></i><span style="left:70%"></span></div></div>
+<header class="hero" id="start" data-score="50" data-what="Guessing. The fly hasn't learned anything yet.">
+  <div class="kicker">Fly Lab · a plain-language guide</div>
+  <h1>Teaching a fly to tell faces apart</h1>
+  <p class="bigq">Can a fruit fly that learns only from small rewards and small pains tell a man from a woman in a photo? And how far can we push it?</p>
+  <p class="lede">That one question runs through this whole guide. We follow a single photo on its way through a simulated fly: into its eye, through its neurons, down to the foot it presses. Along the way we meet each part of a real fly it is modelled on, the limits we ran into, and everything we tried to raise the score. The scoreboard at the side keeps count.</p>
+  <div class="facts"><span>280 light sensors</span><span>400 memory cells</span><span>3,330 photos</span><span>guessing = 50%</span><span>one fly ≈ 61–63%</span><span>best swarm ≈ 67–68%</span></div>
+  <div class="side remember"><b class="t">The short version</b>
+    One fly gets about 61% of never-seen faces right, and about 63% if it looks a few times. A small swarm of flies, each looking at a slightly different spot, gets about 66%, which is what the best simple "straight-line" reader can get out of these photos. A swarm whose new members practise on the photos the others find hard gets 67–68%, the first result past that line.</div>
+</header>
+
+<section class="ch" id="senses" data-score="50" data-what="Guessing. First we look at what a real fly has to work with.">
+  <div class="kicker">Chapter 1</div>
+  <h2>A real fly's senses</h2>
+  <p class="question">What does a real fruit fly have to sense the world with, and which of those senses does our fly get?</p>
+  <p>A fruit fly (<i>Drosophila melanogaster</i>) is about 3 mm long and senses far more than light. It smells with its antennae, tastes with its feet, hears with a joint in its antennae, feels the air on its bristles, and keeps its balance in flight with two tiny gyroscopes. Our simulated fly only needs a few of these for the photo test, but it helps to know what the real animal has.</p>
+  <div class="widget" id="w-body">
+    <div class="wh"><h4>Tap a part of the fly</h4><span>real sense · and in our fly?</span></div>
+    <div class="flywrap">
+      <svg class="fly" viewBox="0 0 400 420" role="group" aria-label="A fruit fly, seen from above">
+        <g class="part" data-k="wings" tabindex="0" role="button" aria-label="Wings"><ellipse cx="118" cy="250" rx="88" ry="34" transform="rotate(-28 118 250)" fill="var(--wing)" stroke="var(--line)" stroke-width="1.5"/><ellipse cx="282" cy="250" rx="88" ry="34" transform="rotate(28 282 250)" fill="var(--wing)" stroke="var(--line)" stroke-width="1.5"/></g>
+        <g class="part" data-k="legs" tabindex="0" role="button" aria-label="Legs and feet"><path d="M175 205 L110 170 L95 140 M175 225 L100 230 L80 215 M180 245 L120 300 L110 330 M225 205 L290 170 L305 140 M225 225 L300 230 L320 215 M220 245 L280 300 L290 330" fill="none" stroke="var(--muted)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g class="part" data-k="abdomen" tabindex="0" role="button" aria-label="Abdomen and bristles"><ellipse cx="200" cy="320" rx="40" ry="62" fill="var(--body-fill)" stroke="var(--line)" stroke-width="1.5"/></g>
+        <g class="part" data-k="halteres" tabindex="0" role="button" aria-label="Halteres"><line x1="178" y1="262" x2="160" y2="276" stroke="var(--muted)" stroke-width="2.5"/><circle cx="156" cy="279" r="6" fill="var(--amber)" stroke="var(--line)"/><line x1="222" y1="262" x2="240" y2="276" stroke="var(--muted)" stroke-width="2.5"/><circle cx="244" cy="279" r="6" fill="var(--amber)" stroke="var(--line)"/></g>
+        <g class="part" data-k="thorax" tabindex="0" role="button" aria-label="Thorax"><ellipse cx="200" cy="228" rx="36" ry="42" fill="var(--body-fill)" stroke="var(--line)" stroke-width="1.5"/></g>
+        <g class="part" data-k="head" tabindex="0" role="button" aria-label="Head and brain"><ellipse cx="200" cy="160" rx="42" ry="30" fill="var(--body-fill)" stroke="var(--line)" stroke-width="1.5"/></g>
+        <g class="part" data-k="eyes" tabindex="0" role="button" aria-label="Compound eyes"><ellipse cx="166" cy="152" rx="20" ry="26" fill="var(--red)" stroke="var(--line)" stroke-width="1.5"/><ellipse cx="234" cy="152" rx="20" ry="26" fill="var(--red)" stroke="var(--line)" stroke-width="1.5"/></g>
+        <g class="part" data-k="ocelli" tabindex="0" role="button" aria-label="Ocelli"><circle cx="200" cy="142" r="4" fill="var(--amber)" stroke="var(--line)"/><circle cx="192" cy="152" r="4" fill="var(--amber)" stroke="var(--line)"/><circle cx="208" cy="152" r="4" fill="var(--amber)" stroke="var(--line)"/></g>
+        <g class="part" data-k="antennae" tabindex="0" role="button" aria-label="Antennae"><path d="M192 132 L180 104 L170 92 M208 132 L220 104 L230 92" fill="none" stroke="var(--muted)" stroke-width="4" stroke-linecap="round"/><circle cx="180" cy="104" r="6" fill="var(--body-fill)" stroke="var(--line)"/><circle cx="220" cy="104" r="6" fill="var(--body-fill)" stroke="var(--line)"/></g>
+        <g class="part" data-k="mouth" tabindex="0" role="button" aria-label="Proboscis"><rect x="193" y="182" width="14" height="16" rx="5" fill="var(--muted)" stroke="var(--line)"/></g>
+        <text class="lbl" x="250" y="96">antennae</text><text class="lbl" x="256" y="160">compound eye</text><text class="lbl" x="212" y="138">ocelli</text><text class="lbl" x="252" y="292">haltere</text><text class="lbl" x="296" y="210">wing</text><text class="lbl" x="296" y="345">legs · feet</text>
+      </svg>
+      <div class="detail" id="body-detail" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Sense</th><th>Real fruit fly</th><th>Our fly</th></tr></thead>
+    <tbody>
+      <tr><td>Compound eyes</td><td>About 800 facets per eye, each with 8 light cells: 6 for brightness and motion, 2 for colour, ultraviolet and polarised light</td><td><span class="tag yes">yes</span> 280 sensors, one eye</td></tr>
+      <tr><td>Colour</td><td>The two inner light cells compare wavelengths</td><td><span class="tag yes">yes</span> red–green and blue–yellow per sensor</td></tr>
+      <tr><td>Ocelli</td><td>Three simple eyes on top of the head; sense overall light and the horizon for flight stability</td><td><span class="tag no">no</span></td></tr>
+      <tr><td>Smell</td><td>About 1,300 smell neurons per antenna, about 50 receptor types, sorted into about 50 glomeruli</td><td><span class="tag no">no</span></td></tr>
+      <tr><td>Hearing, wind, gravity</td><td>Johnston's organ, a joint in the antenna that senses its vibration (courtship songs, wind, gravity)</td><td><span class="tag no">no</span></td></tr>
+      <tr><td>Taste</td><td>Taste neurons on the feet, the proboscis and the wing edges</td><td><span class="tag no">no</span></td></tr>
+      <tr><td>Touch</td><td>Mechanosensory bristles all over the body</td><td><span class="tag part">partly</span> it feels which foot is pressed</td></tr>
+      <tr><td>Pain (nociception)</td><td>Sensory neurons that respond to heat and harsh touch</td><td><span class="tag yes">yes</span> a wrong answer hurts the foot that pressed</td></tr>
+      <tr><td>Balance in flight</td><td>Halteres: tiny club-shaped hind wings that beat and act as gyroscopes</td><td><span class="tag no">no</span> it doesn't fly</td></tr>
+      <tr><td>Body position</td><td>Stretch sensors in joints and cuticle (proprioception)</td><td><span class="tag part">partly</span> it feels where its eye points and how far it stands (an efference copy)</td></tr>
+      <tr><td>Temperature, humidity</td><td>Sensors in the antennae</td><td><span class="tag no">no</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">Numbers for the real fly are rounded, typical values for <i>Drosophila melanogaster</i>.</p>
+  <div class="leaves"><span class="n">50%</span><b>Where this leaves us</b><div>For telling faces apart, only the eyes matter. Our fly gets one compound eye with colour, plus touch and pain on its feet so that it can learn. Next: what happens behind the eye.</div></div>
+</section>
+
+<section class="ch" id="groups" data-score="50" data-what="Guessing. Now the real brain the model borrows from.">
+  <div class="kicker">Chapter 2</div>
+  <h2>The fly's brain</h2>
+  <p class="question">Which groups of neurons turn light into a decision in a real fly?</p>
+  <p>A fruit-fly brain has about 140,000 neurons, and in 2024 its complete wiring diagram, the <i>connectome</i>, was published: every neuron and every connection. Well over half of those neurons sit in the two optic lobes, which shows how much of a fly's brain is devoted to seeing. From the eye, the signal passes through a chain of neuron groups, each doing one kind of job.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Neuron group</th><th>What it does in a real fly</th><th>In our fly</th></tr></thead>
+    <tbody>
+      <tr><td><b>Lamina</b> (optic lobe, 1st layer)</td><td>Takes the light cells' signals; neighbouring columns dim each other, which sharpens contrast</td><td><span class="tag yes">yes</span> edge boost (lateral inhibition)</td></tr>
+      <tr><td><b>Medulla</b> (2nd layer)</td><td>The biggest visual area: dozens of cell types for colour, motion and local features, one column per facet</td><td><span class="tag part">partly</span> edge-direction cells and colour channels</td></tr>
+      <tr><td><b>Lobula plate</b></td><td>Motion detectors (T4/T5 cells) and big cells that read wide-field motion to steer flight</td><td><span class="tag no">no</span> the photos don't move</td></tr>
+      <tr><td><b>Lobula</b> and the <b>LC neurons</b></td><td>"Feature detector" cells, each type sending its output to its own spot in the central brain: LC11 for small moving dots, LC4 and LPLC2 for looming objects that trigger escape</td><td><span class="tag yes">yes</span> our "eye cells": LC11, LC_ON, LC4, LPLC2, brightness</td></tr>
+      <tr><td><b>Mushroom body</b></td><td>The learning centre. About 2,000 Kenyon cells per side each read a handful of random inputs; only a few percent fire at once</td><td><span class="tag yes">yes</span> memory centre, 400 Kenyon cells, 5% fire</td></tr>
+      <tr><td><b>Dopamine neurons</b> (PAM, PPL1)</td><td>Carry reward and punishment to the mushroom body, which changes which Kenyon-cell outputs count</td><td><span class="tag yes">yes</span> the reward/pain signal that changes the learning synapses; "mood" and "surprise" variants</td></tr>
+      <tr><td><b>Mushroom body output neurons</b> (MBONs)</td><td>About 35 cell types that read the Kenyon cells and push behaviour toward "approach" or "avoid"</td><td><span class="tag yes">yes</span> the two feet's learning synapses</td></tr>
+      <tr><td><b>Lateral horn</b></td><td>Innate, unlearned reactions (mostly to smells)</td><td><span class="tag part">partly</span> the innate "look at what stands out" reflex</td></tr>
+      <tr><td><b>Central complex</b></td><td>Navigation: an internal compass, steering and choosing actions</td><td><span class="tag part">partly</span> a small recurrent core of 128 neurons</td></tr>
+      <tr><td><b>Descending neurons</b></td><td>A few hundred cells that carry commands from the brain to the nerve cord that runs the legs and wings</td><td><span class="tag yes">yes</span> two foot motor outputs (and optional eye and walking outputs)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="side remember"><b class="t">Keep in mind</b>
+    Real flies really do learn visual patterns from reward and punishment. In classic experiments, a fly tethered in a flight simulator learns to steer away from a pattern that is paired with heat. Our test is the same idea with photos instead of stripes and a foot press instead of steering.</div>
+  <div class="leaves"><span class="n">50%</span><b>Where this leaves us</b><div>We now know the parts list. Our fly keeps the chain's main idea (fixed feature detectors near the eye, a sparse memory centre, learning by dopamine) at a much smaller size. Next: how those pieces are wired in our fly.</div></div>
+</section>
+
+<section class="ch" id="brain" data-score="50" data-what="Guessing. Here is the brain we built.">
+  <div class="kicker">Chapter 3</div>
+  <h2>Our fly's neuron chain</h2>
+  <p class="question">What exactly happens to the photo inside our fly, step by step?</p>
+  <p>Our fly keeps the real brain's overall layout: fixed, hard-wired stages near the eye, a flexible memory centre in the middle, and a few learning synapses that decide which foot to press. We don't copy the connectome cell by cell; each stage is a small model of its real counterpart.</p>
+  <div class="widget" id="w-chain">
+    <div class="wh"><h4>Follow the photo through the brain</h4><span>tap a stage</span></div>
+    <div class="chain" role="group" aria-label="Brain stages"></div>
+    <div class="detail" aria-live="polite"></div>
+    <div class="legend"><span><i style="background:var(--teal)"></i>fixed wiring (born with it)</span><span><i style="background:var(--amber)"></i>tuned by evolution</span><span><i style="background:var(--red)"></i>learns during its life</span></div>
+  </div>
+  <div class="widget" id="w-kc">
+    <div class="wh"><h4>A picture's code in the memory centre</h4><span>pick one picture, then another</span></div>
+    <div class="seg" id="kc-pic" role="group" aria-label="Picture">
+      <button aria-pressed="true" data-p="face">Cartoon face</button><button aria-pressed="false" data-p="stripes">Stripes</button><button aria-pressed="false" data-p="faint">Faint stripes</button><button aria-pressed="false" data-p="spot">Find the spot</button>
+    </div>
+    <div class="row">
+      <canvas id="kc-c" width="400" height="400" aria-label="400 Kenyon cells; the firing ones are red"></canvas>
+      <div style="flex:1;min-width:200px;display:grid;gap:12px;align-content:start">
+        <div class="stat"><div class="cap">Kenyon cells firing</div><div class="big" id="kc-n">20</div></div>
+        <div class="stat"><div class="cap">Also fired for the previous picture</div><div class="big" id="kc-ov" style="color:var(--teal)">–</div></div>
+        <p class="cap">Each square is one of the 400 Kenyon cells. Red = firing for this picture; a teal ring = it fired for the previous one. Different pictures light up almost different cells, which is what makes them easy to tell apart and to learn from.</p>
+      </div>
+    </div>
+    <div class="controls"><label for="kc-sp">Share of cells allowed to fire <output id="kc-sp-o">5%</output><input type="range" id="kc-sp" min="1" max="40" value="5"></label></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Part</th><th>Real fruit fly</th><th>Our fly</th></tr></thead>
+    <tbody>
+      <tr><td>Light sensors (one eye)</td><td class="n">≈ 800 facets</td><td class="n">280</td></tr>
+      <tr><td>Kenyon cells (one side)</td><td class="n">≈ 2,000</td><td class="n">400</td></tr>
+      <tr><td>Inputs per Kenyon cell</td><td class="n">≈ 6–7</td><td class="n">6 (+3 colour)</td></tr>
+      <tr><td>Share of Kenyon cells firing</td><td class="n">a few %</td><td class="n">5% (20 cells)</td></tr>
+      <tr><td>Whole brain</td><td class="n">≈ 140,000 neurons</td><td class="n">≈ 1,800 units</td></tr>
+      <tr><td>Synapses that learn in its lifetime</td><td class="n">many</td><td class="n">1,920</td></tr>
+    </tbody>
+  </table></div>
+  <div class="side tech"><b class="t">Under the hood</b>
+    The brain runs 20 steps per simulated second. One step is about 40–50 thousand simple multiply-and-add operations. The part evolution can tune has 4,452 numbers; the part that learns during the fly's life has 1,920 synapses. Everything is plain JavaScript and runs in a web browser.</div>
+  <div class="leaves"><span class="n">50%</span><b>Where this leaves us</b><div>The photo's route is set: eye, eye cells, memory centre, learning synapses, feet. The very first step, the eye, turns out to shape everything after it. Next: what the fly actually sees.</div></div>
+</section>
+
+<section class="ch" id="eye" data-score="50" data-what="Guessing. The eye decides what the brain can ever know.">
+  <div class="kicker">Chapter 4</div>
+  <h2>How a fly sees</h2>
+  <p class="question">What is left of a photo once it has passed through a fly's eye?</p>
+  <p>A compound eye is a dome of tiny tubes (<i>ommatidia</i>), each pointing in a slightly different direction and reporting one blob of light. There is no sharp image anywhere, only a coarse mosaic. Our fly has 14 rows × 20 columns = <b>280 sensors</b> spread over a 100° × 70° view; the photo fills about 70° × 50° of it.</p>
+  <p>Right behind the sensors, neighbours dim each other (the lamina's <i>lateral inhibition</i>), so edges pop. Further in, cells respond to the direction edges run in, to small dark or bright spots, and to things that grow fast. Some flies also have a <i>fovea</i>: sensors packed more tightly in the middle of the view.</p>
+  <div class="widget" id="w-eye">
+    <div class="wh"><h4>See through the fly's eye</h4><span>play with the sliders</span></div>
+    <div class="seg" id="eye-pic" role="group" aria-label="Picture">
+      <button aria-pressed="true" data-p="face">Cartoon face</button><button aria-pressed="false" data-p="stripes">Stripes</button><button aria-pressed="false" data-p="faint">Faint stripes</button><button aria-pressed="false" data-p="spot">Find the spot</button>
+    </div>
+    <div class="row">
+      <div><canvas id="eye-src" width="200" height="200" aria-label="The picture"></canvas><p class="cap">The picture; dashed box = what the eye covers</p></div>
+      <div><canvas id="eye-out" width="300" height="210" aria-label="What the fly's sensors report"></canvas><p class="cap">What the sensors report</p></div>
+      <div><canvas id="eye-ori" width="300" height="210" aria-label="Edge-direction cells"></canvas><p class="cap">Edge-direction cells (line = direction, thickness = strength)</p></div>
+    </div>
+    <div class="controls">
+      <label for="eye-rows">Eye size <output id="eye-rows-o">14 × 20</output><input type="range" id="eye-rows" min="6" max="28" value="14"></label>
+      <label for="eye-fov">Sharp centre (fovea) <output id="eye-fov-o">0.0</output><input type="range" id="eye-fov" min="0" max="1.5" step="0.1" value="0"></label>
+      <label for="eye-dist">Distance <output id="eye-dist-o">1.0×</output><input type="range" id="eye-dist" min="0.6" max="1.7" step="0.05" value="1"></label>
+      <label for="eye-shift">Look sideways <output id="eye-shift-o">0°</output><input type="range" id="eye-shift" min="-15" max="15" step="1" value="0"></label>
+    </div>
+  </div>
+  <div class="side remember"><b class="t">Keep in mind</b>
+    The fly never sees the photo itself. It gets 280 numbers per moment. A 32 × 32 photo has 1,024 pixels, so most fine detail is gone before any neuron is involved. Try the "Faint stripes" picture: the raw sensors look like noise, but the edge-direction cells still line up.</div>
+  <div class="leaves"><span class="n">50%</span><b>Where this leaves us</b><div>The eye throws away most of the photo, but what it keeps (brightness, colour, edge directions) is exactly what later chapters build on. Next: the test itself.</div></div>
+</section>
+
+<section class="ch" id="setup" data-score="53.6" data-what="A first fly with a memory centre, learning from grey photos.">
+  <div class="kicker">Chapter 5</div>
+  <h2>The test and its limits</h2>
+  <p class="question">How do we test the fly fairly, and what makes this test so hard?</p>
+  <p>A trial is simple. A photo appears. The fly has half a second to press the left foot (man) or the right foot (woman). A right answer earns a small reward, a wrong one a small pain, and that is all it ever learns from. After practice it takes an exam on 500 photos it has never seen, with men and women counted equally, so guessing scores exactly 50%.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Piece</th><th>What it is</th><th>Size</th></tr></thead>
+    <tbody>
+      <tr><td>Photos</td><td>Everyday photos of men and women, cropped to a square around the upper middle (face, hair, shoulders)</td><td class="n">3,330 (1,418 men, 1,912 women)</td></tr>
+      <tr><td>Stored picture</td><td>Brightness at 32 × 32 pixels, colour at 16 × 16</td><td class="n">5 MB for all photos</td></tr>
+      <tr><td>Practice / exam</td><td>Split once, men and women in proportion</td><td class="n">2,830 / 500</td></tr>
+      <tr><td>The eye</td><td>Sensors that sample the photo</td><td class="n">14 × 20 = 280</td></tr>
+      <tr><td>Practice time</td><td>"Quick learn": sessions of 12 seconds, about 8–10 photos each</td><td class="n">150 sessions ≈ 1,300 photos</td></tr>
+    </tbody>
+  </table></div>
+  <div class="side warn"><b class="t">Watch out</b>
+    The photos are not lined up. Faces sit in different places, at different sizes and angles, sometimes with other people in the frame, and a few are mislabelled. That is the hardest part of the task and it caps what any simple reader can do. (We also checked for copies: only 6 exam photos, 1.2%, have a near-copy among the practice photos.)</div>
+  <h3>Three bottlenecks</h3>
+  <p>Information gets lost at three points: when the photo is shrunk to 32 × 32, when 280 sensors sample it, and when the fly's simple learning rule reads what is left. A first fly with just a memory centre, on grey photos, scores <b>53.6%</b>: barely above guessing.</p>
+  <div class="leaves"><span class="n">53.6%</span><b>Where this leaves us</b><div>The fly learns something, but not much. Before trying fixes, we need to know how much there is to gain at all. Next: the ceiling.</div></div>
+</section>
+
+<section class="ch" id="line" data-score="53.6" data-what="Still the first fly. The ceiling for simple readers is 66%.">
+  <div class="kicker">Chapter 6</div>
+  <h2>The 66% line</h2>
+  <p class="question">How well could a perfect student do on these photos, and what does "straight-line reader" mean?</p>
+  <p>Imagine every photo as a dot on a map, placed by its features. If men's dots and women's dots formed two separate islands, one straight line could split them perfectly. They don't: the clouds overlap a lot. A <b>straight-line reader</b> (in maths: a linear classifier) draws the best single dividing line it can. Wherever the clouds overlap, some dots end up on the wrong side, whatever you do.</p>
+  <div class="widget" id="w-line">
+    <div class="wh"><h4>Draw the dividing line</h4><span>turn it, slide it, or drag on the chart</span></div>
+    <div class="row">
+      <canvas id="line-c" width="420" height="300" aria-label="Two overlapping clouds and a dividing line"></canvas>
+      <div style="display:grid;gap:10px;min-width:200px;flex:1">
+        <div><div class="cap">Your line gets right</div><div class="big" id="line-acc">–</div></div>
+        <div><div class="cap">Best possible straight line</div><div class="big" id="line-best" style="color:var(--teal)">–</div></div>
+        <button class="btn primary" id="line-snap">Show the best line</button>
+      </div>
+    </div>
+    <div class="controls">
+      <label for="line-ang">Turn the line <output id="line-ang-o">0°</output><input type="range" id="line-ang" min="0" max="180" value="20"></label>
+      <label for="line-off">Slide the line <output id="line-off-o">0</output><input type="range" id="line-off" min="-100" max="100" value="30"></label>
+      <label for="line-ov">How much the groups overlap <output id="line-ov-o">a lot</output><input type="range" id="line-ov" min="0.4" max="3" step="0.1" value="1.9"></label>
+    </div>
+  </div>
+  <p>We measured the best possible straight line on the photos themselves, describing each photo in several different ways. The best description we found (edge directions summed over small patches, plus colour) reaches <b>66%</b>. That is the ceiling for any reader that works by adding up weighted evidence, and the fly's learning synapses are such a reader.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>What the reader sees</th><th>Best straight line</th><th>With the fly's own learning rule</th></tr></thead>
+    <tbody>
+      <tr><td>32 × 32 photo, raw brightness</td><td class="n">58.7%</td><td class="n">–</td></tr>
+      <tr><td>32 × 32 photo, raw brightness + colour</td><td class="n">63.0%</td><td class="n">–</td></tr>
+      <tr><td>32 × 32 photo, 2,000–8,000 random memory cells</td><td class="n">58.6%</td><td class="n">–</td></tr>
+      <tr><td>32 × 32 photo, edge directions (8), grey</td><td class="n">65.6%</td><td class="n">–</td></tr>
+      <tr><td><b>32 × 32 photo, edge directions + colour</b></td><td class="n"><b>66.0%</b></td><td class="n">–</td></tr>
+      <tr><td>The fly's eye (280 sensors)</td><td class="n">58.2%</td><td class="n">56.4%</td></tr>
+      <tr><td>The fly's eye → 400 memory cells</td><td class="n">60.3%</td><td class="n">57.8%</td></tr>
+      <tr><td>The fly's eye → edge-direction cells, gain-adapted</td><td class="n">63.3%</td><td class="n">62.7%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">5-fold cross-validation on 2,836 photos with equal numbers of men and women (guessing = 50%). Typical uncertainty ±0.9 points.</p>
+  <div class="side tech"><b class="t">Under the hood</b>
+    "Best straight line" is shrinkage LDA: a linear classifier that corrects for inputs that move together. "The fly's own learning rule" is plain class averages on the raw signals, because reward-and-pain learning simply adds up "this pattern came with a man" and "this pattern came with a woman". That is why gain adaptation (each cell rescaling its own signal) matters so much in the last row.</div>
+  <div class="side remember"><b class="t">Keep in mind</b>
+    66% is not a law of nature. A deep neural network could very likely do better on the same photos. It is the ceiling for <i>simple, fly-like</i> readers on <i>these</i> 32 × 32 photos, and a swarm of flies that specialise in different photos is not one straight line, so it can get past it (chapter 8).</div>
+  <div class="leaves"><span class="n">53.6%</span><b>Where this leaves us</b><div>There is room between 53.6% and 66%, and the table already hints where it is: colour, and edge directions read with gain adaptation. Next: five rounds of trying to close that gap.</div></div>
+</section>
+
+<section class="ch" id="tried" data-score="63.4" data-what="One fly with colour, edge cells and a few looks.">
+  <div class="kicker">Chapter 7</div>
+  <h2>Five rounds of tries</h2>
+  <p class="question">Which changes moved the score, and which didn't?</p>
+  <p>Every result compares flies with and without one change, in pairs that start from the same luck, tested on photos they never practised on. "Clear" means the difference is bigger than its 95% uncertainty. Quick = learning by reward and pain (150 sessions); Evolve = breeding brains over generations.</p>
+
+  <div class="round"><span class="k">Round 1</span><h3>Better senses</h3></div>
+  <p>Give the fly more of what real flies have. This round did most of the work.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Change</th><th>Challenge</th><th>Without</th><th>With</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Memory centre (400 Kenyon cells)</td><td>faint stripes</td><td class="n">62.6%</td><td class="n">92.7%</td><td><span class="pill good">+30.1 clear</span></td></tr>
+      <tr><td>Memory centre, grey</td><td>faces</td><td class="n">53.0%</td><td class="n">53.6%</td><td><span class="pill meh">no difference</span></td></tr>
+      <tr><td><b>Colour vision</b> (+ memory)</td><td>faces</td><td class="n">53.6%</td><td class="n">60.4%</td><td><span class="pill good">+6.8 clear</span></td></tr>
+      <tr><td><b>Edge-direction cells</b> (+ memory)</td><td>faces</td><td class="n">53.6%</td><td class="n">61.2%</td><td><span class="pill good">+7.6 clear</span></td></tr>
+      <tr><td>Edge-direction cells (+ memory)</td><td>faint stripes</td><td class="n">92.7%</td><td class="n">100%</td><td><span class="pill good">+7.3 clear</span></td></tr>
+      <tr><td>Edge-direction cells (+ memory, colour)</td><td>faces</td><td class="n">60.4%</td><td class="n">61.6%</td><td><span class="pill meh">+1.2, not clear</span></td></tr>
+      <tr><td>Edge boost (lateral inhibition)</td><td>faint stripes</td><td class="n">62.6%</td><td class="n">77.1%</td><td><span class="pill good">+14.5 clear</span></td></tr>
+      <tr><td>Sharp centre (fovea)</td><td>find the spot</td><td class="n">59.9%</td><td class="n">72.0%</td><td><span class="pill good">+12.1 clear</span></td></tr>
+      <tr><td>Learn from surprises (dopamine as prediction error)</td><td>faint stripes / faces</td><td class="n">92.7 / 60.4%</td><td class="n">95.3 / 58.5%</td><td><span class="pill good">+2.5</span> <span class="pill meh">−1.9</span></td></tr>
+      <tr><td>Look at what stands out (innate reflex)</td><td>faces</td><td class="n">60.4%</td><td class="n">58.4%</td><td><span class="pill meh">no difference</span></td></tr>
+      <tr><td>Realistic lens blur instead of pinhole</td><td>faint stripes / spot</td><td class="n">62.4 / 59.7%</td><td class="n">56.8 / 49.1%</td><td><span class="pill bad">worse</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="side tip"><b class="t">Try this</b>
+    Colour and edge directions each add about 7 points on faces, but together only a little more than either alone. On these photos they carry much the same information, so the fly takes the easier one.</div>
+
+  <div class="widget" id="w-train">
+    <div class="wh"><h4>Train a tiny fly yourself</h4><span>faint stripes · reward and pain</span></div>
+    <p class="cap" style="font-size:14px">A picture of faint stripes, lying or standing, hidden in heavy noise, as seen by a 14 × 20 eye. The fly guesses; a right answer strengthens the synapses from its active cells to the foot it pressed, a wrong one weakens them. After every 20 pictures it is scored on 200 new ones. Choose what the learning synapses read, then press Train.</p>
+    <div class="seg" id="tr-mode" role="group" aria-label="What the learning synapses read">
+      <button aria-pressed="true" data-m="raw">Raw sensors</button><button aria-pressed="false" data-m="kc">Memory centre</button><button aria-pressed="false" data-m="edge">Edge-direction cells</button>
+    </div>
+    <div class="row">
+      <div><canvas id="tr-img" width="200" height="140" aria-label="The current practice picture"></canvas><p class="cap" id="tr-lab">Practice picture</p></div>
+      <canvas class="chart" id="tr-curve" width="560" height="230" style="flex:1 1 320px" aria-label="Score on new pictures during training"></canvas>
+    </div>
+    <div class="controls">
+      <label for="tr-amp">How strong the stripes are <output id="tr-amp-o">0.12</output><input type="range" id="tr-amp" min="0.05" max="0.4" step="0.01" value="0.12"></label>
+      <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap"><button class="btn primary" id="tr-go">Train on 400 pictures</button><button class="btn" id="tr-clear">Clear chart</button></div>
+    </div>
+    <div class="readout" id="tr-read" aria-live="polite">Not trained yet. Try all three and compare the lines.</div>
+    <p class="cap">What to expect: raw sensors stay near 50%, because the stripes sit in a different place in every picture and cancel out when averaged. Edge-direction cells don't care where the stripes are, only which way they run, and climb to about 90%. Make the stripes stronger (0.25) and the memory centre catches up too. This is the same pattern the real experiments showed.</p>
+  </div>
+
+  <div class="round"><span class="k">Round 2</span><h3>Better pictures</h3></div>
+  <p>If the photos are the limit, change the photos.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Idea</th><th>What we did</th><th>Best straight line</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>All 3,330 photos instead of 1,000</td><td>Rebuilt from the originals; a bigger, fairer 500-photo exam</td><td class="n">honest baseline 53%</td><td><span class="pill good">kept</span></td></tr>
+      <tr><td>Different crop</td><td>Centre, upper, tight</td><td class="n">upper best: 58.7%</td><td><span class="pill good">kept</span></td></tr>
+      <tr><td>Skin-colour face finder</td><td>Frame each photo on its largest skin patch</td><td class="n">54.0%</td><td><span class="pill bad">worse</span></td></tr>
+      <tr><td>Align on an "average face"</td><td>Shift and zoom each photo until it best matches a learned average face</td><td class="n">55.6% zoom, 56.5% shift</td><td><span class="pill bad">worse</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="side warn"><b class="t">Watch out</b>
+    Every attempt to frame the face more tightly made things worse. Zooming in cuts off hair and shoulders, which carry much of the man-or-woman signal in these photos. The plain upper crop keeps them.</div>
+
+  <div class="round"><span class="k">Round 3</span><h3>A sharper eye</h3></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Change</th><th>Without</th><th>With</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>20 × 28 sensors instead of 14 × 20</td><td class="n">60.7%</td><td class="n">57.8%</td><td><span class="pill bad">−2.9 clear</span></td></tr>
+      <tr><td>28 × 40 sensors</td><td class="n">60.7%</td><td class="n">60.8%</td><td><span class="pill meh">no difference</span></td></tr>
+      <tr><td>Stronger fovea (1.4 instead of 1.1)</td><td class="n">60.7%</td><td class="n">60.4%</td><td><span class="pill meh">no difference</span></td></tr>
+      <tr><td>A second layer of memory cells on the edge cells</td><td class="n">62.8% ceiling</td><td class="n">63.3% ceiling</td><td><span class="pill meh">not worth it</span></td></tr>
+    </tbody>
+  </table></div>
+  <p>More sensors don't bring more usable information here. They give the same amount of practice more inputs to spread over.</p>
+
+  <div class="round"><span class="k">Round 4</span><h3>More looks, more practice</h3></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Idea</th><th>What we did</th><th>Result</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td><b>Several looks</b></td><td>9 looks, each nudged half a sensor sideways; confidences added up</td><td class="n">61.0% → 63.4%</td><td><span class="pill good">+2.4 one fly</span></td></tr>
+      <tr><td>Longer practice</td><td>600 sessions instead of 150</td><td class="n">60.7% → 62.9%</td><td><span class="pill meh">+2.2, just short of clear</span></td></tr>
+      <tr><td>Jitter within one look</td><td>The "loop trick" with the answer averaged over time</td><td class="n">−2.2 / +0.1</td><td><span class="pill meh">no time to average</span></td></tr>
+      <tr><td>Keep adapting in the exam</td><td>Senses keep adjusting while learning is frozen</td><td class="n">−2.4 at normal distance</td><td><span class="pill bad">off</span></td></tr>
+      <tr><td>Practise at many distances</td><td>Every practice photo at a random distance</td><td class="n">flat 55–57% at 0.9–1.1×, −4 at 1×</td><td><span class="pill meh">trade-off</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="side warn"><b class="t">Watch out</b>
+    A fly trained at one distance collapses to chance when the picture is just 10% nearer or further (51% and 44%). It isn't blind: all its answers tip to one foot, because its sense of "an average picture" no longer fits. Sideways shifts of up to a whole sensor do no harm.</div>
+
+  <div class="widget" id="w-dist">
+    <div class="wh"><h4>The distance cliff</h4><span>measured, 5 flies each</span></div>
+    <div class="seg" id="dist-mode" role="group" aria-label="How the flies practised">
+      <button aria-pressed="true" data-m="fixed">Practised at one distance</button><button aria-pressed="false" data-m="many">Practised at many distances</button>
+    </div>
+    <div class="row">
+      <canvas class="chart" id="dist-c" width="560" height="230" style="flex:1 1 320px" aria-label="Accuracy by viewing distance"></canvas>
+      <div style="display:grid;gap:10px;min-width:160px;flex:0 1 200px">
+        <div class="stat"><div class="cap">Score at this distance</div><div class="big" id="dist-acc">60%</div></div>
+        <canvas id="dist-eye" width="200" height="140" aria-label="What the eye sees at this distance"></canvas>
+      </div>
+    </div>
+    <div class="controls"><label for="dist-s">Picture distance <output id="dist-s-o">1.00×</output><input type="range" id="dist-s" min="0.9" max="1.1" step="0.01" value="1"></label></div>
+  </div>
+
+  <div class="round"><span class="k">Round 5</span><h3>Evolution</h3></div>
+  <p>Some abilities can't be learned in one lifetime and have to be bred over generations: moving the eye, a mood chemical, tuning the learning rule itself. None of them proved itself yet, even over 150 generations.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Ability</th><th>Challenge</th><th>Without</th><th>With</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Smart eye (+ sharp centre), 150 generations</td><td>find the spot</td><td class="n">70.9%</td><td class="n">76.5%</td><td><span class="pill meh">+5.6, not clear</span></td></tr>
+      <tr><td>Mood chemical, 150 generations</td><td>stripes</td><td class="n">91.7%</td><td class="n">92.9%</td><td><span class="pill meh">+1.2, not clear</span></td></tr>
+      <tr><td>Self-tuning learning, 150 generations</td><td>faint stripes</td><td class="n">58.2%</td><td class="n">60.8%</td><td><span class="pill meh">+2.6, not clear</span></td></tr>
+      <tr><td>Step closer or back (evolved)</td><td>find the spot</td><td class="n">56.1%</td><td class="n">56.9%</td><td><span class="pill meh">no difference</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="leaves"><span class="n">63.4%</span><b>Where this leaves us</b><div>One fly now reaches about 61% from one look and 63% from nine, within a few points of the 66% line. Squeezing more out of one fly got hard, so the next idea is to use many.</div></div>
+</section>
+
+<section class="ch" id="swarm" data-score="67.3" data-what="A boosting swarm of 25 flies (average of 2 runs).">
+  <div class="kicker">Chapter 8</div>
+  <h2>A swarm of flies</h2>
+  <p class="question">Can many flies voting together beat one fly, and even the 66% line?</p>
+  <p>Many flies can vote. That only helps if they make <i>different</i> mistakes: ten flies that all see the same thing are wrong on the same photos. So each fly gets its own centre of gaze, a point on a small circle around the middle of the picture. With the sharp centre switched on, each fly sees a different part of the face in detail.</p>
+  <div class="widget" id="w-circle">
+    <div class="wh"><h4>Where each fly looks</h4><span>move the sliders</span></div>
+    <div class="row">
+      <canvas id="circle-c" width="320" height="320" aria-label="Gaze centres on a circle"></canvas>
+      <div class="controls" style="flex:1;min-width:220px">
+        <label for="circle-n">Flies <output id="circle-n-o">9</output><input type="range" id="circle-n" min="1" max="25" value="9"></label>
+        <label for="circle-r">Circle radius <output id="circle-r-o">10°</output><input type="range" id="circle-r" min="0" max="20" value="10"></label>
+        <p class="cap">Each dot is one fly's centre of gaze; the shaded disc is its sharp centre. 10–15° worked best: close enough that every fly still sees the face, far enough that they see it differently.</p>
+      </div>
+    </div>
+  </div>
+  <div class="widget" id="w-vote">
+    <div class="wh"><h4>Why "different mistakes" matter</h4><span>a voting simulator</span></div>
+    <div class="controls">
+      <label for="vote-acc">One fly gets right <output id="vote-acc-o">61%</output><input type="range" id="vote-acc" min="52" max="75" value="61"></label>
+      <label for="vote-cor">How alike their mistakes are <output id="vote-cor-o">0.40</output><input type="range" id="vote-cor" min="0" max="0.95" step="0.05" value="0.4"></label>
+      <div class="seg" role="group" aria-label="Presets"><button data-c="0.62" aria-pressed="false">Same view (0.62)</button><button data-c="0.4" aria-pressed="true">Circle (0.40)</button><button data-c="0" aria-pressed="false">Independent (0)</button></div>
+    </div>
+    <canvas class="chart" id="vote-c" width="760" height="260" aria-label="Swarm accuracy by number of flies"></canvas>
+    <p class="cap">Line: simulated swarm accuracy when votes are added up. Red dots: real flies with the circle; grey dots: real flies all looking at the same spot. The simulation treats every photo as equally hard, so it is kinder than reality at large swarm sizes.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Swarm (faces, balanced exam)</th><th>One fly</th><th>Mistakes alike</th><th>9 flies</th><th>25 flies</th><th>101 flies</th></tr></thead>
+    <tbody>
+      <tr><td>All flies look at the same spot</td><td class="n">60%</td><td class="n">0.61–0.63</td><td class="n">60–62%</td><td class="n">–</td><td class="n">–</td></tr>
+      <tr><td>…each with its own random wiring</td><td class="n">60%</td><td class="n">0.61</td><td class="n">61%</td><td class="n">–</td><td class="n">–</td></tr>
+      <tr><td>Circle of gaze, no sharp centre</td><td class="n">59%</td><td class="n">0.48</td><td class="n">61%</td><td class="n">–</td><td class="n">–</td></tr>
+      <tr><td><b>Circle of gaze + sharp centre</b></td><td class="n">60–61%</td><td class="n">0.36–0.42</td><td class="n"><b>65–66%</b></td><td class="n">65.5–66.1%</td><td class="n">65.7–66.1%</td></tr>
+      <tr><td>Rings of gaze (0, 5, 10, 15°) + sharp centre</td><td class="n">60–61%</td><td class="n">0.39–0.42</td><td class="n">65%</td><td class="n">65.3%</td><td class="n">65.3–66.4%</td></tr>
+      <tr><td><b>Boosting</b>: new flies practise on the swarm's hard photos</td><td class="n">49–62%</td><td class="n">–</td><td class="n">–</td><td class="n"><b>66.6–68.0%</b></td><td class="n">–</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Boosting: newcomers learn from the swarm's mistakes</h3>
+  <p>Flies join in rounds of five. After each round the swarm answers every practice photo, and the photos it gets wrong, or only just right, are shown more often to the next round (AdaBoost weights, capped at 4× so the swarm doesn't chase the few mislabelled photos). The newcomers become specialists: on their own they score only 49–54% on the exam, because they get ordinary photos wrong. Inside the swarm they cover its blind spots.</p>
+  <div class="widget" id="w-boost">
+    <div class="wh"><h4>Boosting, round by round</h4><span>measured runs</span></div>
+    <div class="seg" id="boost-run" role="group" aria-label="Run"><button aria-pressed="false" data-r="0">Run 1</button><button aria-pressed="true" data-r="1">Run 2</button></div>
+    <div class="row">
+      <canvas class="chart" id="boost-c" width="520" height="240" style="flex:1 1 320px" aria-label="Swarm score by round, with and without boosting"></canvas>
+      <div style="flex:0 1 240px;display:grid;gap:6px">
+        <canvas id="boost-m" width="240" height="180" aria-label="Practice photos drawn by weight (illustration)"></canvas>
+        <p class="cap">Illustration: each square is a practice photo; the bigger it is, the more often the next round sees it. Red = photos the swarm still gets wrong.</p>
+      </div>
+    </div>
+    <div class="controls">
+      <label for="boost-round">Round <output id="boost-round-o">5 of 5</output><input type="range" id="boost-round" min="1" max="5" value="5"></label>
+      <div style="display:flex;align-items:end"><button class="btn primary" id="boost-play">Play the rounds</button></div>
+    </div>
+    <div class="readout" id="boost-read" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>25-fly circle swarm</th><th>Run 1</th><th>Run 2</th></tr></thead>
+    <tbody>
+      <tr><td>Without boosting</td><td class="n">65.7%</td><td class="n">65.3%</td></tr>
+      <tr><td><b>With boosting, equal votes</b></td><td class="n"><b>66.6%</b></td><td class="n"><b>68.0%</b></td></tr>
+      <tr><td>With boosting, votes weighted by practice score</td><td class="n">66.2%</td><td class="n">68.8% (70.6% at 20 flies)</td></tr>
+    </tbody>
+  </table></div>
+  <h3>How the swarm should vote</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Voting rule</th><th>5 flies</th><th>9 flies</th><th>25 flies</th><th>101 flies</th></tr></thead>
+    <tbody>
+      <tr><td><b>Add up confidences, each scaled to that fly's usual level</b></td><td class="n"><b>65.5%</b></td><td class="n"><b>65.7%</b></td><td class="n"><b>66.1%</b></td><td class="n"><b>66.1%</b></td></tr>
+      <tr><td>Plain majority of feet</td><td class="n">63.7%</td><td class="n">63.8%</td><td class="n">64.4%</td><td class="n">64.5%</td></tr>
+      <tr><td>A judge that learns whom to trust (on separate photos)</td><td class="n">65.1%</td><td class="n">65.8%</td><td class="n">65.8%</td><td class="n">66.4%</td></tr>
+      <tr><td>"Hebbian trust" (weight = how often a fly was right)</td><td class="n">63.1%</td><td class="n">63.3%</td><td class="n">63.9%</td><td class="n">65.8%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">Circle swarm without boosting; averages over several random teams drawn from 101 trained flies. Each result is good to about ±2 points.</p>
+  <div class="side tip"><b class="t">Try this</b>
+    The simplest vote is the best one we found: every fly says how sure it is, each fly's number is scaled to its usual size, and the numbers are added up. A learned judge overfits the photos it learns from. Past about 9–25 flies, more flies barely help unless they learn something different, which is exactly what boosting does.</div>
+  <div class="leaves"><span class="n">67.3%</span><b>Where this leaves us</b><div>A circle swarm reaches the 66% line; a boosting swarm gets past it, 67–68% on average over two runs. That's promising, not proven: each run is good to about ±2 points. Next: could this run on real hardware?</div></div>
+</section>
+
+<section class="ch" id="hardware" data-score="67.3" data-what="Same score; now: could it run on a camera board?">
+  <div class="kicker">Chapter 9</div>
+  <h2>On a tiny computer</h2>
+  <p class="question">Could a real swarm run on cheap hardware?</p>
+  <p>One fly is small enough for a camera board costing a few dollars, such as the ESP32-CAM. These are estimates from counting the fly's operations, not measurements on a real board.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th>Estimate</th></tr></thead>
+    <tbody>
+      <tr><td>Camera setting</td><td>Lowest frame sizes (96 × 96 or 160 × 120, colour) are plenty for a 14 × 20 eye; one frame is 18–38 KB</td></tr>
+      <tr><td>One fly's learned state</td><td class="n">≈ 3,900 numbers ≈ 8 KB (16-bit)</td></tr>
+      <tr><td>One fly's working memory</td><td class="n">60–80 KB, fits in the chip's own 520 KB SRAM</td></tr>
+      <tr><td>Work per step</td><td class="n">40–50 thousand operations ≈ 0.3–0.5 ms</td></tr>
+      <tr><td>Real time (20 steps/s)</td><td class="n">≈ 1% of one processor core</td></tr>
+      <tr><td>Virtual swarm, one board</td><td>Flies share one wiring (measured: no loss); each is a different crop of the same camera frame. 10–15 flies in SRAM, 101 in the 4 MB PSRAM</td></tr>
+      <tr><td>Decision time</td><td class="n">≈ 0.1 s for 25 flies, ≈ 1 s for 101</td></tr>
+    </tbody>
+  </table></div>
+  <div class="side remember"><b class="t">Keep in mind</b>
+    One camera board running 9–25 "virtual" flies gets nearly everything 101 flies get. A physical swarm of many boards gets truly different viewpoints, but each board has to be trained from where it stands and kept at a fixed distance (remember the distance cliff in round 4).</div>
+  <div class="leaves"><span class="n">67.3%</span><b>Where this leaves us</b><div>The whole swarm fits on one small camera board. What's left is to sum up the journey and pick the next steps.</div></div>
+</section>
+
+<section class="ch" id="now" data-score="67.3" data-what="Where we are: a boosting swarm, just past the 66% line.">
+  <div class="kicker">Chapter 10</div>
+  <h2>Where we are now</h2>
+  <p class="question">So, can the fly tell a man from a woman?</p>
+  <p>Somewhat, yes, and far better than guessing. Faces, exam on never-seen photos, men and women counted equally:</p>
+  <div class="where" id="where"></div>
+  <p class="cap">Dashed line: the 66% ceiling for straight-line readers on these photos. The last bar is two runs, each good to about ±2 points.</p>
+  <h3>What we're trying next</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Idea</th><th>Why it could help</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Confirm boosting</td><td>More runs and bigger rounds, to turn "promising" into a solid number and make it the recommended swarm mode</td><td><span class="pill good">next</span></td></tr>
+      <tr><td>Better photos</td><td>Larger or better-framed pictures carry more information; the framing has to keep hair and shoulders</td><td><span class="pill meh">open</span></td></tr>
+      <tr><td>Looking around (sideways only)</td><td>A fly that learns where to look can gather more than one fixed view; needs evolution, which found it only sometimes on simpler tasks</td><td><span class="pill meh">open</span></td></tr>
+      <tr><td>A real camera</td><td>Run one fly, then a virtual swarm, on an ESP32 camera board</td><td><span class="pill meh">planned</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch" id="quiz" data-score="67.3" data-what="Where we are: a boosting swarm, just past the 66% line.">
+  <div class="kicker">Chapter 11</div>
+  <h2>Test yourself</h2>
+  <p class="question">Did the story stick? Six quick questions.</p>
+  <div class="widget">
+    <div class="wh"><h4>Quick quiz</h4><span id="quiz-score">0 of 6</span></div>
+    <div class="quiz" id="quiz-box"></div>
+    <div style="display:flex"><button class="btn" id="quiz-reset">Start over</button></div>
+  </div>
+</section>
+
+<section class="ch" id="words" data-score="67.3" data-what="Where we are: a boosting swarm, just past the 66% line.">
+  <div class="kicker">Chapter 12</div>
+  <h2>Words to know</h2>
+  <dl class="glossary">
+    <dt>Connectome</dt><dd>The full wiring diagram of a brain: which neuron connects to which. The fruit fly's was completed in 2024.</dd>
+    <dt>Ommatidium</dt><dd>One of the tiny tubes of a compound eye; in our fly, one light sensor.</dd>
+    <dt>Ocelli</dt><dd>Three simple eyes on top of a fly's head that sense overall light and the horizon.</dd>
+    <dt>Halteres</dt><dd>A fly's tiny club-shaped hind wings, used as gyroscopes in flight.</dd>
+    <dt>Optic lobe</dt><dd>The visual part of the fly brain: lamina, medulla, lobula and lobula plate.</dd>
+    <dt>Lateral inhibition (edge boost)</dt><dd>Neighbouring cells dim each other, which makes edges stand out.</dd>
+    <dt>LC neurons</dt><dd>Visual feature-detector cells of the lobula that report things like small spots or looming objects. Our "eye cells" are modelled on them.</dd>
+    <dt>Mushroom body and Kenyon cells</dt><dd>The fly's learning centre. Each Kenyon cell reads a few random inputs, and only a few percent fire at once, so every picture gets its own sparse code.</dd>
+    <dt>Dopamine neurons, MBONs</dt><dd>Dopamine neurons carry reward and punishment into the mushroom body; its output neurons (MBONs) turn what was learned into "approach" or "avoid".</dd>
+    <dt>Gain adaptation</dt><dd>A cell turns its sensitivity up or down so that its usual signal has a standard size. Weak but telling signals then count as much as strong ones.</dd>
+    <dt>Fovea (sharp centre)</dt><dd>Sensors packed more tightly in the middle of the view.</dd>
+    <dt>Straight-line reader</dt><dd>A linear classifier: it adds up weighted evidence and answers by which side of a threshold the total lands.</dd>
+    <dt>Balanced accuracy</dt><dd>Accuracy where men and women count equally, so guessing always scores 50%.</dd>
+    <dt>Boosting</dt><dd>Training each new learner on the examples the earlier learners got wrong, then letting them all vote.</dd>
+  </dl>
+</section>
+<footer>Fly Lab · all results come from runs in this project and can be reproduced with the tools in <code>web/tools/</code>. The pictures and the fly in the widgets are drawn by code; no real photos are shown.</footer>
+</main>
+</div>
+
+<script>
+(() => {
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const $ = (id) => document.getElementById(id);
+// charts are drawn at their real on-screen size (sharp on dense screens), and taller on narrow screens
+function fit(cv, aspect, minH){
+  const dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.max(240, Math.round(cv.clientWidth || cv.width));
+  const h = Math.max(minH, Math.round(w / (w < 520 ? Math.min(aspect, 1.55) : aspect)));
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { c, W: w, H: h };
+}
+const store = { get(k){ try { return localStorage.getItem(k); } catch { return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch {} } };
+
+// ---------------------------------------------------------------- scoreboard follows the reader
+const sbNum = $('sb-num'), sbWhat = $('sb-what'), sbBar = $('sb-bar');
+const sections = [...document.querySelectorAll('[data-score]')], tocLinks = [...document.querySelectorAll('.toc a')];
+const pctOf = (v) => Math.max(0, Math.min(100, ((v - 45) / 30) * 100));
+const mbNum = $('mb-num'), mbWhat = $('mb-what'), mbBar = $('mb-bar');
+function setScore(sec){
+  const v = +sec.dataset.score, txt = (Number.isInteger(v) ? v : v.toFixed(1)) + '%';
+  sbNum.textContent = txt; sbWhat.textContent = sec.dataset.what; sbBar.style.width = pctOf(v) + '%';
+  mbNum.textContent = txt; mbWhat.textContent = sec.dataset.what; mbBar.style.width = pctOf(v) + '%';
+  tocLinks.forEach((a) => a.classList.toggle('here', a.getAttribute('href') === '#' + sec.id));
+}
+// the chapter that crosses 40% of the screen height is the one being read
+let current = null;
+function track(){
+  const y = innerHeight * 0.4;
+  let pick = sections[0];
+  for (const s of sections) if (s.getBoundingClientRect().top <= y) pick = s;
+  if (pick !== current) { current = pick; setScore(pick); }
+}
+addEventListener('scroll', track, { passive: true });
+addEventListener('resize', track);
+track();
+// the phone contents menu folds away after a tap
+document.querySelectorAll('.mtoc a').forEach((a) => a.addEventListener('click', () => { a.closest('details').open = false; }));
+
+// ---------------------------------------------------------------- 1. the fly's body
+const BODY = {
+  eyes: ['Compound eyes', 'About 800 facets per eye. Under each facet sit 8 light cells: six sense brightness and motion, two sense colour, ultraviolet and polarised light. Together the facets make a wide, coarse mosaic of the world.', 'yes', 'Our fly has one eye of 280 sensors (14 × 20), each reporting brightness and, with colour vision, red–green and blue–yellow.'],
+  ocelli: ['Ocelli', 'Three simple eyes in a triangle on top of the head. They don’t form images; they sense overall light and where the horizon is, which helps keep flight level.', 'no', 'Not modelled: the photo test doesn’t involve flying.'],
+  antennae: ['Antennae', 'The fly’s nose and ears. About 1,300 smell neurons per antenna, with about 50 receptor types. The joint at the base (Johnston’s organ) senses vibration: courtship songs, wind and gravity. Temperature and humidity sensors sit here too.', 'no', 'Not modelled: there is nothing to smell or hear in a photo.'],
+  mouth: ['Proboscis', 'The mouthparts carry taste neurons for sweet, bitter, salt and water.', 'no', 'Not modelled.'],
+  head: ['Head and brain', 'About 140,000 neurons. Well over half of them are in the two optic lobes, the visual processing areas behind the eyes.', 'yes', 'Our fly’s brain is a chain of about 1,800 model units: eye cells, a memory centre, a small recurrent core and the learning synapses.'],
+  thorax: ['Thorax', 'Holds the flight and leg muscles and the ventral nerve cord, which runs the legs and wings on commands from the brain’s descending neurons.', 'part', 'Our fly’s "descending" outputs are two foot commands (plus optional eye and walking commands).'],
+  wings: ['Wings', 'Beat about 200 times per second. The wing edges also carry taste and touch sensors.', 'no', 'Not modelled: the fly answers with its feet, not by flying.'],
+  halteres: ['Halteres', 'Tiny club-shaped hind wings that beat with the wings and act as gyroscopes, sensing body rotation in flight.', 'no', 'Not modelled.'],
+  legs: ['Legs and feet', 'Six legs. The feet taste what the fly stands on and feel touch; stretch sensors in the joints tell the fly where its legs are.', 'yes', 'This is how our fly answers: left foot = man, right foot = woman. It feels which foot is pressed, and a wrong answer hurts that foot.'],
+  abdomen: ['Abdomen and bristles', 'Bristles all over the body are touch sensors; stretch sensors in the cuticle report posture.', 'no', 'Not modelled beyond the feet.'],
+};
+const bodyDet = $('body-detail'), parts = [...document.querySelectorAll('svg.fly .part')];
+let bodySel = store.get('flyguide-body') || 'eyes'; if (!BODY[bodySel]) bodySel = 'eyes';
+function showBody(k){
+  bodySel = k; store.set('flyguide-body', k);
+  parts.forEach((p) => { p.classList.toggle('on', p.dataset.k === k); p.setAttribute('aria-pressed', p.dataset.k === k); });
+  const [t, real, has, ours] = BODY[k], tag = has === 'yes' ? '<span class="tag yes">in our fly</span>' : has === 'part' ? '<span class="tag part">partly in our fly</span>' : '<span class="tag no">not in our fly</span>';
+  bodyDet.innerHTML = `<h5>${t} ${tag}</h5>${real}<div class="ours">${ours}</div>`;
+}
+parts.forEach((p) => { p.addEventListener('click', () => showBody(p.dataset.k)); p.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showBody(p.dataset.k); } }); });
+showBody(bodySel);
+
+// ---------------------------------------------------------------- 2. neuron chain
+const STAGES = [
+  { k:'fixed', t:'Light sensors', s:'280 sensors · 14 × 20', d:'Each sensor reports the brightness (and, with colour vision, how red-versus-green and blue-versus-yellow) of one small patch of the view.', r:'Real fly: the photoreceptors under each of about 800 facets.' },
+  { k:'fixed', t:'Edge boost', s:'lateral inhibition', d:'Every sensor subtracts a share of its neighbours. Flat areas go quiet and edges stand out.', r:'Real fly: the lamina, the first layer of the optic lobe.' },
+  { k:'fixed', t:'Eye cells', s:'LC family · ~90 tiles', d:'Fixed detectors: LPLC2 and LC4 respond to things growing fast (looming), LC11 to small dark spots, LC_ON to small bright spots, and brightness cells to overall light.', r:'Real fly: lobula columnar (LC) neurons, each type projecting to its own glomerulus in the central brain.' },
+  { k:'fixed', t:'Edge-direction cells', s:'8 directions · 560 cells', d:'For every 2 × 2 patch of sensors: how strongly edges run in each of 8 directions. Each cell adapts its gain to its own usual signal, so faint but telling edges count. The biggest single gain on grey faces (+7.6 points).', r:'Real fly: orientation-tuned cells of the medulla and lobula.' },
+  { k:'evo', t:'Recurrent core', s:'128 neurons · evolved', d:'A small network with loops, so it can hold a thought for a moment. Its wiring is fixed at birth; its strengths are tuned by evolution (4,452 numbers). With Quick learn it stays as born.', r:'Real fly: loosely, the central complex and other central-brain circuits.' },
+  { k:'learn', t:'Memory centre', s:'400 Kenyon cells · 5% fire', d:'Each Kenyon cell listens to 6 random brightness sensors (plus 3 colour signals). Only the 20 most excited fire, so every picture gets its own sparse pattern that is easy to learn from.', r:'Real fly: the mushroom body, about 2,000 Kenyon cells per side.' },
+  { k:'learn', t:'Learning synapses', s:'1,920 synapses', d:'The only part that learns during the fly’s life. After a right answer, the synapses from the active cells to the pressed foot get stronger; after a wrong one, weaker. That is the whole learning rule.', r:'Real fly: Kenyon cell → output neuron (MBON) synapses, changed by dopamine neurons.' },
+  { k:'fixed', t:'Two feet', s:'press = answer', d:'Left foot = man, right foot = woman. The first foot whose drive crosses a threshold presses. After half a second the stronger foot is pressed for it.', r:'Real fly: descending neurons to the ventral nerve cord, which runs the legs.' },
+];
+const chain = document.querySelector('#w-chain .chain'), det = document.querySelector('#w-chain .detail');
+let sel = +(store.get('flyguide-stage') ?? 5); if (!(sel >= 0 && sel < STAGES.length)) sel = 5;
+STAGES.forEach((st, i) => {
+  const b = document.createElement('button');
+  b.className = st.k === 'learn' ? 'learn' : st.k === 'evo' ? 'evo' : '';
+  b.innerHTML = `<span class="dot"></span>${st.t}<small>${st.s}</small>`;
+  b.onclick = () => { sel = i; store.set('flyguide-stage', i); drawChain(); };
+  chain.appendChild(b);
+});
+function drawChain(){
+  [...chain.children].forEach((b, i) => b.setAttribute('aria-pressed', i === sel));
+  const st = STAGES[sel];
+  det.innerHTML = `<h5>${sel + 1}. ${st.t}</h5>${st.d}<div class="ours">${st.r}</div>`;
+}
+drawChain();
+
+// ---------------------------------------------------------------- 3. fly-eye viewer
+const SRC = 128, srcC = $('eye-src'), outC = $('eye-out'), oriC = $('eye-ori');
+let eyePic = new Float32Array(SRC * SRC);
+function mulberry(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function makePic(kind, pic = new Float32Array(SRC * SRC)){
+  const r = mulberry(7);
+  for (let y = 0; y < SRC; y++) for (let x = 0; x < SRC; x++) {
+    const u = x / SRC - 0.5, v = y / SRC - 0.5; let g = 0.55;
+    if (kind === 'face') {
+      const face = (u*u)/(0.2*0.2) + ((v+0.02)*(v+0.02))/(0.27*0.27) < 1;
+      const hair = (u*u)/(0.27*0.27) + ((v+0.07)*(v+0.07))/(0.33*0.33) < 1 && v < 0.02 && !face;
+      const eye = ((u+0.08)**2 + (v+0.06)**2 < 0.0012) || ((u-0.08)**2 + (v+0.06)**2 < 0.0012);
+      const brow = (Math.abs(v+0.115) < 0.01 && Math.abs(Math.abs(u)-0.08) < 0.045);
+      const mouth = Math.abs(v-0.14 - 1.8*u*u) < 0.012 && Math.abs(u) < 0.08;
+      const nose = Math.abs(u) < 0.012 && v > -0.03 && v < 0.07;
+      const shoulders = v > 0.3 && Math.abs(u) < 0.45 - (0.5 - v) * 0.3;
+      g = shoulders ? 0.3 : hair ? 0.18 : face ? 0.78 : 0.55 + 0.1 * Math.sin(u * 9);
+      if (face && (eye || brow || mouth)) g = 0.12;
+      if (face && nose) g = 0.62;
+    } else if (kind === 'stripes') g = Math.sin(u * 2 * Math.PI * 5) > 0 ? 0.85 : 0.15;
+    else if (kind === 'faint') g = 0.5 + 0.08 * Math.sign(Math.sin(v * 2 * Math.PI * 5)) + (r() - 0.5) * 0.35;
+    else if (kind === 'spot') { g = 0.5 + (r() - 0.5) * 0.25; if ((u-0.15)**2 + (v+0.1)**2 < 0.004) g = 0.08; }
+    pic[y * SRC + x] = Math.max(0, Math.min(1, g));
+  }
+  return pic;
+}
+const warp = (p, f) => p * (1 - f / 1.6) + (f / 1.6) * p * p * p; // denser sampling near the middle
+function sampleEye(rows, cols, fov, dist, shiftDeg, pic = eyePic){
+  const out = new Float32Array(rows * cols), picW = 70 / dist, picH = 50 / dist;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const az = warp(-1 + (2 * (c + 0.5)) / cols, fov) * 50 + shiftDeg, el = warp(-1 + (2 * (r + 0.5)) / rows, fov) * 35;
+    const px = (az / picW + 0.5) * SRC, py = (el / picH + 0.5) * SRC;
+    out[r * cols + c] = px < 0 || py < 0 || px >= SRC || py >= SRC ? 0.04 : pic[Math.floor(py) * SRC + Math.floor(px)];
+  }
+  return out;
+}
+function drawGrey(ctx, data, w, h, W, H){
+  const img = ctx.createImageData(w, h);
+  for (let i = 0; i < w * h; i++) { const g = Math.round(data[i] * 255); img.data.set([g, g, g, 255], i * 4); }
+  const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h; tmp.getContext('2d').putImageData(img, 0, 0);
+  ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, W, H);
+  const s = Math.min(W / w, H / h), dw = w * s, dh = h * s; ctx.drawImage(tmp, (W - dw) / 2, (H - dh) / 2, dw, dh);
+}
+function drawEye(){
+  const rows = +$('eye-rows').value, cols = Math.round(rows * 20 / 14), fov = +$('eye-fov').value, dist = +$('eye-dist').value, sh = +$('eye-shift').value;
+  $('eye-rows-o').textContent = `${rows} × ${cols}`; $('eye-fov-o').textContent = fov.toFixed(1); $('eye-dist-o').textContent = dist.toFixed(2) + '×'; $('eye-shift-o').textContent = sh + '°';
+  drawGrey(srcC.getContext('2d'), eyePic, SRC, SRC, srcC.width, srcC.height);
+  const sctx = srcC.getContext('2d'), sc = srcC.width / SRC, picW = 70 / dist, picH = 50 / dist;
+  const bx = ((sh - 50) / picW + 0.5) * SRC * sc, by = ((-35) / picH + 0.5) * SRC * sc, bw = (100 / picW) * SRC * sc, bh = (70 / picH) * SRC * sc;
+  sctx.strokeStyle = css('--red'); sctx.setLineDash([5, 4]); sctx.lineWidth = 2; sctx.strokeRect(bx, by, bw, bh); sctx.setLineDash([]);
+  const eye = sampleEye(rows, cols, fov, dist, sh);
+  drawGrey(outC.getContext('2d'), eye, cols, rows, outC.width, outC.height);
+  const octx = oriC.getContext('2d'), W = oriC.width, H = oriC.height; octx.clearRect(0, 0, W, H);
+  const pr = Math.ceil(rows / 2), pc = Math.ceil(cols / 2), cell = Math.min(W / pc, H / pr), ox = (W - pc * cell) / 2, oy = (H - pr * cell) / 2;
+  const E = new Float32Array(pr * pc * 8); let mx = 1e-6;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const at = (rr, cc) => eye[Math.min(rows - 1, Math.max(0, rr)) * cols + Math.min(cols - 1, Math.max(0, cc))];
+    const gx = at(r, c + 1) - at(r, c - 1), gy = at(r + 1, c) - at(r - 1, c), m = Math.hypot(gx, gy); if (!m) continue;
+    let a = Math.atan2(gy, gx); if (a < 0) a += Math.PI; const b = Math.round(a * 8 / Math.PI) % 8;
+    const k = ((r >> 1) * pc + (c >> 1)) * 8 + b; E[k] += m; if (E[k] > mx) mx = E[k];
+  }
+  octx.strokeStyle = css('--teal'); octx.lineCap = 'round';
+  for (let p = 0; p < pr * pc; p++) {
+    const cx = ox + (p % pc + 0.5) * cell, cy = oy + (Math.floor(p / pc) + 0.5) * cell;
+    for (let b = 0; b < 8; b++) {
+      const v = E[p * 8 + b] / mx; if (v < 0.08) continue;
+      const a = b * Math.PI / 8 + Math.PI / 2, L = cell * 0.42;
+      octx.globalAlpha = Math.min(1, 0.25 + v); octx.lineWidth = 0.6 + 3 * v;
+      octx.beginPath(); octx.moveTo(cx - Math.cos(a) * L, cy - Math.sin(a) * L); octx.lineTo(cx + Math.cos(a) * L, cy + Math.sin(a) * L); octx.stroke();
+    }
+  }
+  octx.globalAlpha = 1;
+}
+document.querySelectorAll('#eye-pic button').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('#eye-pic button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+  eyePic = makePic(b.dataset.p); drawEye();
+});
+['eye-rows', 'eye-fov', 'eye-dist', 'eye-shift'].forEach((id) => $(id).addEventListener('input', drawEye));
+eyePic = makePic('face'); drawEye();
+
+// ---------------------------------------------------------------- 4. the straight line
+const lc = $('line-c'), lctx = lc.getContext('2d');
+let pts = [];
+function makePts(){
+  const r = mulberry(11), ov = +$('line-ov').value, g = () => { let u = 0; for (let i = 0; i < 6; i++) u += r(); return (u - 3) / Math.sqrt(0.5); };
+  pts = [];
+  for (let i = 0; i < 220; i++) { const y = i % 2; pts.push({ x: (y ? 0.8 : -0.8) + g() * ov * 0.55, z: (y ? 0.35 : -0.35) + g() * ov * 0.55, y }); }
+}
+const accOf = (ang, off) => { const a = ang * Math.PI / 180, nx = Math.cos(a), nz = Math.sin(a); let ok = 0; for (const p of pts) ok += ((p.x * nx + p.z * nz - off) > 0 ? 1 : 0) === p.y ? 1 : 0; return ok / pts.length; };
+function bestLine(){ let best = [0, 0, 0]; for (let ang = 0; ang < 360; ang += 2) for (let off = -2.5; off <= 2.5; off += 0.05) { const a = accOf(ang, off); if (a > best[0]) best = [a, ang, off]; } return best; }
+let lineAng = 20, lineOff = 0.6, best = null;
+function drawLine(){
+  const W = lc.width, H = lc.height, S = 55, cx = W / 2, cy = H / 2;
+  lctx.clearRect(0, 0, W, H);
+  for (const p of pts) { lctx.fillStyle = p.y ? css('--red') : css('--teal'); lctx.globalAlpha = 0.75; lctx.beginPath(); lctx.arc(cx + p.x * S, cy - p.z * S, 3.4, 0, 7); lctx.fill(); }
+  lctx.globalAlpha = 1;
+  const a = lineAng * Math.PI / 180, nx = Math.cos(a), nz = Math.sin(a), px = nx * lineOff, pz = nz * lineOff;
+  lctx.strokeStyle = css('--ink'); lctx.lineWidth = 2.5; lctx.beginPath();
+  lctx.moveTo(cx + (px - nz * 9) * S, cy - (pz + nx * 9) * S); lctx.lineTo(cx + (px + nz * 9) * S, cy - (pz - nx * 9) * S); lctx.stroke();
+  lctx.font = '600 12px ' + css('--display'); lctx.fillStyle = css('--teal'); lctx.fillText('● men', 10, 18); lctx.fillStyle = css('--red'); lctx.fillText('● women', 10, 36);
+  const acc = accOf(lineAng, lineOff); $('line-acc').textContent = Math.round(Math.max(acc, 1 - acc) * 100) + '%';
+  $('line-best').textContent = Math.round(best[0] * 100) + '%';
+}
+function syncLine(){ lineAng = +$('line-ang').value; lineOff = +$('line-off').value / 40; $('line-ang-o').textContent = lineAng + '°'; $('line-off-o').textContent = lineOff.toFixed(2); drawLine(); }
+$('line-ang').addEventListener('input', syncLine); $('line-off').addEventListener('input', syncLine);
+$('line-ov').addEventListener('input', () => { const v = +$('line-ov').value; $('line-ov-o').textContent = v < 0.9 ? 'little' : v < 1.7 ? 'some' : v < 2.4 ? 'a lot' : 'almost all'; makePts(); best = bestLine(); drawLine(); });
+$('line-snap').onclick = () => { const ang = best[1] % 180, flip = best[1] >= 180; lineAng = best[1]; lineOff = best[2]; $('line-ang').value = ang; $('line-off').value = Math.round((flip ? -1 : 1) * lineOff * 40); $('line-ang-o').textContent = ang + '°'; $('line-off-o').textContent = lineOff.toFixed(2); drawLine(); };
+makePts(); best = bestLine(); syncLine();
+// drag (or tap) on the chart to slide the line to that spot; works with a finger too
+function dragLine(e){
+  if (e.type === 'pointermove' && !e.buttons) return;
+  const rect = lc.getBoundingClientRect(), k = lc.width / rect.width;
+  const x = ((e.clientX - rect.left) * k - lc.width / 2) / 55, z = -((e.clientY - rect.top) * k - lc.height / 2) / 55, a = lineAng * Math.PI / 180;
+  lineOff = x * Math.cos(a) + z * Math.sin(a);
+  $('line-off').value = Math.max(-100, Math.min(100, Math.round(lineOff * 40))); $('line-off-o').textContent = lineOff.toFixed(2); drawLine();
+}
+lc.addEventListener('pointerdown', (e) => { lc.setPointerCapture?.(e.pointerId); dragLine(e); });
+lc.addEventListener('pointermove', dragLine);
+
+// ---------------------------------------------------------------- 5. circle of gaze
+const cc = $('circle-c'), cctx = cc.getContext('2d');
+function drawCircle(){
+  const n = +$('circle-n').value, R = +$('circle-r').value; $('circle-n-o').textContent = n; $('circle-r-o').textContent = R + '°';
+  const W = cc.width, H = cc.height, s = W / 70;
+  cctx.clearRect(0, 0, W, H);
+  cctx.fillStyle = css('--muted'); cctx.globalAlpha = 0.3; cctx.beginPath(); cctx.ellipse(W / 2, H * 0.42, W * 0.29, H * 0.3, 0, Math.PI, 2 * Math.PI); cctx.fill(); cctx.globalAlpha = 1;
+  cctx.fillStyle = css('--line'); cctx.beginPath(); cctx.ellipse(W / 2, H * 0.5, W * 0.26, H * 0.32, 0, 0, 7); cctx.fill();
+  cctx.fillStyle = css('--ink'); [[-0.11, -0.05], [0.11, -0.05]].forEach(([x, y]) => { cctx.beginPath(); cctx.arc(W / 2 + x * W, H / 2 + y * H, 5, 0, 7); cctx.fill(); });
+  cctx.strokeStyle = css('--ink'); cctx.lineWidth = 2.5; cctx.beginPath(); cctx.arc(W / 2, H * 0.56, W * 0.09, 0.2 * Math.PI, 0.8 * Math.PI); cctx.stroke();
+  cctx.strokeStyle = css('--muted'); cctx.setLineDash([4, 4]); cctx.lineWidth = 1; cctx.beginPath(); cctx.arc(W / 2, H / 2, R * s, 0, 7); cctx.stroke(); cctx.setLineDash([]);
+  for (let k = 0; k < n; k++) {
+    const a = 2 * Math.PI * k / n, x = W / 2 + (n > 1 ? R : 0) * s * Math.cos(a), y = H / 2 + (n > 1 ? R : 0) * s * Math.sin(a);
+    cctx.fillStyle = css('--red'); cctx.globalAlpha = 0.09; cctx.beginPath(); cctx.arc(x, y, 8 * s, 0, 7); cctx.fill();
+    cctx.globalAlpha = 1; cctx.beginPath(); cctx.arc(x, y, 4, 0, 7); cctx.fill();
+  }
+}
+['circle-n', 'circle-r'].forEach((id) => $(id).addEventListener('input', drawCircle)); drawCircle();
+
+// ---------------------------------------------------------------- 6. voting simulator
+const vc = $('vote-c'), vctx = vc.getContext('2d');
+const MEASURED_CIRCLE = [[1, 61.2], [3, 64.3], [5, 64.5], [9, 64.9], [15, 65.2], [25, 65.5], [51, 66.1], [101, 65.7]];
+const MEASURED_SAME = [[1, 60.6], [3, 60.4], [5, 60.9], [9, 61.6]];
+function normInv(p){ // inverse of the standard normal CDF (Acklam's approximation)
+  const c = [-0.00778489400243029, -0.322396458041136, -2.40076964927863, -2.54973253934373, 4.37466414146197, 2.93816398269878], d = [0.00778469570904146, 0.32246712907004, 2.445134137143, 3.75440866190742];
+  const q = p < 0.5 ? p : 1 - p, t = Math.sqrt(-2 * Math.log(q));
+  const x = (((((c[0] * t + c[1]) * t + c[2]) * t + c[3]) * t + c[4]) * t + c[5]) / ((((d[0] * t + d[1]) * t + d[2]) * t + d[3]) * t + 1);
+  return p < 0.5 ? x : -x;
+}
+function erf(x){ const s = Math.sign(x); x = Math.abs(x); const t = 1 / (1 + 0.3275911 * x); return s * (1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x)); }
+const Phi = (x) => 0.5 * (1 + erf(x / Math.SQRT2));
+// each fly's evidence = signal + shared noise (correlation rho) + its own noise; adding N flies averages only the own noise
+const swarmAcc = (p, rho, N) => Phi(normInv(p) / Math.sqrt(rho + (1 - rho) / N));
+function drawVote(){
+  const p = +$('vote-acc').value / 100, rho = +$('vote-cor').value;
+  $('vote-acc-o').textContent = Math.round(p * 100) + '%'; $('vote-cor-o').textContent = rho.toFixed(2);
+  const { W, H } = fit(vc, 760 / 260, 200), L = 44, R = 14, T = 14, B = 34, lo = 50, hi = 80;
+  const X = (n) => L + (Math.log(n) / Math.log(101)) * (W - L - R), Y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  vctx.clearRect(0, 0, W, H); vctx.font = '12px ' + css('--mono'); vctx.fillStyle = css('--muted'); vctx.strokeStyle = css('--line'); vctx.lineWidth = 1;
+  for (let v = 50; v <= 80; v += 5) { vctx.beginPath(); vctx.moveTo(L, Y(v)); vctx.lineTo(W - R, Y(v)); vctx.stroke(); vctx.fillText(v + '%', 4, Y(v) + 4); }
+  [1, 3, 5, 9, 25, 101].forEach((n) => vctx.fillText(String(n), X(n) - 6, H - 12));
+  vctx.fillText('flies', W - R - 34, H - 26);
+  vctx.setLineDash([6, 5]); vctx.strokeStyle = css('--amber'); vctx.beginPath(); vctx.moveTo(L, Y(66)); vctx.lineTo(W - R, Y(66)); vctx.stroke(); vctx.setLineDash([]);
+  vctx.fillStyle = css('--amber'); vctx.fillText('66% line', L + 6, Y(66) - 6);
+  vctx.strokeStyle = css('--teal'); vctx.lineWidth = 2.5; vctx.beginPath();
+  for (let n = 1; n <= 101; n++) { const v = Math.min(hi, swarmAcc(p, rho, n) * 100); n === 1 ? vctx.moveTo(X(n), Y(v)) : vctx.lineTo(X(n), Y(v)); } vctx.stroke();
+  const dots = (arr, col) => { vctx.fillStyle = col; for (const [n, v] of arr) { vctx.beginPath(); vctx.arc(X(n), Y(v), 4.5, 0, 7); vctx.fill(); } };
+  dots(MEASURED_SAME, css('--meh')); dots(MEASURED_CIRCLE, css('--red'));
+}
+['vote-acc', 'vote-cor'].forEach((id) => $(id).addEventListener('input', () => { document.querySelectorAll('#w-vote .seg button').forEach((b) => b.setAttribute('aria-pressed', false)); drawVote(); }));
+document.querySelectorAll('#w-vote .seg button').forEach((b) => b.onclick = () => { document.querySelectorAll('#w-vote .seg button').forEach((x) => x.setAttribute('aria-pressed', x === b)); $('vote-cor').value = b.dataset.c; drawVote(); });
+drawVote();
+
+// ---------------------------------------------------------------- 7. where we are
+const STEPS = [
+  ['Guessing', 50, ''],
+  ['One fly, grey', 53.6, 'memory centre only (chapter 5)'],
+  ['+ colour', 60.4, 'colour vision (round 1)'],
+  ['+ edge cells', 61.6, 'gain-adapted edge-direction cells (round 1)'],
+  ['9 looks', 63.4, 'one fly, looks added up (round 4)'],
+  ['Circle swarm', 66.1, '25 flies, sharp centre, equal votes (chapter 8)'],
+  ['Boosting swarm', 67.3, '25 flies, average of 2 runs: 66.6% and 68.0%'],
+];
+const where = $('where');
+STEPS.forEach(([name, v, note], i) => {
+  const d = document.createElement('div'); d.className = 'stepline' + (i === STEPS.length - 1 ? ' now' : '');
+  d.innerHTML = `<div class="lbl"><b>${name}</b>${note ? `<div class="cap">${note}</div>` : ''}</div><div class="bar" role="img" aria-label="${v}%"><i style="width:${pctOf(v)}%"></i><span style="position:absolute;top:-3px;bottom:-3px;left:${pctOf(66)}%;border-left:2px dashed var(--amber)"></span></div><div class="readout">${v.toFixed(1)}%</div>`;
+  where.appendChild(d);
+});
+
+// ---------------------------------------------------------------- 8. the memory centre's code
+const kcC = $('kc-c'), kctx = kcC.getContext('2d'), NKC = 400;
+const kcWires = (() => { const r = mulberry(31); return Array.from({ length: NKC }, () => Array.from({ length: 6 }, () => [Math.floor(r() * 280), r() < 0.5 ? -1 : 1])); })();
+const kcEyes = {};
+['face', 'stripes', 'faint', 'spot'].forEach((k) => { kcEyes[k] = sampleEye(14, 20, 0, 1, 0, makePic(k)); });
+const kcMean = new Float32Array(280);
+for (const k in kcEyes) for (let j = 0; j < 280; j++) kcMean[j] += kcEyes[k][j] / 4; // the "average picture" the cells are centred on
+let kcKind = 'face', kcPrevKind = null;
+function kcCode(kind, share){
+  const e = kcEyes[kind], act = kcWires.map((w) => w.reduce((s, [j, g]) => s + g * (e[j] - kcMean[j]), 0));
+  const k = Math.max(1, Math.round(NKC * share)), thr = [...act].sort((a, b) => b - a)[k - 1];
+  let n = 0;
+  return act.map((a) => (a >= thr && n++ < k ? 1 : 0));
+}
+function drawKC(){
+  const share = +$('kc-sp').value / 100; $('kc-sp-o').textContent = Math.round(share * 100) + '%';
+  const now = kcCode(kcKind, share), prev = kcPrevKind ? kcCode(kcPrevKind, share) : null;
+  const W = kcC.width, s = W / 20; kctx.clearRect(0, 0, W, W);
+  let n = 0, ov = 0;
+  for (let i = 0; i < NKC; i++) {
+    const x = (i % 20) * s, y = Math.floor(i / 20) * s;
+    kctx.fillStyle = now[i] ? css('--red') : css('--line'); kctx.fillRect(x + 2, y + 2, s - 4, s - 4);
+    if (prev && prev[i]) { kctx.strokeStyle = css('--teal'); kctx.lineWidth = 3; kctx.strokeRect(x + 3.5, y + 3.5, s - 7, s - 7); }
+    n += now[i]; if (prev && prev[i] && now[i]) ov++;
+  }
+  $('kc-n').textContent = n; $('kc-ov').textContent = prev ? `${ov} of ${n}` : '–';
+}
+document.querySelectorAll('#kc-pic button').forEach((b) => b.onclick = () => {
+  if (b.dataset.p === kcKind) return;
+  document.querySelectorAll('#kc-pic button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+  kcPrevKind = kcKind; kcKind = b.dataset.p; drawKC();
+});
+$('kc-sp').addEventListener('input', drawKC);
+drawKC();
+
+// ---------------------------------------------------------------- 9. train a tiny fly
+const trImgC = $('tr-img'), trCurveC = $('tr-curve'), TR_NAME = { raw: 'Raw sensors', kc: 'Memory centre', edge: 'Edge-direction cells' };
+const TR_COL = () => ({ raw: css('--meh'), kc: css('--amber'), edge: css('--teal') });
+let trMode = 'raw', trRuns = [], trBusy = false;
+const gauss = (r) => { let u = 0; for (let i = 0; i < 6; i++) u += r(); return (u - 3) / Math.SQRT1_2; };
+function stripesImg(cls, r, amp){ // cls 1 = standing stripes, 0 = lying stripes; random phase, heavy noise
+  const out = new Float32Array(280), ph = r() * 4;
+  for (let y = 0; y < 14; y++) for (let x = 0; x < 20; x++) { const t = cls ? x : y; out[y * 20 + x] = 0.5 + amp * Math.sign(Math.sin(2 * Math.PI * (t + ph) / 4)) + 0.35 * gauss(r); }
+  return out;
+}
+function edgeFeat(img){ // 8 directions, summed over 2 x 2 patches (7 x 10 patches)
+  const E = new Float32Array(560);
+  for (let y = 0; y < 14; y++) for (let x = 0; x < 20; x++) {
+    const at = (yy, xx) => img[Math.min(13, Math.max(0, yy)) * 20 + Math.min(19, Math.max(0, xx))];
+    const gx = at(y, x + 1) - at(y, x - 1), gy = at(y + 1, x) - at(y - 1, x), m = Math.hypot(gx, gy); if (!m) continue;
+    let a = Math.atan2(gy, gx); if (a < 0) a += Math.PI;
+    E[((y >> 1) * 10 + (x >> 1)) * 8 + (Math.round(a * 8 / Math.PI) % 8)] += m;
+  }
+  return E;
+}
+const trWires = (() => { const r = mulberry(77); return Array.from({ length: 400 }, () => Array.from({ length: 6 }, () => [Math.floor(r() * 280), r() < 0.5 ? -1 : 1])); })();
+function kcFeat(img){ const act = trWires.map((w) => w.reduce((s, [j, g]) => s + g * (img[j] - 0.5), 0)), thr = [...act].sort((a, b) => b - a)[19]; return Float32Array.from(act, (a) => (a >= thr ? 1 : 0)); }
+function makeLearner(mode){
+  const feat = mode === 'edge' ? edgeFeat : mode === 'kc' ? kcFeat : (x) => x, gain = mode === 'edge';
+  let mean = null, vr = null, w = null, n = 0;
+  const view = (img, adapt) => {
+    const f = feat(img);
+    if (!mean) { mean = Float32Array.from(f); vr = new Float32Array(f.length).fill(0.01); w = new Float32Array(f.length); }
+    if (adapt) { // sensory adaptation: the average (and, for edge cells, the spread) follow what the eye sees
+      const rate = Math.max(0.02, 1 / (1 + n)); n++;
+      for (let j = 0; j < f.length; j++) { const d = f[j] - mean[j]; mean[j] += rate * d; if (gain) vr[j] += Math.min(rate, 0.5) * (d * d - vr[j]); }
+    }
+    return Float32Array.from(f, (v, j) => (v - mean[j]) / (gain ? Math.sqrt(vr[j] + 1e-4) : 1));
+  };
+  return {
+    answer(img, adapt){ const v = view(img, adapt); let z = 0; for (let j = 0; j < v.length; j++) z += w[j] * v[j]; return { v, foot: z > 0 ? 1 : 0 }; },
+    // reward strengthens the synapses to the right foot, pain weakens those to the wrong one: both move toward the right answer
+    learn(v, label){ const s = label ? 0.05 : -0.05; for (let j = 0; j < v.length; j++) w[j] += s * v[j]; },
+  };
+}
+function drawTrImg(img, y, foot){
+  const g = Float32Array.from(img, (v) => Math.max(0, Math.min(1, v)));
+  drawGrey(trImgC.getContext('2d'), g, 20, 14, trImgC.width, trImgC.height);
+  $('tr-lab').textContent = `${y ? 'Standing' : 'Lying'} stripes · the fly said ${foot ? 'standing' : 'lying'} ${foot === y ? '✓' : '✗'}`;
+}
+function drawTrCurve(){
+  const { c, W, H } = fit(trCurveC, 560 / 230, 210), L = 42, R = 12, T = 30, B = 30, cols = TR_COL();
+  const X = (t) => L + (t / 400) * (W - L - R), Y = (v) => T + (1 - (v - 0.4) / 0.6) * (H - T - B);
+  c.clearRect(0, 0, W, H); c.font = '12px ' + css('--mono'); c.strokeStyle = css('--line'); c.fillStyle = css('--muted'); c.lineWidth = 1;
+  for (let v = 0.4; v <= 1.001; v += 0.1) { c.beginPath(); c.moveTo(L, Y(v)); c.lineTo(W - R, Y(v)); c.stroke(); c.fillText(Math.round(v * 100) + '%', 4, Y(v) + 4); }
+  [0, 100, 200, 300, 400].forEach((t) => c.fillText(String(t), X(t) - 8, H - 10));
+  c.textAlign = 'right'; c.fillText('practice pictures', W - R, H - 24); c.textAlign = 'left';
+  trRuns.forEach((run, i) => {
+    c.strokeStyle = cols[run.mode]; c.lineWidth = i === trRuns.length - 1 ? 3 : 1.5; c.globalAlpha = i === trRuns.length - 1 ? 1 : 0.55;
+    c.beginPath(); run.pts.forEach(([t, v], k) => (k ? c.lineTo(X(t), Y(v)) : c.moveTo(X(t), Y(v)))); c.stroke();
+  });
+  c.globalAlpha = 1;
+  let lx = L, ly = 4; c.font = '600 12px ' + css('--display');
+  for (const m of ['raw', 'kc', 'edge']) { const tw = c.measureText(TR_NAME[m]).width + 30; if (lx + tw > W) { lx = L; ly += 16; } c.fillStyle = cols[m]; c.fillRect(lx, ly + 1, 10, 10); c.fillStyle = css('--ink'); c.fillText(TR_NAME[m], lx + 14, ly + 10); lx += tw; }
+}
+function trTrain(){
+  if (trBusy) return; trBusy = true; $('tr-go').disabled = true;
+  const amp = +$('tr-amp').value, r = mulberry(1000 + trRuns.length * 17), rt = mulberry(4242);
+  const test = Array.from({ length: 200 }, (_, i) => ({ y: i % 2, img: stripesImg(i % 2, rt, amp) }));
+  const learner = makeLearner(trMode), run = { mode: trMode, pts: [[0, 0.5]] };
+  trRuns.push(run); if (trRuns.length > 6) trRuns.shift();
+  let t = 0;
+  const step = () => {
+    let last;
+    for (let k = 0; k < 20; k++) { const y = r() < 0.5 ? 1 : 0, img = stripesImg(y, r, amp), a = learner.answer(img, true); learner.learn(a.v, y); t++; last = [img, y, a.foot]; }
+    let ok = 0; for (const s of test) if (learner.answer(s.img, false).foot === s.y) ok++;
+    run.pts.push([t, ok / 200]); drawTrImg(...last); drawTrCurve();
+    $('tr-read').textContent = `${TR_NAME[run.mode]}: ${Math.round(ok / 2)}% right on 200 new pictures after ${t} practice pictures.`;
+    if (t < 400) setTimeout(step, 25); else { trBusy = false; $('tr-go').disabled = false; }
+  };
+  step();
+}
+document.querySelectorAll('#tr-mode button').forEach((b) => b.onclick = () => { document.querySelectorAll('#tr-mode button').forEach((x) => x.setAttribute('aria-pressed', x === b)); trMode = b.dataset.m; });
+$('tr-amp').addEventListener('input', () => { $('tr-amp-o').textContent = (+$('tr-amp').value).toFixed(2); drawTrImg(stripesImg(1, mulberry(3), +$('tr-amp').value), 1, 1); $('tr-lab').textContent = 'Standing stripes at this strength'; });
+$('tr-go').onclick = trTrain;
+$('tr-clear').onclick = () => { if (!trBusy) { trRuns = []; drawTrCurve(); } };
+drawTrImg(stripesImg(1, mulberry(3), 0.12), 1, 1); $('tr-lab').textContent = 'Standing stripes, as the eye sees them'; drawTrCurve();
+
+// ---------------------------------------------------------------- 10. the distance cliff (measured)
+const DIST_X = [0.9, 0.94, 0.97, 1, 1.03, 1.06, 1.1];
+const DIST = { fixed: [51.1, 60.7, 59.3, 60.2, 58.8, 59.0, 44.3], many: [56.6, 55.4, 56.3, 56.4, 56.7, 57.3, 55.3] };
+let distMode = 'fixed';
+const distFace = makePic('face');
+const interp = (xs, ys, x) => { for (let i = 0; i < xs.length - 1; i++) if (x <= xs[i + 1]) { const t = (x - xs[i]) / (xs[i + 1] - xs[i]); return ys[i] + t * (ys[i + 1] - ys[i]); } return ys[ys.length - 1]; };
+function drawDist(){
+  const d = +$('dist-s').value; $('dist-s-o').textContent = d.toFixed(2) + '×';
+  const { c, W, H } = fit($('dist-c'), 560 / 230, 210), L = 42, R = 12, T = 12, B = 30;
+  const X = (x) => L + ((x - 0.9) / 0.2) * (W - L - R), Y = (v) => T + (1 - (v - 40) / 25) * (H - T - B);
+  c.clearRect(0, 0, W, H); c.font = '12px ' + css('--mono'); c.strokeStyle = css('--line'); c.fillStyle = css('--muted'); c.lineWidth = 1;
+  for (let v = 40; v <= 65; v += 5) { c.beginPath(); c.moveTo(L, Y(v)); c.lineTo(W - R, Y(v)); c.stroke(); c.fillText(v + '%', 4, Y(v) + 4); }
+  DIST_X.forEach((x, i) => { if (W > 420 || i % 2 === 0 || x === 1) c.fillText(x.toFixed(2), X(x) - 14, H - 10); });
+  c.setLineDash([5, 4]); c.strokeStyle = css('--muted'); c.beginPath(); c.moveTo(L, Y(50)); c.lineTo(W - R, Y(50)); c.stroke(); c.setLineDash([]); c.fillText('guessing', W - R - 64, Y(50) - 6);
+  for (const m of ['many', 'fixed']) {
+    const on = m === distMode; c.strokeStyle = m === 'fixed' ? css('--red') : css('--teal'); c.lineWidth = on ? 3 : 1.5; c.globalAlpha = on ? 1 : 0.4;
+    c.beginPath(); DIST_X.forEach((x, i) => (i ? c.lineTo(X(x), Y(DIST[m][i])) : c.moveTo(X(x), Y(DIST[m][i])))); c.stroke();
+    c.fillStyle = c.strokeStyle; DIST_X.forEach((x, i) => { c.beginPath(); c.arc(X(x), Y(DIST[m][i]), on ? 4 : 3, 0, 7); c.fill(); });
+  }
+  c.globalAlpha = 1;
+  const v = interp(DIST_X, DIST[distMode], d);
+  c.strokeStyle = css('--ink'); c.lineWidth = 1.5; c.beginPath(); c.moveTo(X(d), T); c.lineTo(X(d), H - B); c.stroke();
+  $('dist-acc').textContent = Math.round(v) + '%'; $('dist-acc').style.color = v < 53 ? css('--bad') : css('--ink');
+  drawGrey($('dist-eye').getContext('2d'), sampleEye(14, 20, 0, d, 0, distFace), 20, 14, $('dist-eye').width, $('dist-eye').height);
+}
+document.querySelectorAll('#dist-mode button').forEach((b) => b.onclick = () => { document.querySelectorAll('#dist-mode button').forEach((x) => x.setAttribute('aria-pressed', x === b)); distMode = b.dataset.m; drawDist(); });
+$('dist-s').addEventListener('input', drawDist);
+drawDist();
+
+// ---------------------------------------------------------------- 11. boosting, round by round (measured)
+const BOOST = [
+  { plain: [62.3, 64.5, 64.8, 65.2, 65.7], boost: [62.3, 63.7, 64.5, 66.1, 66.6] },
+  { plain: [63.9, 64.4, 64.8, 64.8, 65.3], boost: [63.9, 63.6, 65.6, 69.4, 68.0] },
+];
+let boostRun = 1, boostTimer = null;
+const bDiff = (() => { const r = mulberry(5); return Array.from({ length: 48 }, () => r()); })(); // illustration only
+function drawBoost(){
+  const round = +$('boost-round').value, data = BOOST[boostRun]; $('boost-round-o').textContent = `${round} of 5`;
+  const { c, W, H } = fit($('boost-c'), 520 / 240, 210), L = 42, R = 12, T = 26, B = 30;
+  const X = (i) => L + (i / 4) * (W - L - R), Y = (v) => T + (1 - (v - 60) / 11) * (H - T - B);
+  c.clearRect(0, 0, W, H); c.font = '12px ' + css('--mono'); c.strokeStyle = css('--line'); c.fillStyle = css('--muted'); c.lineWidth = 1;
+  for (let v = 60; v <= 71; v += 2) { c.beginPath(); c.moveTo(L, Y(v)); c.lineTo(W - R, Y(v)); c.stroke(); c.fillText(v + '%', 4, Y(v) + 4); }
+  c.textAlign = 'center'; for (let i = 0; i < 5; i++) c.fillText(W > 420 ? `${(i + 1) * 5} flies` : String((i + 1) * 5), X(i), H - 10); c.textAlign = 'left';
+  if (W <= 420) c.fillText('flies', W - R - 30, H - 24);
+  c.setLineDash([6, 5]); c.strokeStyle = css('--amber'); c.beginPath(); c.moveTo(L, Y(66)); c.lineTo(W - R, Y(66)); c.stroke(); c.setLineDash([]);
+  c.fillStyle = css('--amber'); c.fillText('66% line', W - R - 60, Y(66) - 6);
+  for (const [k, col] of [['plain', css('--meh')], ['boost', css('--red')]]) {
+    c.strokeStyle = col; c.fillStyle = col; c.lineWidth = 3; c.beginPath();
+    for (let i = 0; i < round; i++) (i ? c.lineTo(X(i), Y(data[k][i])) : c.moveTo(X(i), Y(data[k][i])));
+    c.stroke(); for (let i = 0; i < round; i++) { c.beginPath(); c.arc(X(i), Y(data[k][i]), 4.5, 0, 7); c.fill(); }
+  }
+  c.font = '600 12px ' + css('--display'); c.fillStyle = css('--red'); c.fillText('● with boosting', L + 6, 16); c.fillStyle = css('--meh'); c.fillText('● without', L + 124, 16);
+  // illustration: practice photos grow with their weight; the hard ones stay red
+  const m = $('boost-m').getContext('2d'), MW = $('boost-m').width, MH = $('boost-m').height, cw = MW / 8, ch = MH / 6;
+  m.clearRect(0, 0, MW, MH);
+  const wts = bDiff.map((d) => Math.min(4, Math.exp(2.4 * (d - 0.55) * (round - 1) / 2)));
+  const mean = wts.reduce((a, b) => a + b, 0) / wts.length;
+  bDiff.forEach((d, i) => {
+    const s = Math.min(1, 0.32 * Math.sqrt(wts[i] / mean)), x = (i % 8 + 0.5) * cw, y = (Math.floor(i / 8) + 0.5) * ch;
+    m.fillStyle = d > 0.62 + 0.05 * (round - 1) ? css('--red') : css('--teal'); m.globalAlpha = 0.85;
+    m.fillRect(x - s * cw, y - s * ch, 2 * s * cw, 2 * s * ch);
+  });
+  m.globalAlpha = 1;
+  $('boost-read').textContent = `After round ${round} (a swarm of ${round * 5}): ${data.boost[round - 1].toFixed(1)}% with boosting, ${data.plain[round - 1].toFixed(1)}% without.`;
+}
+document.querySelectorAll('#boost-run button').forEach((b) => b.onclick = () => { document.querySelectorAll('#boost-run button').forEach((x) => x.setAttribute('aria-pressed', x === b)); boostRun = +b.dataset.r; drawBoost(); });
+$('boost-round').addEventListener('input', drawBoost);
+$('boost-play').onclick = () => {
+  clearTimeout(boostTimer); let r = 1;
+  const next = () => { $('boost-round').value = r; drawBoost(); if (++r <= 5) boostTimer = setTimeout(next, 800); };
+  next();
+};
+drawBoost();
+
+// ---------------------------------------------------------------- 12. quiz
+const QUIZ = [
+  ['Which part of our fly learns during its own life?', ['The light sensors', 'The eye cells', 'The learning synapses', 'The recurrent core'], 2, 'Only the 1,920 learning synapses change with reward and pain. Everything before them is fixed, or tuned by evolution.'],
+  ['Why can’t any straight-line reader get 100% on these photos?', ['There are too few photos', 'Men’s and women’s photos overlap', 'The photos are in colour', 'The eye is too sharp'], 1, 'Wherever the two clouds of photos overlap, some land on the wrong side of any line. With these photos, the best line gets 66%.'],
+  ['What happened when we zoomed in tightly on the faces?', ['It gained 5 points', 'Nothing changed', 'It got worse'], 2, 'Zooming in cut off hair and shoulders, which carry much of the signal in these photos.'],
+  ['When does a swarm of flies beat one fly by the most?', ['When all flies see exactly the same thing', 'When the flies make different mistakes', 'Only with more than 100 flies'], 1, 'Voting only fixes photos the flies disagree on. Giving each fly its own centre of gaze made their mistakes differ.'],
+  ['Which real fly sense does our fly not have?', ['Colour', 'Pain', 'Smell', 'Touch on its feet'], 2, 'Our fly has an eye with colour, and touch and pain on its feet. Smell, hearing, taste and the halteres are left out.'],
+  ['What does gain adaptation do?', ['Makes the eye bigger', 'Scales each cell to its usual signal, so weak but telling signals count', 'Adds noise to the picture'], 1, 'Edge cells carry weak signals. Scaled to their usual size, they took grey faces from 53.6% to 61.2%.'],
+];
+function drawQuiz(){
+  const box = $('quiz-box'); box.innerHTML = ''; let right = 0, done = 0;
+  const score = () => { $('quiz-score').textContent = `${right} of ${QUIZ.length}` + (done === QUIZ.length ? (right === QUIZ.length ? ' · all right!' : ' · done') : ''); };
+  QUIZ.forEach(([q, opts, ans, why], qi) => {
+    const d = document.createElement('div'); d.className = 'q';
+    d.innerHTML = `<b>${qi + 1}. ${q}</b><div class="opts"></div><div class="why" hidden></div>`;
+    const o = d.querySelector('.opts');
+    opts.forEach((t, i) => {
+      const b = document.createElement('button'); b.textContent = t;
+      b.onclick = () => {
+        if (d.dataset.done) return; d.dataset.done = 1; done++;
+        if (i === ans) right++; else b.classList.add('wrong');
+        o.children[ans].classList.add('right');
+        const w = d.querySelector('.why'); w.hidden = false; w.textContent = (i === ans ? 'Right. ' : 'Not quite. ') + why; score();
+      };
+      o.appendChild(b);
+    });
+    box.appendChild(d);
+  });
+  score();
+}
+$('quiz-reset').onclick = drawQuiz;
+drawQuiz();
+
+// redraw canvases when the theme changes
+const redraw = () => { drawEye(); drawLine(); drawCircle(); drawVote(); drawKC(); drawTrCurve(); drawDist(); drawBoost(); };
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(redraw, 150); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', redraw);
+new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+</script>
+</body>
+</html>
