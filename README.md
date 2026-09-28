@@ -73,7 +73,10 @@ Evolve = 30 generations.
 | Memory centre (+ colour vision) | faces | Quick | 53.0% | 60.4% | **better by 7.4 pts** |
 | Memory centre (grey only) | faces | Quick | 53.0% | 53.6% | no clear difference (+0.6 ± 5.8) |
 | Edge-direction cells (+ memory centre) | faces | Quick | 53.6% | 61.2% | **better by 7.6 pts** |
-| Edge-direction cells (+ memory, colour) | faces | Quick | 60.4% | 61.6% | no clear difference (+1.2 ± 3.7) |
+| Edge-direction cells (+ memory, colour), 15 flies | faces | Quick | 60.8% | 62.7% | **better by 1.9 pts** (5 flies had shown +1.2 ± 3.7) |
+| Edge-direction cells (+ memory, colour, sharp centre), 15 flies | faces | Quick | 60.6% | 63.3% | **better by 2.7 pts** |
+| Edge-direction cells (+ memory, colour), 600 sessions, 10 flies | faces | Quick | 60.3% | 63.8% | **better by 3.5 pts** |
+| Colour vision (+ memory, edge cells), 15 flies | faces | Quick | 61.7% | 62.7% | **better by 1.0 pts** |
 | Edge-direction cells (+ memory centre) | faint stripes | Quick | 92.7% | 100.0% | **better by 7.3 pts** |
 | Edge-direction cells (+ memory centre) | find the spot | Quick | 82.3% | 86.1% | no clear difference (+3.8 ± 6.5) |
 | Edge-direction cells (+ memory centre) | stripes | Quick | 99.0% | 100.0% | **better by 1.0 pts** |
@@ -277,6 +280,33 @@ few hundred KB are free next to the camera driver, 4 MB PSRAM, OV2640 camera):
 
 Given the measurements, a single ESP32-CAM (or the roomier ESP32-S3 camera boards, with 8 MB PSRAM
 and vector instructions) running 9-25 virtual flies gets nearly everything 101 flies do.
+
+## Next challenge: following a route over a Wonderland maze
+
+A first prototype, command line only (`src/route/`, `tools/route.mjs`, `tools/route-map.mjs`). The fly hovers
+over a procedurally generated maze - a patchwork of meadow, a checkered rose garden, sand, lilac and
+ponds, with wobbly walls of hedges, rose bushes, mushroom chains and stone that cast shadows - and must
+follow a route it was shown before, using only the view straight down (the same 14 x 20 eye, which
+turns with the fly). The route is never drawn; the fly only ever sees the landscape.
+
+Two ways to learn were tried:
+- **Steer:** learn by reward and pain which wing to beat from each view. It did not work (below
+  a blind fly flying straight): the right turn depends on the exact place and heading, too many
+  combinations to learn from a few thousand views.
+- **Familiarity**, the way ants and bees are thought to follow routes: while flying the route a few
+  times, every view silences the Kenyon cells it uses on a "novelty" output, as dopamine does in the
+  mushroom body. To navigate, the fly looks in 9 directions and flies the way that looks most
+  familiar. It needs a big memory centre (20,000 Kenyon cells, 1% firing; 4,000 cells run out).
+
+| released near the route, wrong heading (2 mazes x 2 flies x 15 releases) | reaches the goal | route flown |
+|---|---|---|
+| familiarity, brightness | 33% (35% on a changed maze) | 58% (67%) |
+| **familiarity, brightness + colour** | **52% (50% on a changed maze)** | **69% (73%)** |
+| teacher (upper bound) / blind straight flight | | 96% / 51% |
+
+"Changed maze": the same layout and route with flowers moved, walls bent differently and other light
+(`makeWonderland({ variant: 1 })`) - it costs nothing. The whole learned route is one bit per Kenyon cell,
+2.5 KB, and the cells' wiring comes from one seed.
 
 ## Distance and lenses (the billboard question)
 
