@@ -8,6 +8,18 @@
 // the fly. At height 1 the view covers 1.6 x 2.3 maze cells. Every sensor averages the ground
 // under it (a small image pyramid), so the view doesn't shimmer as the fly moves.
 
+// Weather and time of day, applied to what the camera sees: the light (and its colour), haze or fog
+// (the picture fades toward a pale grey) and camera noise (random speckle on every sensor, every frame).
+export const WEATHER = {
+  clear: {},
+  haze: { fog: 0.3 },
+  fog: { fog: 0.6 },
+  overcast: { light: 0.85, fog: 0.15, tint: [0.95, 0.98, 1.05] },
+  dusk: { light: 0.55, tint: [1.12, 0.95, 0.78] },
+  night: { light: 0.25, tint: [0.8, 0.9, 1.2], noise: 0.05 },
+  noisy: { noise: 0.08 },
+};
+
 export class RouteFlight {
   constructor(world, cfg) {
     this.w = world; this.cfg = cfg;
@@ -30,6 +42,18 @@ export class RouteFlight {
       this.levels.push({ w, h, p });
     }
     this.hint = 0; // where on the route the last lookup ended (speeds up the next one)
+    this.setWeather('clear');
+    this._seed = 12345;
+  }
+  // name of a WEATHER preset, or { fog, light, tint, noise }
+  setWeather(w) {
+    const p = typeof w === 'string' ? WEATHER[w] || {} : w || {};
+    this.weather = { fog: p.fog || 0, light: p.light ?? 1, tint: p.tint || [1, 1, 1], noise: p.noise || 0, fogCol: [0.78, 0.8, 0.82] };
+  }
+  _gauss() { // camera noise
+    let u = 0;
+    for (let i = 0; i < 4; i++) { this._seed = (Math.imul(this._seed, 1664525) + 1013904223) >>> 0; u += this._seed / 4294967296; }
+    return (u - 2) * 1.732;
   }
 
   // colour of the ground at (x, y) seen through a blur of about `spread` pixels (bilinear in the pyramid)
@@ -55,9 +79,20 @@ export class RouteFlight {
     for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
       const f = this.fwd[r] * len, s = this.side[c] * wid, i = r * C + c;
       this._sample(cx + fx * f + rx * s, cy + fy * f + ry * s, spread, col);
+      const wt = this.weather;
+      if (wt.fog || wt.light !== 1) for (let c = 0; c < 3; c++) col[c] = (col[c] * (1 - wt.fog) + wt.fogCol[c] * wt.fog) * wt.light * wt.tint[c];
       L[i] = 0.299 * col[0] + 0.587 * col[1] + 0.114 * col[2];
       Q[i] = e.colour ? col[0] - col[1] : 0;
       Q[R * C + i] = e.colour ? col[2] - (col[0] + col[1]) / 2 : 0;
+      if (wt.noise) { L[i] += wt.noise * this._gauss(); if (e.colour) { Q[i] += 0.5 * wt.noise * this._gauss(); Q[R * C + i] += 0.5 * wt.noise * this._gauss(); } }
+    }
+    if (e.normalize) { // contrast filter: stretch the view so its brightness always has the same spread
+      let m = 0, v = 0;
+      for (let i = 0; i < R * C; i++) m += L[i] / (R * C);
+      for (let i = 0; i < R * C; i++) v += (L[i] - m) ** 2 / (R * C);
+      const g = 0.18 / (Math.sqrt(v) + 0.01);
+      for (let i = 0; i < R * C; i++) L[i] = 0.5 + (L[i] - m) * g;
+      if (e.colour) for (let i = 0; i < 2 * R * C; i++) Q[i] *= g; // colour differences stretched by the same gain
     }
     if (e.lateralInhib) { // edge boost, exactly as in the photo world
       const raw = Float32Array.from(L);

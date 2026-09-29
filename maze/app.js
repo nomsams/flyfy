@@ -16,8 +16,9 @@ document.querySelectorAll('.seg').forEach((seg) => seg.addEventListener('click',
   seg.dispatchEvent(new Event('change'));
 }));
 const segVal = (id) => +document.querySelector(`#${id} button.on`).dataset.v;
+const segVal2 = (id) => document.querySelector(`#${id} button.on`).dataset.v; // for segments whose values are words
 const mazeOpts = () => ({ seed: Math.max(1, +$('seed').value || 1), cells: segVal('cells'), wobble: +$('wobble').value, variety: +$('variety').value });
-const flyOpts = () => ({ colour: $('colour').checked, kc: segVal('kc'), swarm: segVal('swarm'), gaze: +$('gaze').value });
+const flyOpts = () => ({ colour: $('colour').checked, kc: segVal('kc'), swarm: segVal('swarm'), gaze: +$('gaze').value, normalize: $('normalize').checked });
 const bindOut = (id, fmt = (v) => v) => { const f = () => { $(id + '-o').textContent = fmt($(id).value); }; $(id).addEventListener('input', f); f(); };
 bindOut('wobble'); bindOut('variety'); bindOut('gaze'); bindOut('passes'); bindOut('alt', (v) => (+v).toFixed(2));
 
@@ -39,7 +40,13 @@ function build() {
 }
 $('build').onclick = build;
 $('dice').onclick = () => { $('seed').value = 1 + Math.floor(Math.random() * 9999); build(); };
-['colour'].forEach((id) => $(id).addEventListener('change', flyChanged));
+// changing the maze builds a new one straight away (the fly has to learn it again)
+let rebuildTimer = null;
+const rebuildSoon = () => { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(build, 350); };
+$('cells').addEventListener('change', rebuildSoon);
+['wobble', 'variety', 'seed'].forEach((id) => $(id).addEventListener('change', rebuildSoon));
+$('weather').addEventListener('change', () => worker.postMessage({ type: 'setWeather', weather: segVal2('weather') }));
+['colour', 'normalize'].forEach((id) => $(id).addEventListener('change', flyChanged));
 ['kc', 'swarm'].forEach((id) => $(id).addEventListener('change', flyChanged));
 $('gaze').addEventListener('change', flyChanged);
 function flyChanged() {

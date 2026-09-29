@@ -5,9 +5,12 @@ import { setupConfig } from '../src/abilities.js';
 import { Brain } from '../src/brain.js';
 import { makeWonderland } from '../src/route/terrain.js';
 import { RouteFlight } from '../src/route/flight.js';
+// (RouteFlight.setWeather takes a preset name: clear, haze, fog, overcast, dusk, night, noisy)
 import { FamiliarSwarm, rowOfCircles } from '../src/route/familiar.js';
 
 let mazeOpts = null, flyOpts = null, world = null, cfg = null, brain = null, F = null, Fshow = null, swarm = null;
+// the version of the maze being flown over (0 = the one it learned on) and the weather while flying
+let variantV = 0, variantWorld = null, weather = 'clear';
 let run = 0; // bumps to cancel whatever loop is running
 const wrap = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
 const tick = () => new Promise((r) => setTimeout(r, 0));
@@ -31,7 +34,7 @@ const teacherTurn = (Fl, q, max) => Math.max(-max, Math.min(max, Fl.teacher(q).e
 const H = {
   build(m) {
     run++;
-    mazeOpts = m.maze; flyOpts = m.fly;
+    mazeOpts = m.maze; flyOpts = m.fly; variantV = 0; variantWorld = null;
     world = makeWonderland({ ...mazeOpts, variant: 0 });
     H._makeFly();
     const { msg, transfer } = mapMessage(world);
@@ -41,15 +44,24 @@ const H = {
   // a new fly over the same maze (colour, memory size); the route has to be taught again
   setFly(m) { run++; flyOpts = m.fly; if (world) H._makeFly(); },
   _makeFly() {
-    cfg = mergeConfig({ eye: { activeVision: 0 }, mb: { cells: flyOpts.kc, sparsity: flyOpts.kc >= 10000 ? 0.01 : 0.02 } },
+    cfg = mergeConfig({ eye: { activeVision: 0, normalize: flyOpts.normalize ? 1 : 0 }, mb: { cells: flyOpts.kc, sparsity: flyOpts.kc >= 10000 ? 0.01 : 0.02 } },
       mergeConfig(setupConfig('faces', { memory: true, colour: !!flyOpts.colour })));
     brain = new Brain(cfg); brain.setParams(brain.initParams(1)); brain.reset(false);
-    F = new RouteFlight(world, cfg); Fshow = F; swarm = null;
+    F = new RouteFlight(world, cfg); swarm = null;
+    H._flyOver();
+  },
+  // the flight the fly is released into: the chosen version of the maze, in the chosen weather
+  _flyOver() {
+    Fshow = variantV && variantWorld ? new RouteFlight(variantWorld, cfg) : new RouteFlight(world, cfg);
+    Fshow.setWeather(weather);
+    if (swarm) swarm.F = Fshow;
   },
 
   async train(m) {
     const me = ++run, alts = m.alts.length ? m.alts : [1], speed = world.cell / 8, maxTurn = (10 * Math.PI) / 180;
-    Fshow = F;
+    // it always learns on the original maze, in clear weather: show that maze while it learns
+    F.setWeather('clear');
+    if (variantV) { const { msg, transfer } = mapMessage(world, true); postMessage(msg, transfer); }
     // swarm 7 = three circles in a row across the camera frame (2 left, 3 middle, 2 right)
     const layout = flyOpts.swarm === 7 ? rowOfCircles({ side: 2, mid: 3, apart: flyOpts.gaze * 2, sideR: flyOpts.gaze * 0.5, midR: flyOpts.gaze }) : null;
     swarm = new FamiliarSwarm(brain, F, { swarm: flyOpts.swarm, gazeR: flyOpts.gaze, alts, banks: !!m.banks, track: !!m.track, mapTrack: !!m.map, aversive: !!m.aversive, layout });
@@ -83,17 +95,19 @@ const H = {
         }
       }
     }
+    H._flyOver(); // from now on it flies over the chosen version, in the chosen weather
+    if (variantV) { const { msg, transfer } = mapMessage(variantWorld, true); postMessage(msg, transfer); }
     postMessage({ type: 'trained', share: swarm.familiarShare(), members: swarm.members.map((mm) => [mm.gx, mm.gy]), approach: !!m.approach });
   },
 
   variant(m) {
     run++;
-    const w = m.v ? makeWonderland({ ...mazeOpts, variant: m.v }) : world;
-    Fshow = m.v ? new RouteFlight(w, cfg) : F;
-    if (swarm) swarm.F = Fshow;
-    const { msg, transfer } = mapMessage(w, true);
+    variantV = m.v; variantWorld = m.v ? makeWonderland({ ...mazeOpts, variant: m.v }) : null;
+    H._flyOver();
+    const { msg, transfer } = mapMessage(variantWorld || world, true);
     postMessage(msg, transfer);
   },
+  setWeather(m) { weather = m.weather; if (Fshow) Fshow.setWeather(weather); },
 
   async release(m) {
     if (!swarm) return;

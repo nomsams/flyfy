@@ -110,12 +110,16 @@
       <div class="f" style="display:grid;gap:4px;font-size:13px;color:var(--mut)">Fly over
         <div class="seg" id="variant"><button data-v="0" class="on">The maze it learned</button><button data-v="1">Changed version 1</button><button data-v="2">Changed version 2</button></div>
       </div>
-      <p class="hint">A changed version has the same layout and route, but flowers elsewhere, walls bent a little differently and other light.</p>
+      <p class="hint">A changed version has the same layout and route, but flowers elsewhere, walls bent a little differently and other light. The fly always learns on the original; this chooses what it flies over.</p>
+      <div class="f" style="display:grid;gap:4px;font-size:13px;color:var(--mut)">Weather while it flies (it learns in clear weather)
+        <div class="seg" id="weather"><button data-v="clear" class="on">Clear</button><button data-v="haze">Haze</button><button data-v="fog">Fog</button><button data-v="overcast">Overcast</button><button data-v="dusk">Dusk</button><button data-v="night">Night</button><button data-v="noisy">Noisy camera</button></div>
+      </div>
     </section>
 
     <section class="card">
       <h2><span class="num">2</span>The fly</h2>
       <label class="switch"><input type="checkbox" id="colour" checked><span></span>Colour vision</label>
+      <label class="switch"><input type="checkbox" id="normalize" checked><span></span>Contrast filter (stretches every view to the same contrast; keeps it working in haze, fog and dusk)</label>
       <div class="f" style="display:grid;gap:4px;font-size:13px;color:var(--mut)">Memory centre (Kenyon cells)
         <div class="seg" id="kc"><button data-v="5000">5,000</button><button data-v="10000">10,000</button><button data-v="20000" class="on">20,000</button></div>
       </div>

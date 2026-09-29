@@ -385,6 +385,26 @@ x 2 flies x 10 drops, about +-8 points):
 | **all of them together** | **95%** | **93%** |
 | single fly, learning flights, tracking and map | 90% | |
 
+**Weather and a contrast filter.** The camera's picture can be changed by haze or fog (it fades toward a
+pale grey), overcast, dusk (darker and warmer), night (much darker, bluish, noisy) or a noisy camera
+(`--weather`). A fly trained in clear weather is lost in haze, fog and dusk: every view looks unfamiliar.
+A contrast filter - each view stretched so its brightness always has the same spread (`--normalize`),
+the kind of gain control real eyes do - fixes that; the edge boost does not. Single fly, dropped
+anywhere, trained in clear weather (2 mazes x 2 flies x 10 drops), reached the goal:
+
+| weather | no filter | contrast filter | edge boost |
+|---|---|---|---|
+| clear | 85% | **97%** | 87% |
+| haze | 5% | **93%** | 5% |
+| fog | 3% | **83%** | 3% |
+| overcast | 87% | **92%** | 83% |
+| dusk | 8% | **95%** | 15% |
+| night | 10% | 13% | 8% |
+| noisy camera | 38% | **63%** | 33% |
+
+Night stays unsolved: the dim picture drowns in camera noise. Averaging a few views over time is the
+next thing to try.
+
 Try it in the browser: **[Fly Lab · Maze](maze/)** (`maze/`, same site). Build a maze, teach the route at
 chosen heights (with learning flights), tap anywhere on the map to drop the fly, and change its
 height mid-flight.
