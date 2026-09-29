@@ -50,7 +50,7 @@ const H = {
   async train(m) {
     const me = ++run, alts = m.alts.length ? m.alts : [1], speed = world.cell / 8, maxTurn = (10 * Math.PI) / 180;
     Fshow = F;
-    swarm = new FamiliarSwarm(brain, F, { swarm: flyOpts.swarm, gazeR: flyOpts.gaze, alts, banks: !!m.banks });
+    swarm = new FamiliarSwarm(brain, F, { swarm: flyOpts.swarm, gazeR: flyOpts.gaze, alts, banks: !!m.banks, track: !!m.track });
     const passes = [];
     for (const h of alts) passes.push({ h, avg: true });
     for (const h of alts) for (let k = 0; k < m.passes; k++) passes.push({ h, avg: false });
@@ -115,7 +115,7 @@ const H = {
       else if ((!swarm.hasApproach && offFor > 60) || q.x < -world.cell || q.y < -world.cell || q.x > world.W + world.cell || q.y > world.H + world.cell) status = 'lost';
       else if (steps > 4000) status = 'tired';
       Fshow.view(q); // the centre view, for the page
-      postMessage({ type: 'fly', pose: { ...q }, ratings: Array.from(r.ratings), choice: r.choice, casting: r.casting, mode: r.mode, found, status, steps,
+      postMessage({ type: 'fly', pose: { ...q }, ratings: Array.from(r.ratings), choice: r.choice, casting: r.casting, mode: r.mode, found, status, steps, where: r.where ? { s: r.where.best, conf: r.where.conf } : null,
         progress: Math.max(0, Math.min(1, (maxS - s0) / Math.max(1, world.route.length - s0))), off: nr.d / world.cell,
         view: { L: Array.from(Fshow.retinas[0]), Q: Array.from(Fshow.chroma[0]) }, kActive: brain.kActive * swarm.size });
       if (status === 'reached' || status === 'lost' || status === 'tired') break;

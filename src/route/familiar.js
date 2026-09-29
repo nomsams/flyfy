@@ -14,6 +14,15 @@
 // then it follows the approach memory, which leads it to the route. Optionally, when nothing looks
 // familiar it casts like a moth that lost a scent (it made things worse so far; off by default).
 //
+// Keeping track (track: true): the fly doesn't decide from scratch at every step. While learning the
+// route it also stores, in order, the sparse Kenyon-cell pattern it saw at points along the route (and
+// the route's direction there). While flying it keeps a belief about how far along the route it is:
+// moved on by its own known speed and heading (an ideal helicopter knows both; insects do this by
+// path integration), blurred a little for uncertainty, and sharpened by how well the current view
+// matches the stored patterns - a sequence of views tells look-alike corridors apart where a single view
+// can't. It then prefers directions close to the route's direction at its best guess, the more so the
+// surer it is, while the familiarity scan still corrects sideways drift.
+//
 // Every member has its own centre of gaze on a circle around the fly (gazeR view lengths), its own
 // "average view" to centre its Kenyon cells on, and its own memories - one per height band when `banks`
 // is on (the fly knows its height). All members share one wiring: one brain computes everyone's
@@ -25,15 +34,16 @@ const wrap = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI)
 export class FamiliarSwarm {
   // brain: a Brain with the memory centre on; flight: a RouteFlight to render views with
   // onRoute: the share of a view's firing cells that may be unfamiliar for the route to count as found
-  constructor(brain, flight, { swarm = 1, gazeR = 0.25, alts = [1], banks = false, castThr = 0.1, onRoute = 0.12, approachDecay = 0.5 } = {}) {
+  constructor(brain, flight, { swarm = 1, gazeR = 0.25, alts = [1], banks = false, castThr = 0.1, onRoute = 0.12, approachDecay = 0.5, track = false, trackGain = 0.6 } = {}) {
     if (!brain.nKC) throw new Error('familiarity needs the memory centre');
-    Object.assign(this, { brain, F: flight, alts, banks, castThr, onRoute, approachDecay, hasApproach: false });
+    Object.assign(this, { brain, F: flight, alts, banks, castThr, onRoute, approachDecay, hasApproach: false, track, trackGain });
     const K = Math.max(1, swarm), nb = banks ? alts.length : 1;
     this.members = Array.from({ length: K }, (_, k) => ({
       gx: K > 1 ? gazeR * Math.cos((2 * Math.PI * k) / K) : 0, gy: K > 1 ? gazeR * Math.sin((2 * Math.PI * k) / K) : 0,
       sum: new Float64Array(brain.rv.length), n: 0, rmean: null,
       memory: Array.from({ length: nb }, () => new Uint8Array(brain.nKC).fill(1)),
       approach: Array.from({ length: nb }, () => new Float32Array(brain.nKC).fill(1)),
+      snaps: Array.from({ length: nb }, () => []), // (track) the patterns seen along the route, in order
     }));
   }
   get size() { return this.members.length; }
@@ -56,7 +66,12 @@ export class FamiliarSwarm {
   finishAverage() { for (const m of this.members) m.rmean = Float32Array.from(m.sum, (v) => v / Math.max(1, m.n)); }
   // learning, step 2: this view on the route (at training height h) becomes familiar
   learn(p, h = p.alt) {
-    for (const m of this.members) { const code = this.see(m, p), mem = m.memory[this.bankOf(h)]; for (let j = 0; j < code.length; j++) if (code[j]) mem[j] = 0; }
+    const s = this.track ? this.F.nearest(p).s : 0;
+    for (const m of this.members) {
+      const code = this.see(m, p), mem = m.memory[this.bankOf(h)], on = [];
+      for (let j = 0; j < code.length; j++) if (code[j]) { mem[j] = 0; on.push(j); }
+      if (this.track) m.snaps[this.bankOf(h)].push({ on: Int32Array.from(on), s, th: p.th });
+    }
   }
   // learning, step 3 (optional): this view on the way to the route goes into the approach memory
   learnApproach(p, h = p.alt) {
@@ -102,23 +117,85 @@ export class FamiliarSwarm {
     for (const m of this.members) for (const mem of m.memory) { for (let j = 0; j < mem.length; j++) f += 1 - mem[j]; t += mem.length; }
     return f / t;
   }
+  // (track) the route cut into 8-pixel bins, with the route's direction in each (from the stored patterns)
+  _bins() {
+    if (this._binCache) return this._binCache;
+    const L = this.F.w.route.length, BIN = 8, n = Math.ceil(L / BIN) + 1, cx = new Float64Array(n), cy = new Float64Array(n);
+    for (const m of this.members) for (const bank of m.snaps) for (const sn of bank) { const k = Math.min(n - 1, Math.floor(sn.s / BIN)); cx[k] += Math.cos(sn.th); cy[k] += Math.sin(sn.th); }
+    const th = new Float32Array(n);
+    let last = 0;
+    for (let k = 0; k < n; k++) { if (cx[k] || cy[k]) last = Math.atan2(cy[k], cx[k]); th[k] = last; } // bins without a pattern keep the previous direction
+    return (this._binCache = { n, BIN, th });
+  }
+  // (track) a fresh belief for one flight; returns step(q, code-for-each-member) -> { best, conf, want }
+  _tracker() {
+    const { n, BIN, th } = this._bins(), kA = this.brain.kActive;
+    let b = new Float64Array(n).fill(1 / n), last = null;
+    return (q, codes) => {
+      if (last) { // move the belief on by how far the fly flew along the route's direction in each bin
+        const dist = Math.hypot(q.x - last.x, q.y - last.y), dir = Math.atan2(q.y - last.y, q.x - last.x), nb = new Float64Array(n);
+        for (let k = 0; k < n; k++) {
+          if (!b[k]) continue;
+          const t = k + (dist * Math.cos(dir - th[k])) / BIN, k0 = Math.floor(t), f = t - k0;
+          if (k0 >= 0 && k0 < n) nb[k0] += b[k] * (1 - f);
+          if (k0 + 1 >= 0 && k0 + 1 < n) nb[k0 + 1] += b[k] * f;
+        }
+        b = nb;
+        const blur = new Float64Array(n); // a little uncertainty, and never fully sure
+        for (let k = 0; k < n; k++) blur[k] = 0.25 * (b[k - 1] || 0) + 0.5 * b[k] + 0.25 * (b[k + 1] || 0) + 0.002 / n;
+        b = blur;
+      }
+      last = { x: q.x, y: q.y };
+      // how well the view matches the stored patterns in each bin (best match, summed over the swarm)
+      const bank = this.bankOf(q.alt), match = new Float64Array(n);
+      this.members.forEach((m, mi) => {
+        const code = codes[mi], best = new Float64Array(n);
+        for (const sn of m.snaps[bank]) { let o = 0; const on = sn.on; for (let j = 0; j < on.length; j++) o += code[on[j]]; const k = Math.min(n - 1, Math.floor(sn.s / BIN)); if (o > best[k]) best[k] = o; }
+        for (let k = 0; k < n; k++) match[k] += best[k] / kA;
+      });
+      let mean = 0; for (let k = 0; k < n; k++) mean += match[k] / n;
+      let tot = 0;
+      for (let k = 0; k < n; k++) { b[k] *= Math.exp((12 * (match[k] - mean)) / this.size); tot += b[k]; }
+      let bi = 0;
+      for (let k = 0; k < n; k++) { b[k] /= tot; if (b[k] > b[bi]) bi = k; }
+      let conf = 0; for (let k = Math.max(0, bi - 3); k <= Math.min(n - 1, bi + 3); k++) conf += b[k]; // how much belief is near the best guess
+      return { best: bi * BIN, conf, want: th[Math.min(n - 1, bi + 4)] }; // the route's direction half a cell ahead
+    };
+  }
+
   // a navigator for one flight: for each pose returns
-  // { turn, ratings (of the memory in use), choice, mode: 'route' | 'approach', casting }
+  // { turn, ratings (of the memory in use), choice, mode: 'route' | 'approach', casting, where }
   navigator({ cast = false } = {}) {
     const per = this.brain.kActive * this.size, castLimit = this.castThr * per, onLimit = this.onRoute * per;
     const best = (r) => { let c = 0; for (let i = 1; i < r.length; i++) if (r[i] < r[c] || (r[i] === r[c] && Math.abs(SCAN[i]) < Math.abs(SCAN[c]))) c = i; return c; };
-    let lastGood = null, castDir = 1, castLeft = 0, castLen = 4;
+    let lastGood = null, castDir = 1, castLeft = 0, castLen = 4, tracker = null, out = 0, lastWhere = null;
+    const LOST_AFTER = 12; // steps (1.5 cells) out of sight before it gives up on where it thought it was
     return (q) => {
-      const { route, approach } = this.rate(q), cr = best(route);
-      if (this.hasApproach && route[cr] > onLimit) { // the route isn't in sight yet: head for it
+      const { route, approach } = this.rate(q);
+      let cr = best(route), where = null;
+      const inSight = !this.hasApproach || route[cr] <= onLimit;
+      out = inSight ? 0 : out + 1;
+      if (out > LOST_AFTER) { tracker = null; lastWhere = null; } // lost for a while: forget where on the route it thought it was
+      // not in sight, and no confident idea of where the route is: head for it with the approach memory
+      if (!inSight && !(tracker && lastWhere && lastWhere.conf > 0.5)) {
         const ca = best(approach);
-        return { turn: SCAN[ca], ratings: approach, choice: ca, mode: 'approach', casting: false };
+        return { turn: SCAN[ca], ratings: approach, choice: ca, mode: 'approach', casting: false, where };
       }
-      if (!cast || route[cr] <= castLimit) { lastGood = q.th + SCAN[cr]; castLen = 4; castLeft = 0; return { turn: SCAN[cr], ratings: route, choice: cr, mode: 'route', casting: false }; }
+      if (this.track) {
+        tracker ||= this._tracker(); // (re)found the route: start keeping track afresh
+        // the view in the most familiar direction, for every member, to match against the stored patterns
+        const codes = this.members.map((m) => Uint8Array.from(this.see(m, { ...q, th: q.th + SCAN[cr] })));
+        where = lastWhere = tracker(q, codes);
+        // prefer directions near the route's direction at the best guess, as much as the fly is sure of it
+        const score = (i) => route[i] / per + this.trackGain * where.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - where.want))) / 2;
+        let c = 0; for (let i = 1; i < SCAN.length; i++) if (score(i) < score(c)) c = i;
+        cr = c;
+      }
+      if (!cast || route[cr] <= castLimit) { lastGood = q.th + SCAN[cr]; castLen = 4; castLeft = 0; return { turn: SCAN[cr], ratings: route, choice: cr, mode: 'route', casting: false, where }; }
       if (lastGood === null) lastGood = q.th;
       if (castLeft <= 0) { castDir = -castDir; castLeft = castLen; castLen += 3; }
       castLeft--;
-      return { turn: Math.max(-Math.PI / 4, Math.min(Math.PI / 4, wrap(lastGood + (castDir * Math.PI) / 2 - q.th))), ratings: route, choice: cr, mode: 'route', casting: true };
+      return { turn: Math.max(-Math.PI / 4, Math.min(Math.PI / 4, wrap(lastGood + (castDir * Math.PI) / 2 - q.th))), ratings: route, choice: cr, mode: 'route', casting: true, where };
     };
   }
 }

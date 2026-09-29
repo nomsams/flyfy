@@ -12,6 +12,7 @@
 //        [--cast] (sweep side to side when nothing looks familiar) [--cast-thr 0.1]
 //        [--approach 1] (learning flights toward the route from a grid every 1 cell over the map)
 //        [--drop] (release anywhere on the map instead of near the route)
+//        [--track] (keep a belief of where on the route it is, from its own motion and stored views)
 //        [--policy steer|familiar] [--kc 4000] [--sparsity 0.02] (memory-centre size for familiarity)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -90,7 +91,7 @@ function releaseAnywhere(world, F, r, alt) {
 // looks in a few directions and flies the way that looks most familiar. It never learns the route
 // itself, only what the world looked like while it was on it.
 export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt = 0, policy = 'steer', kc = 0, sparsity = 0, testVariant = 0,
-  trainAlts = null, altBanks = false, testAlt = 0, swarm = 1, gazeR = 0.25, cast = false, castThr = 0.1, approach = 0, drop = false }) {
+  trainAlts = null, altBanks = false, testAlt = 0, swarm = 1, gazeR = 0.25, cast = false, castThr = 0.1, approach = 0, drop = false, track = false }) {
   const world = makeWonderland(worldOpts);
   const over = { eye: { activeVision: 0 }, learn: { anneal: 0 } };
   if (kc) over.mb = { cells: kc, ...(sparsity ? { sparsity } : {}) };
@@ -110,7 +111,7 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
   if (policy === 'familiar') {
     // familiarity navigation (src/route/familiar.js, the same code the web app runs)
     const alts = trainAlts && trainAlts.length ? trainAlts : [1];
-    fam = new FamiliarSwarm(brain, F, { swarm, gazeR, alts, banks: altBanks, castThr });
+    fam = new FamiliarSwarm(brain, F, { swarm, gazeR, alts, banks: altBanks, castThr, track });
     // each member's "average view": one teacher flight along the route at every training height
     for (const h of alts) fly(world, F, { x: world.start[0], y: world.start[1], th: tangent(world, 0), alt: h }, (q) => { fam.addToAverage(q); return teacherTurn(q); }, { maxSteps: 2000 });
     fam.finishAverage();
@@ -176,7 +177,7 @@ if (isMain && !args.one) {
   const worlds = +(args.worlds || 2), seeds = +(args.seeds || 3), setups = (args.setups || 'raw,memory,colour,edges,fovea').split(',');
   const common = { flights: +(args.flights || 40), releases: +(args.releases || 30), alt: +(args.alt || 0), policy: args.policy || 'steer', kc: +(args.kc || 0), sparsity: +(args.sparsity || 0), testVariant: +(args['test-variant'] || 0),
     trainAlts: args['train-alts'] ? args['train-alts'].split(',').map(Number) : null, altBanks: !!args.banks, testAlt: +(args['test-alt'] || 0),
-    swarm: +(args.swarm || 1), gazeR: +(args.gaze ?? 0.25), cast: !!args.cast, castThr: +(args['cast-thr'] || 0.1), approach: +(args.approach || 0), drop: !!args.drop };
+    swarm: +(args.swarm || 1), gazeR: +(args.gaze ?? 0.25), cast: !!args.cast, castThr: +(args['cast-thr'] || 0.1), approach: +(args.approach || 0), drop: !!args.drop, track: !!args.track };
   const jobs = [];
   for (const setup of setups) for (let w = 1; w <= worlds; w++) for (let s = 1; s <= seeds; s++) jobs.push({ ...common, setup, seed: s, worldOpts: { ...worldBase, seed: w } });
   const runOne = (job) => new Promise((resolve, reject) => {
@@ -188,7 +189,7 @@ if (isMain && !args.one) {
   let next = 0;
   await Promise.all(Array.from({ length: Math.min(jobsMax, jobs.length) }, async () => { while (next < jobs.length) { const j = next++; res.push(await runOne(jobs[j])); } }));
   const pct = (x) => (x * 100).toFixed(0) + '%';
-  console.log(`route following (${common.policy}${common.kc ? ', ' + common.kc + ' Kenyon cells' : ''}): ${worldBase.cells}x${worldBase.cells} maze, wobble ${worldBase.wobble}, variety ${worldBase.variety}, height jitter ${common.alt}${common.testVariant ? ', tested on variant ' + common.testVariant : ''}${common.trainAlts ? ', trained at heights ' + common.trainAlts.join('/') + (common.altBanks ? ' (a memory per height)' : '') : ''}${common.testAlt ? ', tested at height ' + common.testAlt : ''}${common.swarm > 1 ? ', swarm of ' + common.swarm + ' (gaze circle ' + common.gazeR + ')' : ''}${common.cast ? ', casting' : ''}${common.approach ? ', learning flights every ' + common.approach + ' cells' : ''}${common.drop ? ', DROPPED ANYWHERE' : ''}; ${worlds} worlds x ${seeds} flies per setup, ${common.flights} training flights, ${common.releases} releases each (${((Date.now() - t0) / 1000).toFixed(0)}s)`);
+  console.log(`route following (${common.policy}${common.kc ? ', ' + common.kc + ' Kenyon cells' : ''}): ${worldBase.cells}x${worldBase.cells} maze, wobble ${worldBase.wobble}, variety ${worldBase.variety}, height jitter ${common.alt}${common.testVariant ? ', tested on variant ' + common.testVariant : ''}${common.trainAlts ? ', trained at heights ' + common.trainAlts.join('/') + (common.altBanks ? ' (a memory per height)' : '') : ''}${common.testAlt ? ', tested at height ' + common.testAlt : ''}${common.swarm > 1 ? ', swarm of ' + common.swarm + ' (gaze circle ' + common.gazeR + ')' : ''}${common.cast ? ', casting' : ''}${common.approach ? ', learning flights every ' + common.approach + ' cells' : ''}${common.drop ? ', DROPPED ANYWHERE' : ''}${common.track ? ', keeping track' : ''}; ${worlds} worlds x ${seeds} flies per setup, ${common.flights} training flights, ${common.releases} releases each (${((Date.now() - t0) / 1000).toFixed(0)}s)`);
   console.log('setup'.padEnd(10) + 'reached goal'.padStart(14) + 'route flown'.padStart(13) + 'off-route'.padStart(12) + (common.drop ? '   (teacher / blind: reached goal) found route' : '   (teacher / blind: route flown)'));
   for (const setup of setups) {
     const rs = res.filter((x) => x.job.setup === setup).map((x) => x.out), m = (k) => rs.reduce((a, o) => a + o[k], 0) / rs.length;

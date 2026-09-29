@@ -344,6 +344,26 @@ itself looks familiar, then the route memory to the goal (`--approach 1 --drop`)
 | same, flown low (0.5) | 77% | 48% |
 | teacher / blind straight flight | | 100% / 10% |
 
+**Keeping track instead of deciding afresh.** An ideal helicopter knows its heading, speed and height
+(insects get the same from path integration). So instead of choosing a direction from scratch every
+step, the fly keeps a belief of how far along the route it is: moved on by its own motion, blurred a
+little, and sharpened by how well the view matches patterns it stored in order while learning the
+route (a sequence of views tells look-alike hedge corridors apart where one view can't). It then
+prefers directions near the route's direction at its best guess, as firmly as it is sure, with the
+familiarity scan still correcting sideways drift. Short gaps (the route out of sight for up to 1.5
+cells) keep the belief going on odometry; only a longer loss resets it (`--track`):
+
+| | without tracking | with tracking |
+|---|---|---|
+| single fly released near the route | 13% goal / 47% flown | **70% / 91%** |
+| full setup, dropped anywhere, flown low (0.5) | 48% | **63%** |
+| full setup, dropped anywhere, height 1 | 55% | 53% |
+| full setup, dropped anywhere, flown high (1.4) | 52% | **65%** |
+
+(Full setup: learning flights, 4 training heights, a memory per height, swarm of 3; 40 drops per row,
+about +-8 points.) Resetting the belief at every short gap threw most of the gain away when dropped
+anywhere (48-60%).
+
 Try it in the browser: **[Fly Lab · Maze](maze/)** (`maze/`, same site). Build a maze, teach the route at
 chosen heights (with learning flights), tap anywhere on the map to drop the fly, and change its
 height mid-flight.
