@@ -7,6 +7,9 @@
 //        [--flights 40] [--releases 30] [--alt 0] (height jitter while training and testing, e.g. 0.15)
 //        [--setups raw,memory,colour,edges,fovea] [--png out.png]
 //        [--test-variant 1] (test over a slightly changed version of the maze)
+//        [--train-alts 0.5,0.7,1,1.4] (practise the route at these heights) [--banks] (a memory per height)
+//        [--test-alt 0.6] (release at this height) [--swarm 5 --gaze 0.25] (flies with gaze centres on a circle)
+//        [--cast] (sweep side to side when nothing looks familiar) [--cast-thr 0.1]
 //        [--policy steer|familiar] [--kc 4000] [--sparsity 0.02] (memory-centre size for familiarity)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -19,6 +22,7 @@ import { Brain } from '../src/brain.js';
 import { mulberry32 } from '../src/rng.js';
 import { makeWonderland } from '../src/route/terrain.js';
 import { RouteFlight } from '../src/route/flight.js';
+import { FamiliarSwarm } from '../src/route/familiar.js';
 import { encodePNG } from './png.mjs';
 import { mapImage } from './route-map.mjs';
 
@@ -73,8 +77,8 @@ function releasePose(world, r, alt, spanEnd = 0.7) {
 // novelty output neuron are silenced, as dopamine does in the mushroom body. To navigate, the fly
 // looks in a few directions and flies the way that looks most familiar. It never learns the route
 // itself, only what the world looked like while it was on it.
-const SCAN = [-60, -45, -30, -15, 0, 15, 30, 45, 60].map((d) => (d * Math.PI) / 180);
-export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt = 0, policy = 'steer', kc = 0, sparsity = 0, testVariant = 0 }) {
+export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt = 0, policy = 'steer', kc = 0, sparsity = 0, testVariant = 0,
+  trainAlts = null, altBanks = false, testAlt = 0, swarm = 1, gazeR = 0.25, cast = false, castThr = 0.1 }) {
   const world = makeWonderland(worldOpts);
   const over = { eye: { activeVision: 0 }, learn: { anneal: 0 } };
   if (kc) over.mb = { cells: kc, ...(sparsity ? { sparsity } : {}) };
@@ -90,30 +94,22 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
   };
   const teacherTurn = (q) => Math.max(-TURN, Math.min(TURN, F.teacher(q).err));
   let testPolicy;
+  let fam = null;
   if (policy === 'familiar') {
-    if (!brain.nKC) throw new Error('familiarity needs the memory centre');
-    // the "average view" the Kenyon cells are centred on: one teacher flight over the whole route
-    const sum = new Float64Array(brain.rv.length); let n = 0;
-    fly(world, F, { x: world.start[0], y: world.start[1], th: tangent(world, 0), alt: 1 }, (q) => { F.view(q); brain.step(F.retinas, F.touch, F.pain, F.pos, F.chroma); for (let j = 0; j < sum.length; j++) sum[j] += brain.rv[j]; n++; return teacherTurn(q); }, { maxSteps: 2000 });
-    brain.rmean.set(Float32Array.from(sum, (v) => v / n));
-    const novel = new Float32Array(brain.nKC).fill(1);
-    const see = (p) => { F.view(p); brain.step(F.retinas, F.touch, F.pain, F.pos, F.chroma); return brain.kc; };
-    // learning the route: a few passes from start to goal, facing along it (as ants learn a route by
-    // walking it), with a little wobble so neighbouring views get learned too. Every view silences the
-    // Kenyon cells it uses; learning while turned sideways would make every direction look familiar.
-    for (let k = 0; k < flights; k++) {
+    // familiarity navigation (src/route/familiar.js, the same code the web app runs)
+    const alts = trainAlts && trainAlts.length ? trainAlts : [1];
+    fam = new FamiliarSwarm(brain, F, { swarm, gazeR, alts, banks: altBanks, castThr });
+    // each member's "average view": one teacher flight along the route at every training height
+    for (const h of alts) fly(world, F, { x: world.start[0], y: world.start[1], th: tangent(world, 0), alt: h }, (q) => { fam.addToAverage(q); return teacherTurn(q); }, { maxSteps: 2000 });
+    fam.finishAverage();
+    // learning the route: a few passes from start to goal at each training height, facing along it
+    // (as ants learn a route by walking it), with a little wobble so neighbouring views are learned too
+    for (const h of alts) for (let k = 0; k < flights; k++) {
       const th0 = tangent(world, 0), off = gauss(r) * 0.08 * world.cell;
-      const p = { x: world.start[0] - Math.sin(th0) * off, y: world.start[1] + Math.cos(th0) * off, th: wrap(th0 + gauss(r) * 0.05), alt: Math.exp(gauss(r) * alt) };
-      fly(world, F, p, (q) => {
-        const code = see(q); for (let j = 0; j < code.length; j++) if (code[j]) novel[j] = 0; // this view is now familiar
-        return teacherTurn(q) + gauss(r) * 0.03;
-      }, { maxSteps: 3000 });
+      const p = { x: world.start[0] - Math.sin(th0) * off, y: world.start[1] + Math.cos(th0) * off, th: wrap(th0 + gauss(r) * 0.05), alt: h * Math.exp(gauss(r) * 0.04) };
+      fly(world, F, p, (q) => { fam.learn(q, h); return teacherTurn(q) + gauss(r) * 0.03; }, { maxSteps: 3000 });
     }
-    testPolicy = (q) => {
-      let best = Infinity, turn = 0;
-      for (const d of SCAN) { const code = see({ ...q, th: q.th + d }); let nov = 0; for (let j = 0; j < code.length; j++) nov += code[j] * novel[j]; if (nov < best || (nov === best && Math.abs(d) < Math.abs(turn))) { best = nov; turn = d; } }
-      return turn;
-    };
+    testPolicy = () => { const nav = fam.navigator({ cast }); return (q) => nav(q).turn; };
   } else {
     // ---- training flights: the teacher flies part of the time (more at first), the fly the rest;
     // after every step the fly is rewarded if its chosen wing was the one the teacher would have used
@@ -127,15 +123,17 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
     }
     const frozen = new Brain(mergeConfig({ learn: { eta: 0 } }, cfg));
     frozen.setParams(theta); frozen.reset(false); frozen.setPlastic(brain.getPlastic());
-    testPolicy = (q) => (decide(frozen, q) ? TURN : -TURN);
+    testPolicy = () => (q) => (decide(frozen, q) ? TURN : -TURN);
   }
   // ---- test: learning frozen, released near the route with a wrong heading (optionally over a
   // slightly changed version of the maze: same layout and route, different details)
-  if (testVariant) F = new RouteFlight(makeWonderland({ ...worldOpts, variant: testVariant }), cfg);
+  if (testVariant) { F = new RouteFlight(makeWonderland({ ...worldOpts, variant: testVariant }), cfg); if (fam) fam.F = F; }
   const rt = mulberry32(900001 + seed), out = { reached: 0, progress: 0, dev: 0, tracks: [], teacher: 0, blind: 0 };
   for (let k = 0; k < releases; k++) {
-    const p0 = releasePose(world, rt, alt), maxSteps = Math.ceil((world.route.length / (world.cell / 8)) * 2.5);
-    const res = fly(world, F, { ...p0 }, testPolicy, { maxSteps });
+    const p0 = releasePose(world, rt, alt);
+    if (testAlt) p0.alt = testAlt;
+    const maxSteps = Math.ceil((world.route.length / (world.cell / 8)) * 2.5);
+    const res = fly(world, F, { ...p0 }, testPolicy(), { maxSteps });
     out.reached += res.reached / releases; out.progress += res.progress / releases; out.dev += res.dev / releases;
     if (k < 8) out.tracks.push(res.track);
     // references on the same release: the teacher itself, and a blind fly that flies straight
@@ -160,7 +158,9 @@ if (isMain && args.one) {
 if (isMain && !args.one) {
   const worldBase = { cells: +(args.cells || 6), wobble: +(args.wobble ?? 0.6), variety: +(args.variety ?? 0.7) };
   const worlds = +(args.worlds || 2), seeds = +(args.seeds || 3), setups = (args.setups || 'raw,memory,colour,edges,fovea').split(',');
-  const common = { flights: +(args.flights || 40), releases: +(args.releases || 30), alt: +(args.alt || 0), policy: args.policy || 'steer', kc: +(args.kc || 0), sparsity: +(args.sparsity || 0), testVariant: +(args['test-variant'] || 0) };
+  const common = { flights: +(args.flights || 40), releases: +(args.releases || 30), alt: +(args.alt || 0), policy: args.policy || 'steer', kc: +(args.kc || 0), sparsity: +(args.sparsity || 0), testVariant: +(args['test-variant'] || 0),
+    trainAlts: args['train-alts'] ? args['train-alts'].split(',').map(Number) : null, altBanks: !!args.banks, testAlt: +(args['test-alt'] || 0),
+    swarm: +(args.swarm || 1), gazeR: +(args.gaze ?? 0.25), cast: !!args.cast, castThr: +(args['cast-thr'] || 0.1) };
   const jobs = [];
   for (const setup of setups) for (let w = 1; w <= worlds; w++) for (let s = 1; s <= seeds; s++) jobs.push({ ...common, setup, seed: s, worldOpts: { ...worldBase, seed: w } });
   const runOne = (job) => new Promise((resolve, reject) => {
@@ -172,7 +172,7 @@ if (isMain && !args.one) {
   let next = 0;
   await Promise.all(Array.from({ length: Math.min(jobsMax, jobs.length) }, async () => { while (next < jobs.length) { const j = next++; res.push(await runOne(jobs[j])); } }));
   const pct = (x) => (x * 100).toFixed(0) + '%';
-  console.log(`route following (${common.policy}${common.kc ? ', ' + common.kc + ' Kenyon cells' : ''}): ${worldBase.cells}x${worldBase.cells} maze, wobble ${worldBase.wobble}, variety ${worldBase.variety}, height jitter ${common.alt}${common.testVariant ? ', tested on variant ' + common.testVariant : ''}; ${worlds} worlds x ${seeds} flies per setup, ${common.flights} training flights, ${common.releases} releases each (${((Date.now() - t0) / 1000).toFixed(0)}s)`);
+  console.log(`route following (${common.policy}${common.kc ? ', ' + common.kc + ' Kenyon cells' : ''}): ${worldBase.cells}x${worldBase.cells} maze, wobble ${worldBase.wobble}, variety ${worldBase.variety}, height jitter ${common.alt}${common.testVariant ? ', tested on variant ' + common.testVariant : ''}${common.trainAlts ? ', trained at heights ' + common.trainAlts.join('/') + (common.altBanks ? ' (a memory per height)' : '') : ''}${common.testAlt ? ', tested at height ' + common.testAlt : ''}${common.swarm > 1 ? ', swarm of ' + common.swarm + ' (gaze circle ' + common.gazeR + ')' : ''}${common.cast ? ', casting' : ''}; ${worlds} worlds x ${seeds} flies per setup, ${common.flights} training flights, ${common.releases} releases each (${((Date.now() - t0) / 1000).toFixed(0)}s)`);
   console.log('setup'.padEnd(10) + 'reached goal'.padStart(14) + 'route flown'.padStart(13) + 'off-route'.padStart(12) + '   (teacher / blind: route flown)');
   for (const setup of setups) {
     const rs = res.filter((x) => x.job.setup === setup).map((x) => x.out), m = (k) => rs.reduce((a, o) => a + o[k], 0) / rs.length;

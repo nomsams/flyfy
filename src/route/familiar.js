@@ -17,7 +17,7 @@ const wrap = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI)
 
 export class FamiliarSwarm {
   // brain: a Brain with the memory centre on; flight: a RouteFlight to render views with
-  constructor(brain, flight, { swarm = 1, gazeR = 0.25, alts = [1], banks = false, castThr = 0.3 } = {}) {
+  constructor(brain, flight, { swarm = 1, gazeR = 0.25, alts = [1], banks = false, castThr = 0.1 } = {}) {
     if (!brain.nKC) throw new Error('familiarity needs the memory centre');
     this.brain = brain; this.F = flight; this.alts = alts; this.banks = banks; this.castThr = castThr;
     const K = Math.max(1, swarm);

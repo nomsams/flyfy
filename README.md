@@ -304,6 +304,27 @@ Two ways to learn were tried:
 | **familiarity, brightness + colour** | **52% (50% on a changed maze)** | **69% (73%)** |
 | teacher (upper bound) / blind straight flight | | 96% / 51% |
 
+**Flying high or low.** The view below shrinks and sharpens as the fly drops, so height causes the same
+cliff as viewing distance did for faces. Reached the goal / route flown (2 mazes x 2 flies x 12 releases;
+a blind straight flight covers 53% of these routes):
+
+| trained | flown at 0.5 (low) | 0.7 | 1 | 1.4 (high) |
+|---|---|---|---|---|
+| at height 1 only | 2% / 38% | 8% / 34% | 44% / 72% | 19% / 52% |
+| at 4 heights, one memory | 17% / 48% | 29% / 60% | 35% / 62% | 35% / 66% |
+| at 4 heights, a memory per height (the fly knows its height) | 33% / 62% | 35% / 62% | 42% / 58% | 29% / 65% |
+| **...plus a swarm of 3** (gaze centres on a circle, summed unfamiliarity) | **40% / 69%** | | **50% / 67%** | |
+| 4 heights, one memory, swarm of 5 | 33% / 60% | | 50% / 75% | |
+
+Practising at several heights removes the cliff; a memory per height helps most when low; a small
+swarm adds about 7 points on top. Casting (sweeping side to side when nothing looks familiar, like a
+moth that lost a scent) made things worse (e.g. 50% -> 29% for the swarm at height 1): a third of a
+cell off the route already looks unfamiliar, so the fly casts exactly when a small correction would
+have done. It stays off; a version that casts only after staying lost for a while is still to try.
+
+Try it in the browser: **[Fly Lab · Maze](maze/)** (`maze/`, same site). Build a maze, teach the route at
+chosen heights, tap the map to release the fly, and change its height mid-flight.
+
 "Changed maze": the same layout and route with flowers moved, walls bent differently and other light
 (`makeWonderland({ variant: 1 })`) - it costs nothing. The whole learned route is one bit per Kenyon cell,
 2.5 KB, and the cells' wiring comes from one seed.
