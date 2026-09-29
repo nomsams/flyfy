@@ -25,6 +25,7 @@ function setBusy() {
   $('build').disabled = S.training;
   $('train').disabled = !S.map || S.training || S.flying;
   $('release').disabled = !S.trained || S.training || S.flying;
+  $('drop').disabled = !S.trained || S.training || S.flying;
   $('stop').disabled = !S.training && !S.flying;
 }
 
@@ -54,7 +55,7 @@ $('train').onclick = () => {
   const alts = [...document.querySelectorAll('#alts input:checked')].map((x) => +x.value);
   if (!alts.length) { $('train-t').textContent = 'Pick at least one height.'; return; }
   S.training = true; S.trained = false; S.trainTrail = []; S.flyTrail = []; S.pose = null; setBusy();
-  worker.postMessage({ type: 'train', alts, passes: +$('passes').value, banks: $('banks').checked });
+  worker.postMessage({ type: 'train', alts, passes: +$('passes').value, banks: $('banks').checked, approach: $('approach').checked ? 1 : 0 });
 };
 $('stop').onclick = () => { worker.postMessage({ type: 'stop' }); S.flying = false; if (S.training) { S.training = false; $('train-t').textContent = 'Stopped. Teach the route to start again.'; } setBusy(); };
 $('alt').addEventListener('input', () => worker.postMessage({ type: 'setAlt', alt: +$('alt').value }));
@@ -67,10 +68,11 @@ function nearestRoute(x, y) {
   S.route.forEach(([rx, ry], i) => { const d = (rx - x) ** 2 + (ry - y) ** 2; if (d < best) { best = d; bi = i; } });
   return bi;
 }
-function release(x, y) {
+function release(x, y, anyHeading = S.approach) {
   if (!S.trained || S.training) return;
   const i = nearestRoute(x, y), a = S.route[Math.max(0, i - 2)], b = S.route[Math.min(S.route.length - 1, i + 2)];
-  const th = Math.atan2(b[1] - a[1], b[0] - a[0]) + (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() * 0.5); // a wrong heading on purpose
+  const th = anyHeading ? Math.random() * 2 * Math.PI - Math.PI // dropped: facing anywhere
+    : Math.atan2(b[1] - a[1], b[0] - a[0]) + (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() * 0.5); // near the route: a wrong heading on purpose
   S.flyTrail = []; S.flying = true; setBusy();
   $('err').hidden = true;
   worker.postMessage({ type: 'release', x, y, th, alt: +$('alt').value, cast: $('cast').checked, delay: 120 - +$('speed').value });
@@ -78,7 +80,12 @@ function release(x, y) {
 $('release').onclick = () => {
   const i = Math.floor(Math.random() * S.route.length * 0.7), [x, y] = S.route[i], j = Math.min(S.route.length - 1, i + 2);
   const th = Math.atan2(S.route[j][1] - y, S.route[j][0] - x), off = (Math.random() * 2 - 1) * 0.35 * S.cell;
-  release(x - Math.sin(th) * off, y + Math.cos(th) * off);
+  release(x - Math.sin(th) * off, y + Math.cos(th) * off, false);
+};
+$('drop').onclick = () => { // anywhere on the map, at least 0.6 cells from the route
+  let x, y, i;
+  do { x = Math.random() * S.W; y = Math.random() * S.H; i = nearestRoute(x, y); } while (Math.hypot(S.route[i][0] - x, S.route[i][1] - y) < 0.6 * S.cell);
+  release(x, y, true);
 };
 $('map').addEventListener('click', (e) => {
   const r = $('map').getBoundingClientRect();
@@ -95,20 +102,20 @@ worker.onmessage = (e) => {
     if (!m.keepRoute) { S.route = m.route; S.start = m.start; S.goal = m.goal; S.cell = m.cell; S.length = m.length; $('train-t').textContent = 'Ready: teach it the route.'; }
     $('overlay').hidden = true; S.dirty = true; setBusy();
   } else if (m.type === 'train') {
-    S.trainTrail.push([m.pose.x, m.pose.y]); S.pose = m.pose; S.members = m.members;
+    S.trainTrail.push([m.pose.x, m.pose.y, !!m.approach]); S.pose = m.pose; S.members = m.members;
     $('train-bar').style.width = ((100 * (m.pass - 0.5)) / m.passes).toFixed(0) + '%';
     $('train-t').textContent = `${m.stage}, height ${m.alt} (pass ${m.pass} of ${m.passes}) · ${(100 * m.share).toFixed(0)}% of Kenyon cells familiar`;
     S.dirty = true;
   } else if (m.type === 'trained') {
-    S.training = false; S.trained = true; S.members = m.members; S.pose = null;
+    S.training = false; S.trained = true; S.approach = !!m.approach; S.members = m.members; S.pose = null;
     $('train-bar').style.width = '100%';
-    $('train-t').textContent = `Learned. ${(100 * m.share).toFixed(0)}% of its Kenyon cells now mean "I've been here". Release it.`;
+    $('train-t').textContent = `Learned. ${(100 * m.share).toFixed(0)}% of its Kenyon cells now mean "I've been on the route".` + (m.approach ? ' It also knows the way to the route from all over the map: drop it anywhere.' : ' Release it near the route.');
     setBusy(); S.dirty = true;
   } else if (m.type === 'fly') {
-    S.pose = m.pose; S.flyTrail.push([m.pose.x, m.pose.y, m.casting]); S.fly = m;
+    S.pose = m.pose; S.flyTrail.push([m.pose.x, m.pose.y, m.casting, m.mode === 'approach']); S.fly = m;
     const st = $('st-state'); st.className = 'pill ' + m.status;
-    st.textContent = { following: 'following', casting: 'casting (lost the scent)', reached: 'reached the goal', lost: 'lost', tired: 'gave up' }[m.status];
-    $('st-prog').textContent = (100 * m.progress).toFixed(0) + '%';
+    st.textContent = { searching: 'heading for the route', following: 'following the route', casting: 'casting (lost the scent)', reached: 'reached the goal', lost: 'lost', tired: 'gave up' }[m.status];
+    $('st-prog').textContent = m.found ? (100 * m.progress).toFixed(0) + '%' : 'not found yet';
     $('st-off').textContent = m.off.toFixed(2) + ' cells';
     drawView(m.view); drawFan(m);
     if (['reached', 'lost', 'tired'].includes(m.status)) {
@@ -135,11 +142,10 @@ function drawMap() {
   }
   const dot = (x, y, r, col) => { mctx.fillStyle = col; mctx.beginPath(); mctx.arc(x * k, y * k, r, 0, 7); mctx.fill(); mctx.strokeStyle = '#fff'; mctx.lineWidth = 2; mctx.stroke(); };
   dot(S.start[0], S.start[1], 8, '#39d353'); dot(S.goal[0], S.goal[1], 8, '#f0605a');
-  mctx.fillStyle = 'rgba(255,255,255,.35)';
-  for (const [x, y] of S.trainTrail) { mctx.fillRect(x * k - 1.5, y * k - 1.5, 3, 3); }
+  for (const [x, y, ap] of S.trainTrail) { mctx.fillStyle = ap ? 'rgba(160,255,170,.35)' : 'rgba(255,255,255,.4)'; mctx.fillRect(x * k - 1.5, y * k - 1.5, 3, 3); }
   for (let i = 1; i < S.flyTrail.length; i++) {
-    const [x0, y0] = S.flyTrail[i - 1], [x1, y1, c] = S.flyTrail[i];
-    mctx.strokeStyle = c ? css('--amber') : css('--accent'); mctx.lineWidth = 4; mctx.lineCap = 'round';
+    const [x0, y0] = S.flyTrail[i - 1], [x1, y1, c, ap] = S.flyTrail[i];
+    mctx.strokeStyle = ap ? css('--green') : c ? css('--amber') : css('--accent'); mctx.lineWidth = 4; mctx.lineCap = 'round';
     mctx.beginPath(); mctx.moveTo(x0 * k, y0 * k); mctx.lineTo(x1 * k, y1 * k); mctx.stroke();
   }
   if (S.pose) {

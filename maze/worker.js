@@ -71,7 +71,17 @@ const H = {
       done++;
       if (pass.avg && passes[done] && !passes[done].avg) swarm.finishAverage();
     }
-    postMessage({ type: 'trained', share: swarm.familiarShare(), members: swarm.members.map((mm) => [mm.gx, mm.gy]) });
+    // learning flights toward the route from all over the map (so it can be dropped anywhere)
+    if (m.approach) {
+      let k = 0;
+      for (const h of alts) {
+        for (const q of swarm.approachFlights(world, { spacing: m.approach, h, rng: rnd })) {
+          if (me !== run) return;
+          if (k++ % 3 === 0) { postMessage({ type: 'train', pose: q, stage: 'Learning flights toward the route', pass: passes.length, passes: passes.length, alt: h, share: swarm.familiarShare(), members: swarm.members.map((mm) => [mm.gx, mm.gy]), approach: true }); await tick(); }
+        }
+      }
+    }
+    postMessage({ type: 'trained', share: swarm.familiarShare(), members: swarm.members.map((mm) => [mm.gx, mm.gy]), approach: !!m.approach });
   },
 
   variant(m) {
@@ -88,22 +98,24 @@ const H = {
     const me = ++run, speed = world.cell / 8, nav = swarm.navigator({ cast: !!m.cast });
     const q = { x: m.x, y: m.y, th: m.th, alt: m.alt };
     Fshow.hint = Fshow.nearest(q, true).i;
-    let s0 = Fshow.nearest(q).s, maxS = s0, steps = 0, offFor = 0;
+    const n0 = Fshow.nearest(q, true);
+    let found = n0.d < 0.3 * world.cell, s0 = n0.s, maxS = s0, steps = 0, offFor = 0;
     H._q = q; H._delay = m.delay ?? 30;
     while (me === run) {
       const r = nav(q);
       q.th = wrap(q.th + r.turn);
       q.x += speed * Math.cos(q.th); q.y += speed * Math.sin(q.th);
       steps++;
-      const nr = Fshow.nearest(q, false);
-      maxS = Math.max(maxS, nr.s);
+      const nr = Fshow.nearest(q, swarm.hasApproach); // dropped far away: look along the whole route
+      if (nr.d < 0.3 * world.cell && !found) { found = true; s0 = nr.s; maxS = nr.s; }
+      if (found) maxS = Math.max(maxS, nr.s);
       offFor = nr.d > 1.2 * world.cell ? offFor + 1 : 0;
-      let status = r.casting ? 'casting' : 'following';
+      let status = r.mode === 'approach' ? 'searching' : r.casting ? 'casting' : 'following';
       if (nr.s >= world.route.length - 0.3 * world.cell && nr.d < 0.6 * world.cell) status = 'reached';
-      else if (offFor > 60 || q.x < -world.cell || q.y < -world.cell || q.x > world.W + world.cell || q.y > world.H + world.cell) status = 'lost';
+      else if ((!swarm.hasApproach && offFor > 60) || q.x < -world.cell || q.y < -world.cell || q.x > world.W + world.cell || q.y > world.H + world.cell) status = 'lost';
       else if (steps > 4000) status = 'tired';
       Fshow.view(q); // the centre view, for the page
-      postMessage({ type: 'fly', pose: { ...q }, ratings: Array.from(r.ratings), choice: r.choice, casting: r.casting, status, steps,
+      postMessage({ type: 'fly', pose: { ...q }, ratings: Array.from(r.ratings), choice: r.choice, casting: r.casting, mode: r.mode, found, status, steps,
         progress: Math.max(0, Math.min(1, (maxS - s0) / Math.max(1, world.route.length - s0))), off: nr.d / world.cell,
         view: { L: Array.from(Fshow.retinas[0]), Q: Array.from(Fshow.chroma[0]) }, kActive: brain.kActive * swarm.size });
       if (status === 'reached' || status === 'lost' || status === 'tired') break;

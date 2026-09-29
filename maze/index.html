@@ -68,6 +68,7 @@
   .stat b { font-size:20px; font-variant-numeric:tabular-nums; }
   .pill { display:inline-block; padding:4px 9px; border-radius:999px; font-size:12.5px; font-weight:700; background:var(--panel2); border:1px solid var(--line); }
   .pill.following { color:var(--accent); border-color:var(--accent); }
+  .pill.searching { color:var(--green); border-color:var(--green); }
   .pill.casting { color:var(--amber); border-color:var(--amber); }
   .pill.reached { color:var(--green); border-color:var(--green); }
   .pill.lost, .pill.tired { color:var(--red); border-color:var(--red); }
@@ -90,9 +91,9 @@
     <div class="overlay" id="overlay"><div id="overlay-t">Building the maze…</div></div>
     <div class="maptools">
       <label class="switch"><input type="checkbox" id="show-route" checked><span></span>Show the route (the fly never sees it)</label>
-      <div class="legend"><span><i style="background:#39d353"></i>start</span><span><i style="background:#f0605a"></i>goal</span><span><i style="background:var(--accent)"></i>following</span><span><i style="background:var(--amber)"></i>casting</span></div>
+      <div class="legend"><span><i style="background:#39d353"></i>start</span><span><i style="background:#f0605a"></i>goal</span><span><i style="background:var(--green)"></i>heading for the route</span><span><i style="background:var(--accent)"></i>following it</span><span><i style="background:var(--amber)"></i>casting</span></div>
     </div>
-    <p class="hint" style="padding:0 4px 4px">Tap or click on the map to release the fly there. It gets a wrong heading on purpose and has to find the way by what looks familiar.</p>
+    <p class="hint" style="padding:0 4px 4px">Tap or click anywhere on the map to drop the fly there, facing a wrong way on purpose. It first heads for the route (green), then follows it to the goal (blue), steering only by what looks familiar below.</p>
   </section>
 
   <div class="col">
@@ -133,6 +134,7 @@
         <label class="f">Passes per height <output id="passes-o">3</output><input type="range" id="passes" min="1" max="5" value="3"></label>
         <label class="switch" style="align-self:end"><input type="checkbox" id="banks" checked><span></span>A memory per height</label>
       </div>
+      <label class="switch"><input type="checkbox" id="approach" checked><span></span>Also learn to find the route from anywhere (learning flights; takes longer)</label>
       <div class="row"><button class="btn primary" id="train" disabled>Teach the route</button><span class="hint" id="train-t">Build a maze first.</span></div>
       <div class="bar" aria-hidden="true"><i id="train-bar"></i></div>
     </section>
@@ -144,7 +146,7 @@
         <label class="switch"><input type="checkbox" id="cast"><span></span>Cast when lost (experimental)</label>
         <label class="f">Speed <input type="range" id="speed" min="0" max="120" value="90"></label>
       </div>
-      <div class="row"><button class="btn primary" id="release" disabled>Release at a random spot</button><button class="btn" id="stop" disabled>Stop</button></div>
+      <div class="row"><button class="btn primary" id="drop" disabled>Drop it anywhere</button><button class="btn" id="release" disabled>Release near the route</button><button class="btn" id="stop" disabled>Stop</button></div>
       <p class="hint">You can change the height while it flies: try taking it low halfway. It copes best when it practised at that height, and a small swarm (3) copes better than one fly.</p>
       <div class="live">
         <div><canvas id="view" width="200" height="140" aria-label="What the fly sees straight down"></canvas><p class="hint" style="margin-top:4px">What it sees below</p></div>
@@ -158,7 +160,7 @@
       </div>
       <p class="err" id="err" hidden></p>
       <details class="about"><summary>How does it find the way?</summary>
-        <p>Like an ant. While the route is flown a few times, every view it sees marks the memory-centre cells it uses as familiar; nothing about the route itself is stored, only what the world looked like while on it (one bit per cell). To navigate, it looks in 9 directions and flies the way that looks most familiar. A swarm adds up every member's opinion. When nothing looks familiar, it casts like a moth that lost a scent: sweeping side to side, wider each time, until something familiar comes into view.</p>
+        <p>Like an ant. While the route is flown a few times, every view it sees marks the memory-centre cells it uses as familiar; nothing about the route itself is stored, only what the world looked like while on it (one bit per cell). Learning flights from all over the map toward the route fill a second memory, the way ants make learning walks around their nest. To navigate, it looks in 9 directions: until the route itself looks familiar it follows the second memory, which leads to the route; then it follows the route memory to the goal. A swarm adds up every member's opinion. When nothing looks familiar, it casts like a moth that lost a scent: sweeping side to side, wider each time, until something familiar comes into view.</p>
       </details>
     </section>
   </div>

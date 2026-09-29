@@ -322,8 +322,31 @@ moth that lost a scent) made things worse (e.g. 50% -> 29% for the swarm at heig
 cell off the route already looks unfamiliar, so the fly casts exactly when a small correction would
 have done. It stays off; a version that casts only after staying lost for a while is still to try.
 
+**A natural world, and dropped anywhere.** The maze now stands in the countryside, like the Queen's
+garden in Alice in Wonderland: hedges (tall and low, rose hedges, old stone walls, topiary) on a lawn
+mowed in stripes, a gravel path around it, fields (meadow, wheat, ploughed soil, crop rows, orchards)
+with hedgerows between them, roads, houses and barns, trees and a pond. (The tables above were
+measured on the earlier, colourful "Wonderland" patchwork.) It is much harder: inside a real hedge
+maze every corridor looks alike - a fly released near the route with the simple setup reached the
+goal 13% of the time, against 44% before.
+
+To be dropped anywhere, the fly first has to find the route. Like ants making learning walks around
+their nest, it makes **learning flights** toward the route from spots all over the map and keeps those
+views in a second, graded memory (each view halves the novelty of the cells it uses; a yes/no memory
+filled up - 94% of cells familiar - and failed). Navigating, it follows that memory until the route
+itself looks familiar, then the route memory to the goal (`--approach 1 --drop`):
+
+| dropped anywhere, facing anywhere (2 mazes x 2 flies x 10 drops) | found the route | reached the goal |
+|---|---|---|
+| route memory only | 45% | 25% |
+| + learning flights | 77% | 30% |
+| **+ 4 training heights, a memory per height, swarm of 3** | **90%** | **55%** |
+| same, flown low (0.5) | 77% | 48% |
+| teacher / blind straight flight | | 100% / 10% |
+
 Try it in the browser: **[Fly Lab · Maze](maze/)** (`maze/`, same site). Build a maze, teach the route at
-chosen heights, tap the map to release the fly, and change its height mid-flight.
+chosen heights (with learning flights), tap anywhere on the map to drop the fly, and change its
+height mid-flight.
 
 "Changed maze": the same layout and route with flowers moved, walls bent differently and other light
 (`makeWonderland({ variant: 1 })`) - it costs nothing. The whole learned route is one bit per Kenyon cell,
