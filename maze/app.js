@@ -118,7 +118,7 @@ worker.onmessage = (e) => {
     st.textContent = { searching: 'heading for the route', following: 'following the route', casting: 'casting (lost the scent)', reached: 'reached the goal', lost: 'lost', tired: 'gave up' }[m.status];
     $('st-prog').textContent = m.found ? (100 * m.progress).toFixed(0) + '%' : 'not found yet';
     $('st-off').textContent = m.off.toFixed(2) + ' cells';
-    $('st-where').textContent = m.where ? `${(100 * m.where.conf).toFixed(0)}% sure, ${(100 * m.where.s / S.length).toFixed(0)}% along the route` : 'not keeping track';
+    $('st-where').textContent = m.where ? `${(100 * m.where.conf).toFixed(0)}% sure, ${(100 * m.where.s / S.length).toFixed(0)}% along the route` : m.mode === 'approach' ? 'not on the route yet' : 'not keeping track';
     drawView(m.view); drawFan(m);
     if (['reached', 'lost', 'tired'].includes(m.status)) {
       S.flying = false; S.tally.n++; if (m.status === 'reached') S.tally.ok++;
