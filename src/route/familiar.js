@@ -23,6 +23,23 @@
 // can't. It then prefers directions close to the route's direction at its best guess, the more so the
 // surer it is, while the familiarity scan still corrects sideways drift.
 //
+// Knowing where on the map it is (mapTrack): during the learning flights the fly also stores, for every
+// spot, the view turned north-up (the helicopter's compass lets it turn its camera image, so one stored
+// view per spot fits whatever way it faces), and while learning the route it notes where the route
+// lies (its own odometry). Dropped somewhere, it keeps a belief over the whole map - moved on by its own
+// motion, sharpened by matching its north-up view - and, once sure, flies from its best guess straight
+// toward the route instead of feeling its way there with the approach memory alone.
+//
+// Three more options:
+// - aversive: a "wrong way" memory. While learning the route the fly also looks 90 degrees left and
+//   right and stores those views as "not this way" (graded, like the approach memory); directions that
+//   look familiar to it are avoided - the opposing mushroom-body outputs used in ant route models.
+// - climb: when the route is out of sight or it isn't sure where it is, the helicopter climbs (to see
+//   fields, roads and houses beyond the hedges), and comes back down to its cruising height once sure.
+// - layout: where the swarm members look, given explicitly - e.g. rowOfCircles() below: three circles
+//   in a row across one camera frame, a small ring to the left, a larger one in the middle, a small one
+//   to the right.
+//
 // Every member has its own centre of gaze on a circle around the fly (gazeR view lengths), its own
 // "average view" to centre its Kenyon cells on, and its own memories - one per height band when `banks`
 // is on (the fly knows its height). All members share one wiring: one brain computes everyone's
@@ -31,19 +48,31 @@
 export const SCAN = [-60, -45, -30, -15, 0, 15, 30, 45, 60].map((d) => (d * Math.PI) / 180);
 const wrap = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
 
+// Three circles in a row across one camera frame (like the Swedish House Mafia logo): `side` members on
+// a small ring (radius sideR) to the left and to the right (offset `apart` view lengths sideways), and
+// `mid` members on a larger ring (midR) in the middle. Returns the members' [ahead, right] gaze offsets.
+export function rowOfCircles({ side = 2, mid = 3, apart = 0.5, sideR = 0.12, midR = 0.25 } = {}) {
+  const ring = (n, r, cy) => Array.from({ length: n }, (_, k) => (n === 1 ? [0, cy] : [r * Math.cos((2 * Math.PI * k) / n), cy + r * Math.sin((2 * Math.PI * k) / n)]));
+  return [...ring(side, sideR, -apart), ...ring(mid, midR, 0), ...ring(side, sideR, apart)];
+}
+
 export class FamiliarSwarm {
   // brain: a Brain with the memory centre on; flight: a RouteFlight to render views with
   // onRoute: the share of a view's firing cells that may be unfamiliar for the route to count as found
-  constructor(brain, flight, { swarm = 1, gazeR = 0.25, alts = [1], banks = false, castThr = 0.1, onRoute = 0.12, approachDecay = 0.5, track = false, trackGain = 0.6 } = {}) {
+  constructor(brain, flight, { swarm = 1, gazeR = 0.25, alts = [1], banks = false, castThr = 0.1, onRoute = 0.12, approachDecay = 0.5, track = false, trackGain = 0.6,
+    aversive = false, aversiveGain = 0.5, layout = null, mapTrack = false, mapGain = 1 } = {}) {
     if (!brain.nKC) throw new Error('familiarity needs the memory centre');
-    Object.assign(this, { brain, F: flight, alts, banks, castThr, onRoute, approachDecay, hasApproach: false, track, trackGain });
-    const K = Math.max(1, swarm), nb = banks ? alts.length : 1;
+    Object.assign(this, { brain, F: flight, alts, banks, castThr, onRoute, approachDecay, hasApproach: false, track, trackGain, aversive, aversiveGain, mapTrack, mapGain });
+    this.mapSnaps = []; this.routePts = []; // (mapTrack) north-up views of the map, and where the route lies
+    const K = layout ? layout.length : Math.max(1, swarm), nb = banks ? alts.length : 1;
+    const spot = (k) => (layout ? layout[k] : K > 1 ? [gazeR * Math.cos((2 * Math.PI * k) / K), gazeR * Math.sin((2 * Math.PI * k) / K)] : [0, 0]);
     this.members = Array.from({ length: K }, (_, k) => ({
-      gx: K > 1 ? gazeR * Math.cos((2 * Math.PI * k) / K) : 0, gy: K > 1 ? gazeR * Math.sin((2 * Math.PI * k) / K) : 0,
+      gx: spot(k)[0], gy: spot(k)[1],
       sum: new Float64Array(brain.rv.length), n: 0, rmean: null,
       memory: Array.from({ length: nb }, () => new Uint8Array(brain.nKC).fill(1)),
       approach: Array.from({ length: nb }, () => new Float32Array(brain.nKC).fill(1)),
       snaps: Array.from({ length: nb }, () => []), // (track) the patterns seen along the route, in order
+      wrong: Array.from({ length: nb }, () => new Float32Array(brain.nKC).fill(1)), // (aversive) "not this way"
     }));
   }
   get size() { return this.members.length; }
@@ -71,12 +100,66 @@ export class FamiliarSwarm {
       const code = this.see(m, p), mem = m.memory[this.bankOf(h)], on = [];
       for (let j = 0; j < code.length; j++) if (code[j]) { mem[j] = 0; on.push(j); }
       if (this.track) m.snaps[this.bankOf(h)].push({ on: Int32Array.from(on), s, th: p.th });
+      if (this.mapTrack && m === this.members[0]) this.routePts.push([p.x, p.y]);
+      if (this.aversive) for (const turn of [-Math.PI / 2, Math.PI / 2]) { // the wrong ways from here
+        const c2 = this.see(m, { ...p, th: p.th + turn }), w = m.wrong[this.bankOf(h)];
+        for (let j = 0; j < c2.length; j++) if (c2[j]) w[j] *= 0.5;
+      }
     }
   }
   // learning, step 3 (optional): this view on the way to the route goes into the approach memory
   learnApproach(p, h = p.alt) {
     this.hasApproach = true;
     for (const m of this.members) { const code = this.see(m, p), mem = m.approach[this.bankOf(h)]; for (let j = 0; j < code.length; j++) if (code[j]) mem[j] *= this.approachDecay; }
+    if (this.mapTrack) this.mapSnaps.push({ on: this._northCode(p), x: p.x, y: p.y, bank: this.bankOf(h) });
+  }
+  // (mapTrack) the view straight below, turned north-up, as the list of firing Kenyon cells
+  _northCode(p) {
+    const m = this.members[0], code = this.see({ gx: 0, gy: 0, rmean: m.rmean }, { ...p, th: 0 }), on = [];
+    for (let j = 0; j < code.length; j++) if (code[j]) on.push(j);
+    return Int32Array.from(on);
+  }
+  // (mapTrack) a fresh belief over the whole map for one flight: step(q) -> { x, y, conf, want }
+  _mapTracker() {
+    const w = this.F.w, G = 16, nx = Math.ceil(w.W / G), ny = Math.ceil(w.H / G), n = nx * ny, kA = this.brain.kActive;
+    const cells = Array.from({ length: this.banks ? this.alts.length : 1 }, () => Array.from({ length: n }, () => []));
+    for (const sn of this.mapSnaps) { const cx = Math.min(nx - 1, Math.max(0, Math.floor(sn.x / G))), cy = Math.min(ny - 1, Math.max(0, Math.floor(sn.y / G))); cells[sn.bank][cy * nx + cx].push(sn); }
+    let b = new Float64Array(n).fill(1 / n), last = null;
+    return (q) => {
+      if (last) { // move the belief by the fly's own displacement, blur a little, never fully sure
+        const dx = (q.x - last.x) / G, dy = (q.y - last.y) / G, ix = Math.floor(dx), iy = Math.floor(dy), fx = dx - ix, fy = dy - iy, nb = new Float64Array(n);
+        for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) {
+          const v = b[y * nx + x]; if (!v) continue;
+          for (const [ox, oy, wt] of [[ix, iy, (1 - fx) * (1 - fy)], [ix + 1, iy, fx * (1 - fy)], [ix, iy + 1, (1 - fx) * fy], [ix + 1, iy + 1, fx * fy]]) {
+            const X = x + ox, Y = y + oy; if (X >= 0 && Y >= 0 && X < nx && Y < ny) nb[Y * nx + X] += v * wt;
+          }
+        }
+        for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) {
+          let sum = 0, c = 0;
+          for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) { const X = x + ox, Y = y + oy; if (X >= 0 && Y >= 0 && X < nx && Y < ny) { const k = ox || oy ? 0.5 : 2; sum += nb[Y * nx + X] * k; c += k; } }
+          b[y * nx + x] = sum / c + 0.001 / n;
+        }
+      }
+      last = { x: q.x, y: q.y };
+      const north = new Uint8Array(this.brain.nKC); for (const j of this._northCode(q)) north[j] = 1;
+      const here = cells[this.bankOf(q.alt)], match = new Float64Array(n);
+      let mean = 0, cnt = 0;
+      for (let c = 0; c < n; c++) {
+        let best = 0;
+        for (const sn of here[c]) { let o = 0; const on = sn.on; for (let j = 0; j < on.length; j++) o += north[on[j]]; if (o > best) best = o; }
+        match[c] = best / kA; if (here[c].length) { mean += match[c]; cnt++; }
+      }
+      mean /= Math.max(1, cnt);
+      let tot = 0;
+      for (let c = 0; c < n; c++) { if (here[c].length) b[c] *= Math.exp(12 * (match[c] - mean)); tot += b[c]; }
+      let bi = 0; for (let c = 0; c < n; c++) { b[c] /= tot; if (b[c] > b[bi]) bi = c; }
+      const bx = (bi % nx + 0.5) * G, by = (Math.floor(bi / nx) + 0.5) * G;
+      let conf = 0; for (let c = 0; c < n; c++) if (Math.hypot((c % nx + 0.5) * G - bx, (Math.floor(c / nx) + 0.5) * G - by) < 48) conf += b[c];
+      // from there, toward the nearest known point of the route, a little further along it
+      let rb = Infinity, ri = 0; this.routePts.forEach(([x, y], i) => { const d = (x - bx) ** 2 + (y - by) ** 2; if (d < rb) { rb = d; ri = i; } });
+      const [tx, ty] = this.routePts[Math.min(this.routePts.length - 1, ri + 6)] || [bx, by];
+      return { x: bx, y: by, conf, want: Math.atan2(ty - by, tx - bx) };
+    };
   }
   // Learning flights: from spots on a grid over the whole map (every `spacing` maze cells, jittered),
   // fly toward the route and join it a little further along, so the fly arrives heading the right way.
@@ -100,16 +183,16 @@ export class FamiliarSwarm {
   // how unfamiliar each of the 9 directions looks, summed over the swarm, to the route memory and
   // to the approach memory (both from the same views)
   rate(q) {
-    const bank = this.bankOf(q.alt), route = new Float32Array(SCAN.length), approach = new Float32Array(SCAN.length);
+    const bank = this.bankOf(q.alt), route = new Float32Array(SCAN.length), approach = new Float32Array(SCAN.length), wrong = new Float32Array(SCAN.length);
     SCAN.forEach((d, i) => {
-      let r = 0, a = 0;
+      let r = 0, a = 0, w = 0;
       for (const m of this.members) {
-        const code = this.see(m, { ...q, th: q.th + d }), mem = m.memory[bank], am = m.approach[bank];
-        for (let j = 0; j < code.length; j++) if (code[j]) { r += mem[j]; a += am[j]; }
+        const code = this.see(m, { ...q, th: q.th + d }), mem = m.memory[bank], am = m.approach[bank], wm = m.wrong[bank];
+        for (let j = 0; j < code.length; j++) if (code[j]) { r += mem[j]; a += am[j]; w += wm[j]; }
       }
-      route[i] = r; approach[i] = a;
+      route[i] = r; approach[i] = a; wrong[i] = w;
     });
-    return { route, approach };
+    return { route, approach, wrong };
   }
   // share of the route memory's Kenyon cells (all members) that have become familiar
   familiarShare() {
@@ -165,21 +248,32 @@ export class FamiliarSwarm {
 
   // a navigator for one flight: for each pose returns
   // { turn, ratings (of the memory in use), choice, mode: 'route' | 'approach', casting, where }
-  navigator({ cast = false } = {}) {
+  // climb: { cruise, top, rate } - height to cruise at, to climb to when unsure, change per step
+  navigator({ cast = false, climb = null } = {}) {
     const per = this.brain.kActive * this.size, castLimit = this.castThr * per, onLimit = this.onRoute * per;
     const best = (r) => { let c = 0; for (let i = 1; i < r.length; i++) if (r[i] < r[c] || (r[i] === r[c] && Math.abs(SCAN[i]) < Math.abs(SCAN[c]))) c = i; return c; };
     let lastGood = null, castDir = 1, castLeft = 0, castLen = 4, tracker = null, out = 0, lastWhere = null;
+    const mapTracker = this.mapTrack && this.mapSnaps.length ? this._mapTracker() : null;
     const LOST_AFTER = 12; // steps (1.5 cells) out of sight before it gives up on where it thought it was
+    // climbing when unsure, back down to cruising height when sure
+    const height = (q, sure) => (climb ? Math.max(-climb.rate, Math.min(climb.rate, (sure ? climb.cruise : climb.top) - q.alt)) : 0);
     return (q) => {
-      const { route, approach } = this.rate(q);
-      let cr = best(route), where = null;
-      const inSight = !this.hasApproach || route[cr] <= onLimit;
+      const { route, approach, wrong } = this.rate(q);
+      // with a wrong-way memory, a direction that looks like "not this way" is penalised
+      const avoid = (i) => (this.aversive ? this.aversiveGain * (1 - wrong[i] / per) : 0);
+      let cr = best(this.aversive ? Float32Array.from(route, (v, i) => v / per + avoid(i)) : route), where = null;
+      const inSight = !this.hasApproach || route[best(route)] <= onLimit; // judged by the route memory alone
       out = inSight ? 0 : out + 1;
       if (out > LOST_AFTER) { tracker = null; lastWhere = null; } // lost for a while: forget where on the route it thought it was
       // not in sight, and no confident idea of where the route is: head for it with the approach memory
       if (!inSight && !(tracker && lastWhere && lastWhere.conf > 0.5)) {
-        const ca = best(approach);
-        return { turn: SCAN[ca], ratings: approach, choice: ca, mode: 'approach', casting: false, where };
+        let ca = best(approach), onMap = null;
+        if (mapTracker) { // from where it thinks it is on the map, straight toward the route - as firmly as it is sure
+          onMap = mapTracker(q);
+          const score = (i) => approach[i] / per + this.mapGain * onMap.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - onMap.want))) / 2;
+          for (let i = 0; i < SCAN.length; i++) if (score(i) < score(ca)) ca = i;
+        }
+        return { turn: SCAN[ca], ratings: approach, choice: ca, mode: 'approach', casting: false, where, onMap, climb: height(q, false) };
       }
       if (this.track) {
         tracker ||= this._tracker(); // (re)found the route: start keeping track afresh
@@ -187,15 +281,16 @@ export class FamiliarSwarm {
         const codes = this.members.map((m) => Uint8Array.from(this.see(m, { ...q, th: q.th + SCAN[cr] })));
         where = lastWhere = tracker(q, codes);
         // prefer directions near the route's direction at the best guess, as much as the fly is sure of it
-        const score = (i) => route[i] / per + this.trackGain * where.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - where.want))) / 2;
+        const score = (i) => route[i] / per + avoid(i) + this.trackGain * where.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - where.want))) / 2;
         let c = 0; for (let i = 1; i < SCAN.length; i++) if (score(i) < score(c)) c = i;
         cr = c;
       }
-      if (!cast || route[cr] <= castLimit) { lastGood = q.th + SCAN[cr]; castLen = 4; castLeft = 0; return { turn: SCAN[cr], ratings: route, choice: cr, mode: 'route', casting: false, where }; }
+      const sure = inSight && (!where || where.conf > 0.4);
+      if (!cast || route[cr] <= castLimit) { lastGood = q.th + SCAN[cr]; castLen = 4; castLeft = 0; return { turn: SCAN[cr], ratings: route, choice: cr, mode: 'route', casting: false, where, climb: height(q, sure) }; }
       if (lastGood === null) lastGood = q.th;
       if (castLeft <= 0) { castDir = -castDir; castLeft = castLen; castLen += 3; }
       castLeft--;
-      return { turn: Math.max(-Math.PI / 4, Math.min(Math.PI / 4, wrap(lastGood + (castDir * Math.PI) / 2 - q.th))), ratings: route, choice: cr, mode: 'route', casting: true, where };
+      return { turn: Math.max(-Math.PI / 4, Math.min(Math.PI / 4, wrap(lastGood + (castDir * Math.PI) / 2 - q.th))), ratings: route, choice: cr, mode: 'route', casting: true, where, climb: height(q, false) };
     };
   }
 }

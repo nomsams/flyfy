@@ -5,7 +5,7 @@ import { setupConfig } from '../src/abilities.js';
 import { Brain } from '../src/brain.js';
 import { makeWonderland } from '../src/route/terrain.js';
 import { RouteFlight } from '../src/route/flight.js';
-import { FamiliarSwarm } from '../src/route/familiar.js';
+import { FamiliarSwarm, rowOfCircles } from '../src/route/familiar.js';
 
 let mazeOpts = null, flyOpts = null, world = null, cfg = null, brain = null, F = null, Fshow = null, swarm = null;
 let run = 0; // bumps to cancel whatever loop is running
@@ -50,7 +50,9 @@ const H = {
   async train(m) {
     const me = ++run, alts = m.alts.length ? m.alts : [1], speed = world.cell / 8, maxTurn = (10 * Math.PI) / 180;
     Fshow = F;
-    swarm = new FamiliarSwarm(brain, F, { swarm: flyOpts.swarm, gazeR: flyOpts.gaze, alts, banks: !!m.banks, track: !!m.track });
+    // swarm 7 = three circles in a row across the camera frame (2 left, 3 middle, 2 right)
+    const layout = flyOpts.swarm === 7 ? rowOfCircles({ side: 2, mid: 3, apart: flyOpts.gaze * 2, sideR: flyOpts.gaze * 0.5, midR: flyOpts.gaze }) : null;
+    swarm = new FamiliarSwarm(brain, F, { swarm: flyOpts.swarm, gazeR: flyOpts.gaze, alts, banks: !!m.banks, track: !!m.track, mapTrack: !!m.map, aversive: !!m.aversive, layout });
     const passes = [];
     for (const h of alts) passes.push({ h, avg: true });
     for (const h of alts) for (let k = 0; k < m.passes; k++) passes.push({ h, avg: false });
@@ -95,7 +97,9 @@ const H = {
 
   async release(m) {
     if (!swarm) return;
-    const me = ++run, speed = world.cell / 8, nav = swarm.navigator({ cast: !!m.cast });
+    // climbing when unsure: back to the chosen height (the slider) once sure
+    H._climb = m.climb ? { cruise: m.alt, top: 1.4, rate: 0.04 } : null;
+    const me = ++run, speed = world.cell / 8, nav = swarm.navigator({ cast: !!m.cast, climb: H._climb });
     const q = { x: m.x, y: m.y, th: m.th, alt: m.alt };
     Fshow.hint = Fshow.nearest(q, true).i;
     const n0 = Fshow.nearest(q, true);
@@ -103,6 +107,7 @@ const H = {
     H._q = q; H._delay = m.delay ?? 30;
     while (me === run) {
       const r = nav(q);
+      if (r.climb) q.alt = Math.max(0.3, q.alt + r.climb);
       q.th = wrap(q.th + r.turn);
       q.x += speed * Math.cos(q.th); q.y += speed * Math.sin(q.th);
       steps++;
@@ -115,7 +120,7 @@ const H = {
       else if ((!swarm.hasApproach && offFor > 60) || q.x < -world.cell || q.y < -world.cell || q.x > world.W + world.cell || q.y > world.H + world.cell) status = 'lost';
       else if (steps > 4000) status = 'tired';
       Fshow.view(q); // the centre view, for the page
-      postMessage({ type: 'fly', pose: { ...q }, ratings: Array.from(r.ratings), choice: r.choice, casting: r.casting, mode: r.mode, found, status, steps, where: r.where ? { s: r.where.best, conf: r.where.conf } : null,
+      postMessage({ type: 'fly', pose: { ...q }, ratings: Array.from(r.ratings), choice: r.choice, casting: r.casting, mode: r.mode, found, status, steps, where: r.where ? { s: r.where.best, conf: r.where.conf } : null, onMap: r.onMap ? { x: r.onMap.x, y: r.onMap.y, conf: r.onMap.conf } : null,
         progress: Math.max(0, Math.min(1, (maxS - s0) / Math.max(1, world.route.length - s0))), off: nr.d / world.cell,
         view: { L: Array.from(Fshow.retinas[0]), Q: Array.from(Fshow.chroma[0]) }, kActive: brain.kActive * swarm.size });
       if (status === 'reached' || status === 'lost' || status === 'tired') break;
@@ -123,7 +128,7 @@ const H = {
     }
   },
 
-  setAlt(m) { if (H._q) H._q.alt = m.alt; },
+  setAlt(m) { if (H._q) H._q.alt = m.alt; if (H._climb) H._climb.cruise = m.alt; },
   setDelay(m) { H._delay = m.delay; },
   stop() { run++; },
 };

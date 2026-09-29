@@ -364,6 +364,27 @@ cells) keep the belief going on odometry; only a longer loss resets it (`--track
 about +-8 points.) Resetting the belief at every short gap threw most of the gain away when dropped
 anywhere (48-60%).
 
+**Knowing where it is on the map.** During the learning flights the fly also stores, for every spot,
+the view turned north-up (the helicopter's compass lets it turn its camera image, so one stored view
+per spot fits whatever way it faces), and while learning the route it notes where the route lies
+(its own odometry). Dropped anywhere, it keeps a belief over the whole map - moved on by its own
+motion, sharpened by matching its north-up view - and once sure flies from its best guess straight to
+the route. Its position guess is typically off by 0.15 cells (`--map`). Without turning the views
+north-up it failed (off by 6.7 cells): views taken facing other ways rarely match.
+
+Four more ideas, each added to the full setup with tracking (dropped anywhere, facing anywhere; 2 mazes
+x 2 flies x 10 drops, about +-8 points):
+
+| added | reached the goal, height 1 | flown low (0.5) |
+|---|---|---|
+| (full setup with tracking) | 53% | 63% |
+| **knowing where it is on the map** | **100%** (every fly) | **80%** |
+| a wrong-way memory (views of the wrong turns stored as "avoid") | 63% | |
+| three circles in a row across one camera frame (2 + 3 + 2 members) | 68% | |
+| climbing when unsure | | 55% (worse) |
+| **all of them together** | **95%** | **93%** |
+| single fly, learning flights, tracking and map | 90% | |
+
 Try it in the browser: **[Fly Lab · Maze](maze/)** (`maze/`, same site). Build a maze, teach the route at
 chosen heights (with learning flights), tap anywhere on the map to drop the fly, and change its
 height mid-flight.

@@ -55,7 +55,7 @@ $('train').onclick = () => {
   const alts = [...document.querySelectorAll('#alts input:checked')].map((x) => +x.value);
   if (!alts.length) { $('train-t').textContent = 'Pick at least one height.'; return; }
   S.training = true; S.trained = false; S.trainTrail = []; S.flyTrail = []; S.pose = null; setBusy();
-  worker.postMessage({ type: 'train', alts, passes: +$('passes').value, banks: $('banks').checked, approach: $('approach').checked ? 1 : 0, track: $('track').checked });
+  worker.postMessage({ type: 'train', alts, passes: +$('passes').value, banks: $('banks').checked, approach: $('approach').checked ? 1 : 0, track: $('track').checked, map: $('maptrack').checked, aversive: $('aversive').checked });
 };
 $('stop').onclick = () => { worker.postMessage({ type: 'stop' }); S.flying = false; if (S.training) { S.training = false; $('train-t').textContent = 'Stopped. Teach the route to start again.'; } setBusy(); };
 $('alt').addEventListener('input', () => worker.postMessage({ type: 'setAlt', alt: +$('alt').value }));
@@ -73,9 +73,9 @@ function release(x, y, anyHeading = S.approach) {
   const i = nearestRoute(x, y), a = S.route[Math.max(0, i - 2)], b = S.route[Math.min(S.route.length - 1, i + 2)];
   const th = anyHeading ? Math.random() * 2 * Math.PI - Math.PI // dropped: facing anywhere
     : Math.atan2(b[1] - a[1], b[0] - a[0]) + (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() * 0.5); // near the route: a wrong heading on purpose
-  S.flyTrail = []; S.where = null; S.flying = true; setBusy();
+  S.flyTrail = []; S.where = null; S.onMap = null; S.flying = true; setBusy();
   $('err').hidden = true;
-  worker.postMessage({ type: 'release', x, y, th, alt: +$('alt').value, cast: $('cast').checked, delay: 120 - +$('speed').value });
+  worker.postMessage({ type: 'release', x, y, th, alt: +$('alt').value, cast: $('cast').checked, climb: $('climb').checked, delay: 120 - +$('speed').value });
 }
 $('release').onclick = () => {
   const i = Math.floor(Math.random() * S.route.length * 0.7), [x, y] = S.route[i], j = Math.min(S.route.length - 1, i + 2);
@@ -93,6 +93,12 @@ $('map').addEventListener('click', (e) => {
 });
 
 // ---------------------------------------------------------------- messages from the simulation
+// if the simulation itself fails to start or crashes, say so instead of waiting forever
+worker.onerror = (e) => {
+  $('overlay-t').textContent = 'The simulation could not start: ' + (e.message || 'unknown error') + '. Try reloading the page.';
+  $('err').hidden = false; $('err').textContent = 'The simulation stopped: ' + (e.message || 'unknown error');
+  S.training = false; S.flying = false; setBusy();
+};
 worker.onmessage = (e) => {
   const m = e.data;
   if (m.type === 'map') {
@@ -112,13 +118,14 @@ worker.onmessage = (e) => {
     $('train-t').textContent = `Learned. ${(100 * m.share).toFixed(0)}% of its Kenyon cells now mean "I've been on the route".` + (m.approach ? ' It also knows the way to the route from all over the map: drop it anywhere.' : ' Release it near the route.');
     setBusy(); S.dirty = true;
   } else if (m.type === 'fly') {
-    S.where = m.where;
+    S.where = m.where; S.onMap = m.onMap;
+    $('st-alt').textContent = m.pose.alt.toFixed(2);
     S.pose = m.pose; S.flyTrail.push([m.pose.x, m.pose.y, m.casting, m.mode === 'approach']); S.fly = m;
     const st = $('st-state'); st.className = 'pill ' + m.status;
     st.textContent = { searching: 'heading for the route', following: 'following the route', casting: 'casting (lost the scent)', reached: 'reached the goal', lost: 'lost', tired: 'gave up' }[m.status];
     $('st-prog').textContent = m.found ? (100 * m.progress).toFixed(0) + '%' : 'not found yet';
     $('st-off').textContent = m.off.toFixed(2) + ' cells';
-    $('st-where').textContent = m.where ? `${(100 * m.where.conf).toFixed(0)}% sure, ${(100 * m.where.s / S.length).toFixed(0)}% along the route` : m.mode === 'approach' ? 'not on the route yet' : 'not keeping track';
+    $('st-where').textContent = m.where ? `${(100 * m.where.conf).toFixed(0)}% sure, ${(100 * m.where.s / S.length).toFixed(0)}% along the route` : m.mode === 'approach' ? (m.onMap ? `not on the route yet; ${(100 * m.onMap.conf).toFixed(0)}% sure where it is on the map` : 'not on the route yet') : 'not keeping track';
     drawView(m.view); drawFan(m);
     if (['reached', 'lost', 'tired'].includes(m.status)) {
       S.flying = false; S.tally.n++; if (m.status === 'reached') S.tally.ok++;
@@ -154,6 +161,10 @@ function drawMap() {
     const i = Math.min(S.route.length - 1, Math.round((S.where.s / S.length) * (S.route.length - 1))), [wx, wy] = S.route[i];
     mctx.strokeStyle = `rgba(255,255,255,${0.25 + 0.75 * S.where.conf})`; mctx.lineWidth = 3; mctx.setLineDash(S.where.conf > 0.5 ? [] : [4, 4]);
     mctx.beginPath(); mctx.arc(wx * k, wy * k, 11, 0, 7); mctx.stroke(); mctx.setLineDash([]);
+  }
+  if (S.onMap && S.pose) { // its guess of where it is on the map (while heading for the route)
+    mctx.strokeStyle = `rgba(160,255,160,${0.25 + 0.75 * S.onMap.conf})`; mctx.lineWidth = 3; mctx.setLineDash(S.onMap.conf > 0.5 ? [] : [4, 4]);
+    mctx.beginPath(); mctx.arc(S.onMap.x * k, S.onMap.y * k, 14, 0, 7); mctx.stroke(); mctx.setLineDash([]);
   }
   if (S.pose) {
     const p = S.pose, len = S.cell * 1.6 * p.alt, wid = (len * 20) / 14, fx = Math.cos(p.th), fy = Math.sin(p.th), rx = -fy, ry = fx;
