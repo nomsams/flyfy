@@ -394,18 +394,21 @@ anywhere, trained in clear weather (2 mazes x 2 flies x 10 drops), reached the g
 
 | weather | no filter | contrast filter | edge boost |
 |---|---|---|---|
-| clear | 85% | **97%** | 87% |
+| clear | 85% | **98%** | 87% |
 | haze | 5% | **93%** | 5% |
-| fog | 3% | **83%** | 3% |
-| overcast | 87% | **92%** | 83% |
-| dusk | 8% | **95%** | 15% |
-| night | 10% | 13% | 8% |
-| noisy camera | 38% | **63%** | 33% |
+| fog | 3% | **88%** | 3% |
+| overcast | 93% | 93% | 83% |
+| dusk | 15% | **95%** | 15% |
+| night | 10% | 28% | 8% |
+| noisy camera | 90% | 95% | 33% |
 
-Night stays unsolved: the dim picture drowns in camera noise. Averaging a few views over time is the
-next thing to try.
+"Reached the goal" here means getting within 0.8 maze cells of it. The stricter test used before (within
+about half a cell of the route's very last point) undercounts when noise makes the fly hover around the
+goal: it gave 38% / 63% for the noisy camera, where 90% / 95% got within 0.8 cells. Camera noise alone
+is survivable; night, dark and noisy at once, is the weakest case (10% -> 28% with the filter). Averaging
+a few views over time is the next thing to try.
 
-Try it in the browser: **[Fly Lab · Maze](maze/)** (`maze/`, same site). Build a maze, teach the route at
+Read the maze guide: **[maze-guide.html](maze-guide.html)** (https://nomsams.github.io/flyfy/maze-guide.html), a plain-language walk through the maze fly with a small fly you can run in the page. Try it in the browser: **[Fly Lab · Maze](maze/)** (`maze/`, same site). Build a maze, teach the route at
 chosen heights (with learning flights), tap anywhere on the map to drop the fly, and change its
 height mid-flight.
 

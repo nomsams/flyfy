@@ -184,7 +184,6 @@ footer{padding-top:30px;color:var(--muted);font:13px/1.5 var(--display)}
 </style>
 </head>
 <body>
-
 <div class="wrap">
 <aside class="rail" aria-label="Guide navigation">
   <div class="score" aria-live="polite">
@@ -206,7 +205,7 @@ footer{padding-top:30px;color:var(--muted);font:13px/1.5 var(--display)}
     <a href="#tried"><small>07</small>Five rounds of tries</a>
     <a href="#swarm"><small>08</small>A swarm of flies</a>
     <a href="#hardware"><small>09</small>On a tiny computer</a>
-    <a href="#now"><small>10</small>Where we are now</a>
+    <a href="#now"><small>10</small>Where we are now, and a maze</a>
     <a href="#quiz"><small>11</small>Test yourself</a>
     <a href="#words"><small>12</small>Words to know</a>
   </nav>
@@ -225,7 +224,7 @@ footer{padding-top:30px;color:var(--muted);font:13px/1.5 var(--display)}
   <a href="#tried"><small>07</small>Five rounds of tries</a>
   <a href="#swarm"><small>08</small>A swarm of flies</a>
   <a href="#hardware"><small>09</small>On a tiny computer</a>
-  <a href="#now"><small>10</small>Where we are now</a>
+  <a href="#now"><small>10</small>Where we are now, and a maze</a>
   <a href="#quiz"><small>11</small>Test yourself</a>
   <a href="#words"><small>12</small>Words to know</a>
 </details>
@@ -234,7 +233,7 @@ footer{padding-top:30px;color:var(--muted);font:13px/1.5 var(--display)}
   <div class="kicker">Fly Lab · a plain-language guide</div>
   <h1>Teaching a fly to tell faces apart</h1>
   <p class="bigq">Can a fruit fly that learns only from small rewards and small pains tell a man from a woman in a photo? And how far can we push it?</p>
-  <p class="lede">That one question runs through this whole guide. We follow a single photo on its way through a simulated fly: into its eye, through its neurons, down to the foot it presses. Along the way we meet each part of a real fly it is modelled on, the limits we ran into, and everything we tried to raise the score. The scoreboard at the side keeps count.</p>
+  <p class="lede">That one question runs through this whole guide. We follow a single photo on its way through a simulated fly: into its eye, through its neurons, down to the foot it presses. Along the way we meet each part of a real fly it is modelled on, the limits we ran into, and everything we tried to raise the score. The scoreboard at the side keeps count. The last big chapter takes the same fly out of the lab, into the open air: it hovers over a hedge maze in the countryside and has to find its way.</p>
   <div class="facts"><span>280 light sensors</span><span>400 memory cells</span><span>3,330 photos</span><span>guessing = 50%</span><span>one fly ≈ 61–63%</span><span>best swarm ≈ 67–68%</span></div>
   <div class="side remember"><b class="t">The short version</b>
     One fly gets about 61% of never-seen faces right, and about 63% if it looks a few times. A small swarm of flies, each looking at a slightly different spot, gets about 66%, which is what the best simple "straight-line" reader can get out of these photos. A swarm whose new members practise on the photos the others find hard gets 67–68%, the first result past that line.</div>
@@ -666,24 +665,130 @@ footer{padding-top:30px;color:var(--muted);font:13px/1.5 var(--display)}
   <p>Somewhat, yes, and far better than guessing. Faces, exam on never-seen photos, men and women counted equally:</p>
   <div class="where" id="where"></div>
   <p class="cap">Dashed line: the 66% ceiling for straight-line readers on these photos. The last bar is two runs, each good to about ±2 points.</p>
+  <h3 id="maze-part">A second challenge: flying over a maze</h3>
+  <p class="question">Can the same kind of fly find its way across a landscape, like a helicopter?</p>
+  <p>Telling faces apart is one job for this brain. Another is <b>finding the way</b>. Here the fly hovers over a hedge maze in the countryside, like the Queen's garden in Alice in Wonderland: tall and low hedges, rose bushes and old stone walls on a lawn mowed in stripes, with fields, roads, houses and trees around it, all casting shadows. Its camera points straight down (the same 14 × 20 sensors, turning with the fly), and like an ideal helicopter it knows its own compass heading, speed and height.</p>
+  <p>The fly is shown a route through the maze, then dropped somewhere else, facing any direction. There is no map and no line on the ground: it has to find the route and follow it to the exit using only the landscape it sees.</p>
+  <p><a class="btn primary" style="display:inline-block;text-decoration:none" href="https://nomsams.github.io/flyfy/maze/">Try it yourself: Fly Lab · Maze</a> <a class="btn" style="display:inline-block;text-decoration:none" href="https://nomsams.github.io/flyfy/maze-guide.html">Read the maze guide</a></p>
+
+  <div class="side remember"><b class="t">Think of an ant</b>
+    An ant that has walked a route a few times can retrace it, and it does not do that by remembering "turn left here". It remembers <i>what the world looked like</i> along the route, and at every step turns toward whichever direction looks most familiar. That is exactly what the fly's memory centre is good at.</div>
+
+  <h3>How it learns a route without being told</h3>
+  <ol>
+    <li><b>Walk the route a few times.</b> Every view of the ground marks the memory-centre cells it uses as "familiar". The memory is one yes-or-no flag per cell: 20,000 cells, so 2.5 KB in all. Nothing about the route itself is stored, only what the world looked like while on it.</li>
+    <li><b>Steer toward what looks familiar.</b> The fly looks in 9 directions and flies the way that looks most familiar. A swarm adds up every member's opinion.</li>
+    <li><b>Learning flights.</b> To be dropped <i>anywhere</i>, the fly must first find the route. Like ants making learning walks around their nest, it flies from spots all over the map toward the route and keeps those views in a second memory. Dropped somewhere, it follows the second memory until the route itself looks familiar, then the route memory to the goal.</li>
+    <li><b>Keep track.</b> Instead of judging every step afresh, the fly keeps a belief of how far along the route it is, moved on by its own flying and sharpened by matching what it sees. A run of views tells look-alike hedge corridors apart where a single view cannot.</li>
+    <li><b>Know where you are on the map.</b> During the learning flights it also stores each spot's view turned to face north (the compass lets it turn its camera image), so it can place itself on the whole map and fly straight for the route.</li>
+  </ol>
+
+  <div class="widget" id="w-ideas">
+    <div class="wh"><h4>What each idea added</h4><span>dropped anywhere, facing anywhere</span></div>
+    <div class="seg" id="ideas-h" role="group" aria-label="Flying height"><button aria-pressed="true" data-h="0">Normal height</button><button aria-pressed="false" data-h="1">Flown low</button></div>
+    <div class="where" id="ideas-bars"></div>
+    <p class="cap" id="ideas-cap"></p>
+  </div>
+  <p class="cap">Share of drops that reached the goal. 2 mazes × 2 flies × 10 drops per bar, good to about ±8 points. "–" means not measured.</p>
+
+  <div class="side warn"><b class="t">Watch out</b>
+    A natural garden is much harder than a colourful one. Inside a real hedge maze every corridor looks alike, so a simple fly released near the route reached the goal 13% of the time in the natural garden, against 44% in the first, colourful patchwork world. Keeping track and knowing where it is on the map are what fixed that.</div>
+
+  <h3>Flying high and low</h3>
+  <p>Height causes the same cliff as viewing distance did for faces: fly lower and the camera sees a smaller, sharper patch of ground. A fly trained at one height and flown low did worse than one flying blind. The cures also carried over from faces: practise at several heights, keep a memory per height (the fly knows its altitude), and use a small swarm.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Trained</th><th>Flown at 0.5 (low)</th><th>0.7</th><th>1</th><th>1.4 (high)</th></tr></thead>
+    <tbody>
+      <tr><td>at height 1 only</td><td class="n">2% / 38%</td><td class="n">8% / 34%</td><td class="n">44% / 72%</td><td class="n">19% / 52%</td></tr>
+      <tr><td>at 4 heights, one memory</td><td class="n">17% / 48%</td><td class="n">29% / 60%</td><td class="n">35% / 62%</td><td class="n">35% / 66%</td></tr>
+      <tr><td>at 4 heights, a memory per height</td><td class="n">33% / 62%</td><td class="n">35% / 62%</td><td class="n">42% / 58%</td><td class="n">29% / 65%</td></tr>
+      <tr><td><b>…plus a swarm of 3</b></td><td class="n"><b>40% / 69%</b></td><td class="n">–</td><td class="n"><b>50% / 67%</b></td><td class="n">–</td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">Reached the goal / share of the route flown, released near the route (measured in the first, colourful world). A blind straight flight flies 53% of these routes.</p>
+
+  <h3>Other ideas we tried</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Idea</th><th>What it does</th><th>Result</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Keep track of where on the route</td><td>Belief moved on by its own motion, sharpened by stored views</td><td class="n">13% → 70% (single fly, near the route)</td><td><span class="pill good">kept</span></td></tr>
+      <tr><td>Know where it is on the map</td><td>North-up views of every spot; steer straight for the route</td><td class="n">53% → 100% (dropped anywhere)</td><td><span class="pill good">kept, the big one</span></td></tr>
+      <tr><td>Wrong-way memory</td><td>Store views of the wrong turns as "avoid"</td><td class="n">63%</td><td><span class="pill meh">helps some</span></td></tr>
+      <tr><td>Three circles in a row</td><td>2 + 3 + 2 swarm members across one camera frame, like the Swedish House Mafia logo</td><td class="n">68%</td><td><span class="pill meh">helps some</span></td></tr>
+      <tr><td>Climb when unsure</td><td>Rise to see beyond the hedges, come down when sure</td><td class="n">55% (was 63%)</td><td><span class="pill bad">worse</span></td></tr>
+      <tr><td>Cast when lost</td><td>Sweep side to side like a moth that lost a scent</td><td class="n">50% → 29%</td><td><span class="pill bad">worse, off</span></td></tr>
+      <tr><td><b>All of the good ones together</b></td><td>Full setup, tracking, map, wrong-way, three circles, climbing</td><td class="n"><b>95%</b> (93% flown low)</td><td><span class="pill good">best so far</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Fog, dusk and a noisy camera</h3>
+  <p>The same landscape looks different in different weather. Haze and fog fade everything toward grey, dusk is dark and orange, night is dark and grainy, and a cheap camera adds speckle. A fly that learned the route in clear weather sees a route full of unfamiliar views, and gets lost. The cure is a <b>contrast filter</b>: stretch every view so its brightness always has the same spread, like the gain control in real eyes. Try it:</p>
+  <div class="widget" id="w-weather">
+    <div class="wh"><h4>Weather and the contrast filter</h4><span>choose a weather</span></div>
+    <div class="seg" id="wx-pick" role="group" aria-label="Weather"></div>
+    <label class="switch-row" style="display:flex;gap:10px;align-items:center;font:600 14px var(--display)"><input type="checkbox" id="wx-filter" checked> Contrast filter on</label>
+    <div class="row">
+      <div><canvas id="wx-a" width="140" height="98" aria-label="The landscape, clear"></canvas><p class="cap">The landscape from above</p></div>
+      <div><canvas id="wx-b" width="140" height="98" aria-label="What the camera sees, with the weather"></canvas><p class="cap">The camera: 20 × 14 sensors, with the weather</p></div>
+      <div><canvas id="wx-c" width="140" height="98" aria-label="What the brain gets after the filter"></canvas><p class="cap" id="wx-c-t">What the brain gets</p></div>
+    </div>
+    <div class="where" id="wx-bars"></div>
+    <p class="cap" id="wx-cap"></p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Weather</th><th>No filter</th><th>Contrast filter</th><th>Edge boost</th></tr></thead>
+    <tbody>
+      <tr><td>clear</td><td class="n">85%</td><td class="n"><b>98%</b></td><td class="n">87%</td></tr>
+      <tr><td>haze</td><td class="n">5%</td><td class="n"><b>93%</b></td><td class="n">5%</td></tr>
+      <tr><td>fog</td><td class="n">3%</td><td class="n"><b>88%</b></td><td class="n">3%</td></tr>
+      <tr><td>overcast</td><td class="n">93%</td><td class="n">93%</td><td class="n">83%</td></tr>
+      <tr><td>dusk</td><td class="n">15%</td><td class="n"><b>95%</b></td><td class="n">15%</td></tr>
+      <tr><td>night</td><td class="n">10%</td><td class="n">28%</td><td class="n">8%</td></tr>
+      <tr><td>noisy camera</td><td class="n">90%</td><td class="n">95%</td><td class="n">33%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">Share of drops that got within 0.8 maze cells of the goal: single fly, dropped anywhere, trained in clear weather (2 mazes × 2 flies × 10 drops, about ±8 points). A stricter test, which needs the fly within about half a cell of the route's very last point, gave noisy camera 38% → 63%: the noisy fly gets to the goal but hovers around it without ever passing that test.</p>
+  <div class="side tip"><b class="t">Try this</b>
+    The contrast filter fixed haze, fog and dusk, and it even helped in clear weather (85% → 98%). The edge boost from the face chapters did not help at all here. Camera noise alone is survivable (90%), but night is still the weakest case: the dim picture drowns in noise, and the filter only lifts it from 10% to 28%. The next thing to try is averaging a few views over time.</div>
+
+  <h3>How big a maze, and how long would it take?</h3>
+  <p>Training time is dominated by the learning flights, because they cover the whole map, so it grows with the <i>area</i>. Learning the route itself grows only with its length. Move the sliders to plan a real flight: one maze cell is taken to be about the flying height, since the camera sees a patch of ground roughly 1.5 times as long as it is high.</p>
+  <div class="widget" id="w-plan">
+    <div class="wh"><h4>Plan a real flight</h4><span>estimates from measurements</span></div>
+    <div class="controls">
+      <label for="pl-n">Maze size <output id="pl-n-o"></output><input type="range" id="pl-n" min="6" max="100" value="20"></label>
+      <label for="pl-h">Flying height <output id="pl-h-o"></output><input type="range" id="pl-h" min="5" max="200" value="50"></label>
+      <label for="pl-v">Speed <output id="pl-v-o"></output><input type="range" id="pl-v" min="3" max="20" value="10"></label>
+      <label for="pl-k">Practice heights <output id="pl-k-o"></output><input type="range" id="pl-k" min="1" max="4" value="4"></label>
+      <label for="pl-s">Swarm size <output id="pl-s-o"></output><input type="range" id="pl-s" min="1" max="7" value="3"></label>
+    </div>
+    <div class="tbl"><table id="pl-t"></table></div>
+    <p class="cap">Route length is typically about 0.3 × size² cells but varies a lot from maze to maze. Computing time assumes 2.5 ms per view on a desktop computer. A "survey flight" flies back and forth over the whole map once per height instead of the simulated learning flights (an estimate, not yet built).</p>
+  </div>
+  <div class="side remember"><b class="t">Keep in mind</b>
+    Up to about 20 × 20 cells (a 1 km square at 50 m height) is realistic today. A 100 × 100 maze would need a map of 45 million pixels and a memory that does not fill up: the plan is to build the landscape in tiles around the helicopter, search only near the believed position, and keep separate memories for separate regions. A 1,000 × 1,000 maze is not possible as built.</div>
+
   <h3>What we're trying next</h3>
   <div class="tbl"><table>
     <thead><tr><th>Idea</th><th>Why it could help</th><th>Status</th></tr></thead>
     <tbody>
-      <tr><td>Confirm boosting</td><td>More runs and bigger rounds, to turn "promising" into a solid number and make it the recommended swarm mode</td><td><span class="pill good">next</span></td></tr>
-      <tr><td>Better photos</td><td>Larger or better-framed pictures carry more information; the framing has to keep hair and shoulders</td><td><span class="pill meh">open</span></td></tr>
-      <tr><td>Looking around (sideways only)</td><td>A fly that learns where to look can gather more than one fixed view; needs evolution, which found it only sometimes on simpler tasks</td><td><span class="pill meh">open</span></td></tr>
-      <tr><td>A real camera</td><td>Run one fly, then a virtual swarm, on an ESP32 camera board</td><td><span class="pill meh">planned</span></td></tr>
+      <tr><td>Confirm boosting (faces)</td><td>More runs and bigger rounds, to turn "promising" into a solid number and make it the recommended swarm mode</td><td><span class="pill good">next</span></td></tr>
+      <tr><td>Night flying</td><td>Average a few views over time to cancel the camera noise</td><td><span class="pill good">next</span></td></tr>
+      <tr><td>A survey flight instead of learning flights</td><td>The map memory only needs north-facing views at known positions, which a survey provides; about 5–10 times less flying</td><td><span class="pill good">next</span></td></tr>
+      <tr><td>Big maps</td><td>Tiles built on demand, a search only near the believed position, a separate memory for each region</td><td><span class="pill meh">open</span></td></tr>
+      <tr><td>Better photos (faces)</td><td>Larger or better-framed pictures carry more information; the framing has to keep hair and shoulders</td><td><span class="pill meh">open</span></td></tr>
+      <tr><td>A real camera</td><td>Run one fly, then a virtual swarm, on an ESP32 camera board, then on a drone</td><td><span class="pill meh">planned</span></td></tr>
     </tbody>
   </table></div>
+  <p class="cap">Everything in the maze part is reproducible with <code>tools/route.mjs</code>, and you can try it in <a href="https://nomsams.github.io/flyfy/maze/">the maze app</a>. The whole maze story now has its own guide, with a small fly you can run in your browser: <a href="https://nomsams.github.io/flyfy/maze-guide.html">the maze guide</a>.</p>
 </section>
 
 <section class="ch" id="quiz" data-score="67.3" data-what="Where we are: a boosting swarm, just past the 66% line.">
   <div class="kicker">Chapter 11</div>
   <h2>Test yourself</h2>
-  <p class="question">Did the story stick? Six quick questions.</p>
+  <p class="question">Did the story stick? Eight quick questions.</p>
   <div class="widget">
-    <div class="wh"><h4>Quick quiz</h4><span id="quiz-score">0 of 6</span></div>
+    <div class="wh"><h4>Quick quiz</h4><span id="quiz-score">0 of 8</span></div>
     <div class="quiz" id="quiz-box"></div>
     <div style="display:flex"><button class="btn" id="quiz-reset">Start over</button></div>
   </div>
@@ -706,6 +811,10 @@ footer{padding-top:30px;color:var(--muted);font:13px/1.5 var(--display)}
     <dt>Fovea (sharp centre)</dt><dd>Sensors packed more tightly in the middle of the view.</dd>
     <dt>Straight-line reader</dt><dd>A linear classifier: it adds up weighted evidence and answers by which side of a threshold the total lands.</dd>
     <dt>Balanced accuracy</dt><dd>Accuracy where men and women count equally, so guessing always scores 50%.</dd>
+    <dt>Familiarity navigation</dt><dd>Following a route by turning toward whichever direction looks most familiar, the way ants and bees are thought to do it.</dd>
+    <dt>Learning flights</dt><dd>Flights from many spots toward the route (or nest), used to learn what the way back looks like from everywhere.</dd>
+    <dt>Path integration (odometry)</dt><dd>Keeping track of where you are from your own movement: heading and distance flown.</dd>
+    <dt>Contrast filter</dt><dd>Stretching each view so its brightness always has the same spread, so fog and dim light stop changing what the fly sees.</dd>
     <dt>Boosting</dt><dd>Training each new learner on the examples the earlier learners got wrong, then letting them all vote.</dd>
   </dl>
 </section>
@@ -1192,6 +1301,8 @@ const QUIZ = [
   ['When does a swarm of flies beat one fly by the most?', ['When all flies see exactly the same thing', 'When the flies make different mistakes', 'Only with more than 100 flies'], 1, 'Voting only fixes photos the flies disagree on. Giving each fly its own centre of gaze made their mistakes differ.'],
   ['Which real fly sense does our fly not have?', ['Colour', 'Pain', 'Smell', 'Touch on its feet'], 2, 'Our fly has an eye with colour, and touch and pain on its feet. Smell, hearing, taste and the halteres are left out.'],
   ['What does gain adaptation do?', ['Makes the eye bigger', 'Scales each cell to its usual signal, so weak but telling signals count', 'Adds noise to the picture'], 1, 'Edge cells carry weak signals. Scaled to their usual size, they took grey faces from 53.6% to 61.2%.'],
+  ['How does the maze fly follow a route it was shown?', ['It remembers \u201cturn left here\u201d at every corner', 'It steers toward whichever direction looks most familiar', 'It reads a map of the maze'], 1, 'Like an ant, it remembers what the world looked like along the route, one yes-or-no flag per memory cell, and turns toward what looks most familiar.'],
+  ['What rescued the fly in fog and at dusk?', ['A bigger eye', 'The edge boost', 'A contrast filter that stretches every view to the same spread'], 2, 'The filter took fog from 3% to 88% and dusk from 15% to 95%. The edge boost did nothing there.'],
 ];
 function drawQuiz(){
   const box = $('quiz-box'); box.innerHTML = ''; let right = 0, done = 0;
@@ -1217,12 +1328,154 @@ function drawQuiz(){
 $('quiz-reset').onclick = drawQuiz;
 drawQuiz();
 
+// ---------------------------------------------------------------- 13. the maze widgets
+// 13a. what each idea added (measured, dropped anywhere)
+const IDEAS = [
+  ['Route memory only', 25, null, 'Follows the route well once it finds it (it finds it 45% of the time), but only that.'],
+  ['+ learning flights', 30, null, 'Finds the route 77% of the time, but loses it again in the look-alike corridors.'],
+  ['+ 4 practice heights, a memory per height, swarm of 3', 55, 48, 'The full setup: it finds the route 90% of the time at normal height.'],
+  ['+ keeping track of where it is on the route', 53, 63, 'A belief of how far along the route it is, moved on by its own flying.'],
+  ['+ knowing where it is on the map', 100, 80, 'North-up views of every spot let it place itself on the whole map and fly straight for the route. Every fly made it at normal height.'],
+  ['All the good ideas together', 95, 93, 'Adds a wrong-way memory, three circles in a row and climbing when unsure. The best result flown low.'],
+];
+let ideasLow = 0;
+function drawIdeas() {
+  const box = $('ideas-bars'); box.innerHTML = '';
+  IDEAS.forEach(([name, hi, lo], i) => {
+    const v = ideasLow ? lo : hi, d = document.createElement('div'); d.className = 'stepline' + (i === IDEAS.length - 1 ? ' now' : '');
+    d.innerHTML = '<div class="lbl"><b>' + name + '</b></div><div class="bar" role="img" aria-label="' + (v == null ? 'not measured' : v + '%') + '"><i style="width:' + (v || 0) + '%"></i></div><div class="readout">' + (v == null ? '–' : v + '%') + '</div>';
+    box.appendChild(d);
+  });
+  $('ideas-cap').textContent = ideasLow ? 'Flown low (0.5): the camera sees a smaller, sharper patch, and each memory has to be for that height.' : 'Flown at the normal height it practised at.';
+}
+document.querySelectorAll('#ideas-h button').forEach((b) => b.onclick = () => { document.querySelectorAll('#ideas-h button').forEach((x) => x.setAttribute('aria-pressed', x === b)); ideasLow = +b.dataset.h; drawIdeas(); });
+drawIdeas();
+
+// 13b. weather and the contrast filter
+const WX = {
+  clear: {}, haze: { fog: 0.3 }, fog: { fog: 0.6 }, overcast: { light: 0.85, fog: 0.15, tint: [0.95, 0.98, 1.05] },
+  dusk: { light: 0.55, tint: [1.12, 0.95, 0.78] }, night: { light: 0.25, tint: [0.8, 0.9, 1.2], noise: 0.05 }, noisy: { noise: 0.08 },
+};
+const WX_NAME = { clear: 'Clear', haze: 'Haze', fog: 'Fog', overcast: 'Overcast', dusk: 'Dusk', night: 'Night', noisy: 'Noisy camera' };
+const WX_RES = { clear: [85, 98], haze: [5, 93], fog: [3, 88], overcast: [93, 93], dusk: [15, 95], night: [10, 28], noisy: [90, 95] }; // reached the goal %: [no filter, contrast filter]
+const WX_TXT = {
+  clear: 'In clear weather the filter still helps a little: 85% to 98%.',
+  haze: 'Haze fades every view toward grey. Without the filter the fly no longer recognises the route (5%); with it, 93%.',
+  fog: 'Fog fades everything: the stored route views no longer match at all (3%). The filter stretches the faint picture back to full contrast (88%).',
+  overcast: 'Overcast changes little, so the fly copes without the filter (93%).',
+  dusk: 'Dusk is darker and orange. The filter restores the contrast and the colour differences (15% to 95%).',
+  night: 'At night the picture is so dark that camera noise drowns it. The filter helps a little (10% to 28%), but this is still the weakest case.',
+  noisy: 'Camera noise scrambles single views, but the fly still gets near the goal 90% of the time; the filter adds a little (95%). Noise is a different problem from fog.',
+};
+// the scene: fields, a hedge maze on a striped lawn, a road, a house and trees, drawn once at 140 x 98
+const SCN_W = 140, SCN_H = 98;
+let scene = null; // Float32Array(3 * W * H), 0..1
+function makeScene() {
+  const c = document.createElement('canvas'); c.width = SCN_W; c.height = SCN_H; const g = c.getContext('2d');
+  g.fillStyle = '#69913d'; g.fillRect(0, 0, SCN_W, SCN_H);                                 // meadow
+  g.fillStyle = '#c9b25c'; g.fillRect(0, 0, 44, 46);                                       // wheat
+  g.strokeStyle = '#a89240'; g.lineWidth = 1; for (let x = 2; x < 44; x += 4) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 46); g.stroke(); }
+  g.fillStyle = '#6e5238'; g.fillRect(100, 46, 40, 52);                                    // ploughed soil
+  g.strokeStyle = '#4e3a28'; for (let y = 48; y < 98; y += 4) { g.beginPath(); g.moveTo(100, y); g.lineTo(140, y); g.stroke(); }
+  g.fillStyle = '#5a5048'; g.fillRect(0, 84, 140, 8);                                      // road
+  g.strokeStyle = '#d9d2b8'; g.setLineDash([5, 4]); g.beginPath(); g.moveTo(0, 88); g.lineTo(140, 88); g.stroke(); g.setLineDash([]);
+  for (let x = 40; x < 100; x += 6) { g.fillStyle = (Math.floor((x - 40) / 6) % 2) ? '#4f8d38' : '#5ea043'; g.fillRect(x, 14, 6, 62); } // striped lawn
+  const hedge = [[46, 20, 94, 20], [46, 20, 46, 70], [58, 32, 82, 32], [82, 32, 82, 58], [58, 46, 70, 46], [70, 46, 70, 70], [58, 58, 58, 70], [46, 70, 94, 70], [94, 20, 94, 70]];
+  g.lineCap = 'round';
+  for (const [ax, ay, bx, by] of hedge) { g.strokeStyle = 'rgba(20,40,20,.45)'; g.lineWidth = 4; g.beginPath(); g.moveTo(ax + 2, ay + 2); g.lineTo(bx + 2, by + 2); g.stroke(); } // shadows
+  for (const [ax, ay, bx, by] of hedge) { g.strokeStyle = '#1f4a1c'; g.lineWidth = 4; g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke(); }
+  g.fillStyle = 'rgba(20,20,20,.4)'; g.fillRect(118, 12, 16, 12);                          // house shadow, walls, roof
+  g.fillStyle = '#e4d9c8'; g.fillRect(114, 8, 16, 12); g.fillStyle = '#a84a32'; g.fillRect(114, 8, 16, 6);
+  for (const [tx, ty, tr] of [[20, 62, 6], [28, 74, 5], [108, 30, 5], [16, 52, 4]]) { g.fillStyle = 'rgba(15,30,15,.45)'; g.beginPath(); g.arc(tx + 2, ty + 2, tr, 0, 7); g.fill(); g.fillStyle = '#2b5a26'; g.beginPath(); g.arc(tx, ty, tr, 0, 7); g.fill(); }
+  const d = g.getImageData(0, 0, SCN_W, SCN_H).data, out = new Float32Array(3 * SCN_W * SCN_H);
+  for (let i = 0; i < SCN_W * SCN_H; i++) for (let k = 0; k < 3; k++) out[i * 3 + k] = d[i * 4 + k] / 255;
+  return out;
+}
+const gaussR = () => { let u = 0; for (let i = 0; i < 4; i++) u += Math.random(); return (u - 2) * 1.732; };
+// what the camera reports: the scene averaged to 20 x 14 sensors, then the weather (fade to grey, light, tint, sensor noise)
+function cameraView(name) {
+  const w = WX[name] || {}, fog = w.fog || 0, light = w.light == null ? 1 : w.light, tint = w.tint || [1, 1, 1], noise = w.noise || 0, fogCol = [0.78, 0.8, 0.82];
+  const out = new Float32Array(3 * 20 * 14), bx = SCN_W / 20, by = SCN_H / 14;
+  for (let r = 0; r < 14; r++) for (let c = 0; c < 20; c++) {
+    const acc = [0, 0, 0]; let n = 0;
+    for (let y = Math.floor(r * by); y < Math.floor((r + 1) * by); y++) for (let x = Math.floor(c * bx); x < Math.floor((c + 1) * bx); x++) { for (let k = 0; k < 3; k++) acc[k] += scene[(y * SCN_W + x) * 3 + k]; n++; }
+    const nz = noise ? noise * gaussR() : 0;
+    for (let k = 0; k < 3; k++) out[(r * 20 + c) * 3 + k] = ((acc[k] / n) * (1 - fog) + fogCol[k] * fog) * light * tint[k] + nz;
+  }
+  return out;
+}
+// the contrast filter: every view stretched to the same spread of brightness around 0.5
+function stretchView(v) {
+  const N = 20 * 14, lum = (i) => 0.299 * v[i * 3] + 0.587 * v[i * 3 + 1] + 0.114 * v[i * 3 + 2];
+  let m = 0, q = 0; for (let i = 0; i < N; i++) m += lum(i) / N; for (let i = 0; i < N; i++) q += (lum(i) - m) ** 2 / N;
+  const g = 0.18 / (Math.sqrt(q) + 0.01), out = new Float32Array(3 * N);
+  for (let i = 0; i < N; i++) for (let k = 0; k < 3; k++) out[i * 3 + k] = 0.5 + (v[i * 3 + k] - m) * g;
+  return out;
+}
+function paintSensors(canvas, v) {
+  const ctx = canvas.getContext('2d'), img = ctx.createImageData(20, 14), cl = (x) => Math.max(0, Math.min(1, x)) * 255;
+  for (let i = 0; i < 280; i++) img.data.set([cl(v[i * 3]), cl(v[i * 3 + 1]), cl(v[i * 3 + 2]), 255], i * 4);
+  const t = document.createElement('canvas'); t.width = 20; t.height = 14; t.getContext('2d').putImageData(img, 0, 0);
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(t, 0, 0, canvas.width, canvas.height);
+}
+let wxName = 'fog';
+function drawWeather() {
+  if (!scene) scene = makeScene();
+  const a = $('wx-a'), actx = a.getContext('2d'), img = actx.createImageData(SCN_W, SCN_H);
+  for (let i = 0; i < SCN_W * SCN_H; i++) img.data.set([scene[i * 3] * 255, scene[i * 3 + 1] * 255, scene[i * 3 + 2] * 255, 255], i * 4);
+  actx.putImageData(img, 0, 0);
+  const cam = cameraView(wxName), on = $('wx-filter').checked;
+  paintSensors($('wx-b'), cam);
+  paintSensors($('wx-c'), on ? stretchView(cam) : cam);
+  $('wx-c-t').textContent = on ? 'What the brain gets (after the contrast filter)' : 'What the brain gets (no filter: the same as the camera)';
+  const [no, yes] = WX_RES[wxName], box = $('wx-bars'); box.innerHTML = '';
+  [['No filter', no, !on], ['Contrast filter', yes, on]].forEach(([lab, v, cur], i) => {
+    const d = document.createElement('div'); d.className = 'stepline' + (cur ? ' now' : '');
+    d.innerHTML = '<div class="lbl"><b>' + lab + '</b>' + (cur ? '<div class="cap">shown above</div>' : '') + '</div><div class="bar" role="img" aria-label="' + v + '%"><i style="width:' + v + '%"></i></div><div class="readout">' + v + '%</div>';
+    box.appendChild(d);
+  });
+  $('wx-cap').textContent = WX_NAME[wxName] + ': ' + WX_TXT[wxName] + ' (Bars: share of drops that got within 0.8 cells of the goal.)';
+}
+(function () {
+  const seg = $('wx-pick');
+  Object.keys(WX).forEach((k) => { const b = document.createElement('button'); b.textContent = WX_NAME[k]; b.dataset.w = k; b.setAttribute('aria-pressed', k === wxName); b.onclick = () => { wxName = k; seg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); drawWeather(); }; seg.appendChild(b); });
+  $('wx-filter').addEventListener('change', drawWeather);
+})();
+drawWeather();
+
+// 13c. plan a real flight (numbers measured with tools/traintime.mjs, see the README)
+const fmtT = (sec) => (sec < 90 ? Math.round(sec) + ' s' : sec < 5400 ? Math.round(sec / 60) + ' min' : sec < 172800 ? (sec / 3600).toFixed(1) + ' h' : (sec / 86400).toFixed(1) + ' days');
+const fmtD = (m) => (m < 1000 ? Math.round(m) + ' m' : m < 1e6 ? (m / 1000).toFixed(m < 1e4 ? 1 : 0) + ' km' : Math.round(m / 1000).toLocaleString('en') + ' km');
+const fmtN = (n) => (n < 1e4 ? String(Math.round(n)) : n < 1e6 ? Math.round(n / 1e3) + ' thousand' : (n / 1e6).toFixed(1) + ' million');
+function drawPlan() {
+  const n = +$('pl-n').value, h = +$('pl-h').value, v = +$('pl-v').value, k = +$('pl-k').value, sw = +$('pl-s').value;
+  $('pl-n-o').textContent = n + ' × ' + n; $('pl-h-o').textContent = h + ' m'; $('pl-v-o').textContent = v + ' m/s'; $('pl-k-o').textContent = k; $('pl-s-o').textContent = sw;
+  const routeCells = Math.max(8, 0.3 * n * n), mapCells = (n + 5) ** 2;                    // the map holds 2.5 cells of countryside on every side
+  const routeViews = k * 4 * routeCells * 8 * sw, stepsFlights = 28 * mapCells * k, flightViews = stepsFlights * (sw + 1);
+  const cpu = (routeViews + flightViews) * 0.0025;
+  const dRoute = k * 4 * routeCells * h, dFlights = stepsFlights * (h / 8), dSurvey = k * mapCells * h;
+  const row = (a, b, c) => '<tr><td>' + a + '</td><td class="n">' + b + '</td><td class="n">' + (c || '') + '</td></tr>';
+  $('pl-t').innerHTML = '<thead><tr><th>What</th><th>Amount</th><th>Time</th></tr></thead><tbody>'
+    + row('The maze on the ground', fmtD(n * h) + ' square', '(' + fmtD((n + 5) * h) + ' with countryside)')
+    + row('A typical route', routeCells.toFixed(0) + ' cells = ' + fmtD(routeCells * h))
+    + row('Computing: route passes', fmtN(routeViews) + ' views', fmtT(routeViews * 0.0025))
+    + row('Computing: learning flights', fmtN(flightViews) + ' views', fmtT(flightViews * 0.0025))
+    + row('<b>Computing, total</b>', '', '<b>' + fmtT(cpu) + '</b>')
+    + row('Real flying: route passes (4 per height)', fmtD(dRoute), fmtT(dRoute / v))
+    + row('Real flying: learning flights as simulated', fmtD(dFlights), fmtT(dFlights / v))
+    + row('<b>Real flying: a survey flight instead</b>', '<b>' + fmtD(dSurvey) + '</b>', '<b>' + fmtT(dSurvey / v) + '</b>')
+    + '</tbody>';
+}
+['pl-n', 'pl-h', 'pl-v', 'pl-k', 'pl-s'].forEach((id) => $(id).addEventListener('input', drawPlan));
+drawPlan();
+
 // redraw canvases when the theme changes
-const redraw = () => { drawEye(); drawLine(); drawCircle(); drawVote(); drawKC(); drawTrCurve(); drawDist(); drawBoost(); };
+const redraw = () => { drawEye(); drawLine(); drawCircle(); drawVote(); drawKC(); drawTrCurve(); drawDist(); drawBoost(); drawIdeas(); drawWeather(); };
 let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(redraw, 150); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', redraw);
 new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 })();
 </script>
+
 </body>
 </html>
