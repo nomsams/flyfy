@@ -6,7 +6,7 @@
 // chase them). In the end every fly votes with equal, scaled margins, as in tools/swarm.mjs.
 //
 // Usage: node tools/boost.mjs [--rounds 5] [--per 5] [--alpha 1] [--cap 4] [--circle 10]
-//        [--with a,b] [--episodes 150] [--seedbase 0] [--jobs N]
+//        [--dists 0.9,1,1.1] [--with a,b] [--episodes 150] [--seedbase 0] [--jobs N]
 // --alpha 0 is the same swarm without boosting (same seeds, same gaze positions), for comparison.
 import os from 'node:os';
 import fs from 'node:fs';
@@ -71,7 +71,9 @@ const runOne = (job) => new Promise((resolve, reject) => {
   p.on('close', (code) => (code === 0 ? resolve(JSON.parse(out)) : reject(new Error('fly failed'))));
 });
 // fly (round r, j) sits at angle 2*pi*(j*rounds + r)/K: every round covers the whole circle
-const spot = (r, j) => { const a = (2 * Math.PI * (j * rounds + r)) / K; return R ? { screen: { centerAzDeg: R * Math.cos(a), centerElDeg: R * Math.sin(a) } } : {}; };
+// --dists 0.9,1,1.1: the flies also look from different distances (fly k at distance dists[k mod n]): one more way for the swarm to see differently
+const dists = args.dists ? args.dists.split(',').map(Number) : null;
+const spot = (r, j) => { const k = j * rounds + r, a = (2 * Math.PI * k) / K, scr = {}; if (R) { scr.centerAzDeg = R * Math.cos(a); scr.centerElDeg = R * Math.sin(a); } if (dists) scr.distance = dists[k % dists.length]; return Object.keys(scr).length ? { screen: scr } : {}; };
 
 const flies = [];
 // the weights reach each fly through a file (too long for a command line)

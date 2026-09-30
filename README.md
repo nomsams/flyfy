@@ -273,6 +273,13 @@ divided by its own typical size) and, with boosting, the votes weighted by each 
 | 25 flies, 300 sessions each (the "best setup") | 67.9% | **69.2%** |
 | 25 flies, 600 sessions each | 67.3% | 67.9% |
 | 50 flies, 150 sessions each | 67.8% | 68.5% |
+| 25 flies, gaze circle 6 degrees (instead of 10) | 66.7% | 65.8% |
+| 25 flies, gaze circle 15 degrees | 65.1% | 67.3% |
+| 25 flies, also looking from distances 0.9 / 1 / 1.1 | 68.8% | 68.2% |
+| 25 flies, distances 0.85 / 1 / 1.15 | 66.7% | 69.0% |
+
+The gaze circle has a sweet spot near 10 degrees (6 and 15 are 1-3 points worse), and letting flies also look from
+different distances adds nothing (`tools/boost.mjs --dists 0.9,1,1.1`).
 
 So about 68-69% is where this swarm levels off: more flies (50) and longer practice (600 sessions) add nothing
 measurable, and the weighted votes are only ahead from about 15 flies on (at 10 flies they were 6-7 points behind).
@@ -485,6 +492,34 @@ maze 6 10% / 10%.) Two fixes:
 Six mazes, one pass, fixed level: fog + filter 97%, night + filter + 16 frames 92%, wind 40% 79%, odometer 17
 degrees off 97%. The maze app now flies the route once and calibrates by default. The guide has a widget
 that flies the same fly in four different mazes.
+
+**Roll, pitch, yaw and the fly's other senses** (six 6 x 6 mazes x 2 flies x 6 drops, one route pass, calibrated level;
+reference 94%; about +-7 points). The camera is fixed to the helicopter, so `--tilt 20` (roll and pitch wandering
+slowly, standard deviation in degrees) makes each sensor look along a rotated ray and see the ground where it hits
+it (`RouteFlight.view`). `--tilt-comp --tilt-est 3` counter-rotates the camera by an attitude estimate that is
+off by 3 degrees (a gyro, like the fly's halteres; 6 degrees is an ocelli-like horizon sensor). `--yaw-compass 0.3`
+adds a heading error of 0.3 rad at every step that does not accumulate (a sky compass) and `--yaw-walk 0.03` an
+error that random-walks (a gyro compass); both turn the map's north-up views by the wrong angle and skew the
+odometer. `--flow-odo` gives the odometer optic flow: it sees the true ground motion, wind included.
+
+| what is wrong | no help | with the sense |
+|---|---|---|
+| roll and pitch 5 / 10 / 20 degrees | 93% / 86% / 90% | 20 degrees, camera counter-rotated to 3 degrees: 90% |
+| roll and pitch 35 degrees | 78% | counter-rotated to 3 degrees: **90%** |
+| roll and pitch 45 degrees | 56% | |
+| ...the route also practised in rough air | 79% (worse) | |
+| compass off every step by 0.1 / 0.3 / 0.6 / 1.0 rad | 86% / 87% / 79% / 74% | |
+| gyro compass drifting 0.01 / 0.03 / 0.08 / 0.15 rad per step | 94% / 89% / 89% / 75% | |
+| wind of 40% of the flying speed | 69% | optic-flow odometer: 78% |
+| wind of 70% of the flying speed | 33% | optic-flow odometer: 44% |
+| tilt 10 + compass 0.1 + wind 40% | 69% | counter-rotated (3), compass 0.05, optic flow: 78% |
+| tilt 35 + compass 0.6 + wind 70% | 14% | counter-rotated (4), compass 0.1, optic flow: 44% |
+
+The fly barely notices tilts up to 20 degrees or compass errors of a few tenths of a radian: steering compares nine
+looks through the same tilted camera, and the map belief gathers many looks. Sensors earn their keep only for big
+errors. Practising in rough air made it worse. Swarm members can also look at different zoom levels
+(`--scales 1,0.7,1.4`) and vote on the map (`--map-swarm`); `--map-sharp` sharpens the map belief.
+
 
 Read the maze guide: **[maze-guide.html](maze-guide.html)** (https://nomsams.github.io/flyfy/maze-guide.html), a plain-language walk through the maze fly with a small fly you can run in the page. Try it in the browser: **[Fly Lab · Maze](maze/)** (`maze/`, same site). Build a maze, teach the route at
 chosen heights (with learning flights), tap anywhere on the map to drop the fly, and change its
