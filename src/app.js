@@ -16,6 +16,7 @@ import { mulberry32 } from './rng.js';
 import { TASKS, ABILITIES, DEFAULT_ABILITIES, abilitiesOf, MEASURED } from './abilities.js';
 import { ICONS } from './icons.js';
 import { initCompare } from './compare.js';
+import { initSwarm } from './swarm-ui.js';
 import * as viz from './viz.js';
 
 const $ = (id) => document.getElementById(id);
@@ -189,6 +190,7 @@ const REWARD_UI = [
   ['learn.evolveRule', 'Self-tuning learning', '1 = evolution tunes the learning rule itself (speeds, reward and pain weights, forgetting). Ability switch.', 1],
   ['timing', 'Timing'],
   ['timing.reactionSec', 'Reaction time (s)', 'Presses earlier than this after a picture appears count as too early: look first.', 0.05],
+  ['timing.ignoreEarly', 'Ignore early presses', '1 = a press before the reaction time is simply not counted (no penalty, no pain), so the score is not full of "too early" points. 0 = it counts as too early and hurts.', 1],
   ['timing.forceAtSec', 'Forced choice after (s)', 'No press by then: the stronger foot is pressed for the fly. 0 = it may never answer. Set by the challenge.', 0.05],
   ['eye', 'Eye'],
   ['eye.activeVision', 'Smart eye', '1 = the brain moves the eye (ability switch). Moves up to the step size per moment, within the range below.', 1],
@@ -750,6 +752,15 @@ function initUI() {
   $('btnEvolve').onclick = () => toggleTraining('evo');
   $('btnExam').onclick = () => guarded(async () => runExam());
   $('btnProbe').onclick = () => guarded(async () => runProbe());
+  // the best setup measured so far: the face photos, every ability that measured as a win (the defaults plus the sharp centre), and a boosting swarm of 25
+  $('btnBest').onclick = () => guarded(async () => {
+    S.busy = false; await setTask('faces');
+    const BEST = { ...DEFAULT_ABILITIES, fovea: true };
+    for (const a of ABILITIES) writeRewards(BEST[a.id] ? a.on : a.off);
+    await applySettings();
+    S.swarm.setOptions({ size: 25, episodes: 300, boost: true });
+    toast('Best setup: man-or-woman photos, all the abilities that helped, a boosting swarm of 25. Press "Train the swarm".', 6000);
+  });
   $('btnAbilDefault').onclick = () => { for (const a of ABILITIES) writeRewards(DEFAULT_ABILITIES[a.id] ? a.on : a.off); applySettings(); };
   $('btnRewardDefaults').onclick = () => {
     for (const row of REWARD_UI) if (row.length > 2) { const [g, k] = row[0].split('.'); $(rwId(row[0])).value = DEFAULTS[g][k]; }
@@ -802,6 +813,7 @@ async function main() {
   S.compare = initCompare({
     S, $, log, toast, taskSets, readCfg, renderAbilityList, currentAbilities, syncButtons,
   });
+  S.swarm = initSwarm({ S, $, log, toast, taskSets, readCfg, currentAbilities, syncButtons });
   // the full-folder option only makes sense when node server.js is serving a bigger folder
   fetch('api/dataset').then((r) => (r.ok ? r.json() : null)).then((l) => {
     if (l && l.men.length + l.women.length > 3330) { $('btnFullFaces').hidden = false; $('faceSrc').textContent += ` Your local folder has ${l.men.length + l.women.length}.`; }

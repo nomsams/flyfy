@@ -82,6 +82,7 @@ export const DEFAULTS = {
     onsetSec: 0.25,      // new image expands into view over this long
     onsetLoom: true,     // the expansion is what LPLC2/LC4 detect
     reactionSec: 0.3,    // a press earlier than this after the image appears counts as premature: look first
+    ignoreEarly: 1,      // 1 = a press before the reaction time is simply not counted (no penalty, no pain); 0 = it is a "too early" error. Measured on faces: no difference in accuracy (-0.2 +- 2.0), a cleaner score
     forceAtSec: 0.5,     // no press by now: the foot with the stronger output is pressed for it (forced choice). 0 = free response
     stimTimeoutSec: 3.0, // no response by then = a miss
   },

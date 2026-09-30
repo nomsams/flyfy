@@ -4,6 +4,7 @@
 import { StimulusSet } from './stimuli.js';
 import { Runner } from './rollout.js';
 import { runTrial } from './experiment.js';
+import { flyJob } from './swarm.js';
 
 let runner = null;
 
@@ -22,6 +23,15 @@ self.onmessage = (ev) => {
     } else if (m.type === 'eval') {
       const results = m.params.map((p) => runner.evaluate(p, m.seeds));
       self.postMessage({ type: 'result', id: m.id, results });
+    } else if (m.type === 'swarmfly') {
+      // one member of a swarm: train it (on weighted photos when boosting), answer the exam photos, return its votes
+      let last = 0;
+      const res = flyJob({
+        cfg: m.cfg, train: StimulusSet.fromMessage(m.train), test: StimulusSet.fromMessage(m.test), seed: m.seed, episodes: m.episodes, looks: m.looks,
+        weights: m.weights || null, trainMargins: !!m.trainMargins,
+        onProgress: (f) => { if (f - last >= 0.05 || f === 1) { last = f; self.postMessage({ type: 'progress', id: m.id, frac: f }); } },
+      });
+      self.postMessage({ type: 'result', id: m.id, results: res });
     } else if (m.type === 'trial') {
       let last = 0;
       const res = runTrial({

@@ -19,12 +19,23 @@ it learn, and give it a final exam on pictures it has never seen.
    boost (the measured wins) plus smart eye and mood chemical (what this branch is exploring).
 3. **Train it** - **Quick learn** (seconds): the fly learns from rewards and pain as it plays.
    **Evolve** (minutes): a population of brains is bred, keeping the best.
-4. **Final exam** - how many of 100 brand-new pictures it gets right. Guessing gets 50.
+4. **Or train a swarm** (step 3b) - many flies, each looking at the photo from its own spot, vote on every
+   answer. On the face photos one fly scores about 60% and a boosting swarm of 25 about 68% (see "A swarm of
+   flies" below). **Set everything to the best setup** picks the face photos, every ability that measured as a win
+   and a boosting swarm of 25 with longer practice in one click; the swarm trains in Web Workers, one fly per
+   core at a time, and its score climbs as flies join.
+5. **Final exam** - how many of 100 brand-new pictures it gets right. Guessing gets 50.
 
 **Compare** answers "is this ability actually worth it?": it trains several flies with and
 without it, in pairs that start from the same luck, and says plainly whether the difference is
 bigger than chance. **Inside the brain** shows it live, what evolution chose, and how much the
 eye can even see. **Settings** has every number, for tinkerers.
+
+**"Too early" points.** A press before the picture has been up for the reaction time used to be a "too early"
+error (-2 points and some pain) and could fill the score with negative points. It is now simply not counted
+(Settings -> Timing -> Ignore early presses; 1 by default). Measured on the face photos, 6 flies each way:
+60.0% with the penalty, 59.8% without (-0.2 +- 2.0, no difference), and the score ledger no longer shows a "Too
+early" row.
 
 Your fly saves itself in the browser as it trains; **Save fly** downloads it (with its challenge,
 abilities and settings) so you can load it anywhere.

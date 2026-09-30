@@ -60,14 +60,14 @@ export class FamiliarSwarm {
   // brain: a Brain with the memory centre on; flight: a RouteFlight to render views with
   // onRoute: the share of a view's firing cells that may be unfamiliar for the route to count as found
   constructor(brain, flight, { swarm = 1, gazeR = 0.25, alts = [1], banks = false, castThr = 0.1, onRoute = 0.12, approachDecay = 0.5, track = false, trackGain = 0.6,
-    aversive = false, aversiveGain = 0.5, layout = null, mapTrack = false, mapGain = 1, arrive = false } = {}) {
+    aversive = false, aversiveGain = 0.5, layout = null, mapTrack = false, mapGain = 1, arrive = false, mapSwarm = false, mapSharp = 12, scales = null } = {}) {
     if (!brain.nKC) throw new Error('familiarity needs the memory centre');
-    Object.assign(this, { brain, F: flight, alts, banks, castThr, onRoute, approachDecay, hasApproach: false, track, trackGain, aversive, aversiveGain, mapTrack, mapGain, arrive });
+    Object.assign(this, { brain, F: flight, alts, banks, castThr, onRoute, approachDecay, hasApproach: false, track, trackGain, aversive, aversiveGain, mapTrack, mapGain, arrive, mapSwarm, mapSharp });
     this.mapSnaps = []; this.routePts = []; // (mapTrack) north-up views of the map, and where the route lies
     const K = layout ? layout.length : Math.max(1, swarm), nb = banks ? alts.length : 1;
     const spot = (k) => (layout ? layout[k] : K > 1 ? [gazeR * Math.cos((2 * Math.PI * k) / K), gazeR * Math.sin((2 * Math.PI * k) / K)] : [0, 0]);
     this.members = Array.from({ length: K }, (_, k) => ({
-      gx: spot(k)[0], gy: spot(k)[1],
+      gx: spot(k)[0], gy: spot(k)[1], scale: scales ? scales[k % scales.length] : 1, // (scales: member k looks at the ground zoomed by this much: a wide, a close and a normal view)
       sum: new Float64Array(brain.rv.length), n: 0, rmean: null,
       memory: Array.from({ length: nb }, () => new Uint8Array(brain.nKC).fill(1)),
       approach: Array.from({ length: nb }, () => new Float32Array(brain.nKC).fill(1)),
@@ -85,7 +85,7 @@ export class FamiliarSwarm {
   // the Kenyon cells member m uses for the view from pose p
   see(m, p) {
     const F = this.F, b = this.brain;
-    F.view({ ...p, gx: m.gx, gy: m.gy });
+    F.view({ ...p, gx: m.gx, gy: m.gy, alt: p.alt * (m.scale || 1) });
     if (m.rmean) b.rmean.set(m.rmean);
     b.step(F.retinas, F.touch, F.pain, F.pos, F.chroma);
     return b.kc;
@@ -111,11 +111,12 @@ export class FamiliarSwarm {
   learnApproach(p, h = p.alt) {
     this.hasApproach = true;
     for (const m of this.members) { const code = this.see(m, p), mem = m.approach[this.bankOf(h)]; for (let j = 0; j < code.length; j++) if (code[j]) mem[j] *= this.approachDecay; }
-    if (this.mapTrack) this.mapSnaps.push({ on: this._northCode(p), x: p.x, y: p.y, bank: this.bankOf(h) });
+    if (this.mapTrack) this.mapSnaps.push({ on: this._northCode(p), ons: this.mapSwarm ? this.members.map((_, k) => this._northCode(p, k)) : null, x: p.x, y: p.y, bank: this.bankOf(h) });
   }
   // (mapTrack) the view straight below, turned north-up, as the list of firing Kenyon cells
-  _northCode(p) {
-    const m = this.members[0], code = this.see({ gx: 0, gy: 0, rmean: m.rmean }, { ...p, th: 0 }), on = [];
+  // (yawErr: the compass is off, so the picture is turned north-up by the wrong angle; mapSwarm: member k looks through its own gaze offset)
+  _northCode(p, k = 0) {
+    const m = this.members[k], code = this.see(k ? { gx: m.gx, gy: m.gy, rmean: m.rmean, scale: m.scale } : { gx: 0, gy: 0, rmean: m.rmean, scale: m.scale }, { ...p, th: p.yawErr || 0 }), on = [];
     for (let j = 0; j < code.length; j++) if (code[j]) on.push(j);
     return Int32Array.from(on);
   }
@@ -142,17 +143,17 @@ export class FamiliarSwarm {
         }
       }
       last = { x: ox, y: oy };
-      const north = new Uint8Array(this.brain.nKC); for (const j of this._northCode(q)) north[j] = 1;
+      const K = this.mapSwarm ? this.members.length : 1, norths = Array.from({ length: K }, (_, k) => { const a = new Uint8Array(this.brain.nKC); for (const j of this._northCode(q, k)) a[j] = 1; return a; });
       const here = cells[this.bankOf(q.alt)], match = new Float64Array(n);
       let mean = 0, cnt = 0;
       for (let c = 0; c < n; c++) {
         let best = 0;
-        for (const sn of here[c]) { let o = 0; const on = sn.on; for (let j = 0; j < on.length; j++) o += north[on[j]]; if (o > best) best = o; }
-        match[c] = best / kA; if (here[c].length) { mean += match[c]; cnt++; }
+        for (const sn of here[c]) { let o = 0; if (K === 1) { const on = sn.on; for (let j = 0; j < on.length; j++) o += norths[0][on[j]]; } else for (let k = 0; k < K; k++) { const on = sn.ons[k]; for (let j = 0; j < on.length; j++) o += norths[k][on[j]]; } if (o > best) best = o; }
+        match[c] = best / (kA * K); if (here[c].length) { mean += match[c]; cnt++; }
       }
       mean /= Math.max(1, cnt);
       let tot = 0;
-      for (let c = 0; c < n; c++) { if (here[c].length) b[c] *= Math.exp(12 * (match[c] - mean)); tot += b[c]; }
+      for (let c = 0; c < n; c++) { if (here[c].length) b[c] *= Math.exp(this.mapSharp * (match[c] - mean)); tot += b[c]; }
       let bi = 0; for (let c = 0; c < n; c++) { b[c] /= tot; if (b[c] > b[bi]) bi = c; }
       const bx = (bi % nx + 0.5) * G, by = (Math.floor(bi / nx) + 0.5) * G;
       let conf = 0; for (let c = 0; c < n; c++) if (Math.hypot((c % nx + 0.5) * G - bx, (Math.floor(c / nx) + 0.5) * G - by) < 48) conf += b[c];

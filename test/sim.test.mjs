@@ -37,11 +37,21 @@ ok('feet score a response: correct foot = correct, other = wrong', () => {
   }
 });
 
-ok('responding to a blank screen is premature, not a trial', () => {
-  const w = new TrialWorld(cfg);
+ok('responding to a blank screen is premature, not a trial (ignoreEarly off)', () => {
+  const w = new TrialWorld(mergeConfig({ timing: { ignoreEarly: 0 } }));
   w.reset(1, stim);
   w.step(1, -1);
   assert.equal(w.lastEvent, EVENT.PREMATURE);
+  assert.equal(w.trials, 0);
+});
+
+ok('by default a press before the reaction time is not counted: no answer, no penalty', () => {
+  const w = new TrialWorld(cfg);
+  w.reset(1, stim);
+  w.step(1, -1);
+  assert.notEqual(w.lastEvent, EVENT.PREMATURE);
+  assert.equal(w.premature, 0);
+  assert.equal(w.parts.premature, 0);
   assert.equal(w.trials, 0);
 });
 

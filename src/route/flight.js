@@ -78,8 +78,16 @@ export class RouteFlight {
     // optional centre of gaze (a swarm member's own viewpoint): p.gx ahead, p.gy to the right, in view lengths
     const cx = p.x + ((p.gx || 0) * fx + (p.gy || 0) * rx) * len, cy = p.y + ((p.gx || 0) * fy + (p.gy || 0) * ry) * len;
     const L = this.retinas[0], Q = this.chroma[0], col = [0, 0, 0], spread = len / R;
+    // a tilted camera (p.roll: right side down, p.pitch: nose up, radians): each sensor looks along its own ray, rotated with the helicopter,
+    // and sees the ground where that ray hits it. The camera height is one maze cell at height 1 (so the view is about 1.6 cells long).
+    const roll = p.roll || 0, pitch = p.pitch || 0, tilted = roll !== 0 || pitch !== 0, Hh = this.w.cell * p.alt;
+    const cr = Math.cos(roll), sr = Math.sin(roll), cp = Math.cos(pitch), sp = Math.sin(pitch);
     for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
-      const f = this.fwd[r] * len, s = this.side[c] * wid, i = r * C + c;
+      let f = this.fwd[r] * len, s = this.side[c] * wid; const i = r * C + c;
+      if (tilted) {
+        const x0 = f, y0 = s, z0 = Hh, x1 = x0 * cp - z0 * sp, z1 = x0 * sp + z0 * cp, y2 = y0 * cr + z1 * sr, z2 = -y0 * sr + z1 * cr, t = Hh / Math.max(0.17 * Hh, z2);
+        f = x1 * t; s = y2 * t;
+      }
       this._sample(cx + fx * f + rx * s, cy + fy * f + ry * s, spread, col);
       const wt = this.weather;
       if (wt.fog || wt.light !== 1) for (let c = 0; c < 3; c++) col[c] = (col[c] * (1 - wt.fog) + wt.fogCol[c] * wt.fog) * wt.light * wt.tint[c];

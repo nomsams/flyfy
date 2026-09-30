@@ -174,8 +174,12 @@ export class TrialWorld {
     // if both cross in the same step) answers. Releasing just re-arms the foot.
     const outs = [out0, out1];
     const order = out1 > out0 ? [1, 0] : [0, 1];
+    // timing.ignoreEarly: before the picture has been up for the reaction time, a press is not counted at all (no answer, no
+    // penalty, no pain): the fly only has to decide once it has looked. Without it such a press is a "too early" error.
+    const hold = t.ignoreEarly && !(this.phase === 'stim' && this.phaseT >= t.reactionSec);
     for (const foot of order) {
       if (!this.pressed[foot] && outs[foot] > f.pressThr) {
+        if (hold) continue;
         this.pressed[foot] = true;
         reward += this._answer(foot);
       } else if (this.pressed[foot] && outs[foot] < f.releaseThr) {

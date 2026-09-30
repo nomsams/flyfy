@@ -18,6 +18,7 @@
       --accent:#2f6fe0; --green:#1f9a44; --red:#d23f39; --amber:#b87700; --pink:#c43b8a; --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 18px rgba(20,30,50,.06); }
   }
   * { box-sizing: border-box; }
+  [hidden] { display:none !important; }
   html, body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
   button, input, select { font:inherit; color:inherit; }
   a { color: var(--accent); }
@@ -235,6 +236,32 @@
           </div>
           <canvas id="chart" width="600" height="150" aria-label="How often the fly has been right over time"></canvas>
           <p class="note" id="trainNote"></p>
+        </div>
+
+        <div class="card" id="swarmCard">
+          <h2><span class="num">3b</span>Or train a swarm</h2>
+          <p class="hint" style="margin-top:0">A swarm is many flies, each looking at the photos from its own spot, that <b>vote on every answer</b>. A swarm only helps if its flies see differently, so each one gets its own centre of gaze on a circle (and the sharp centre is switched on). On the face photos, one fly scores about 60%, a swarm of 9 to 25 about 65-66%, and a swarm of 25 that trains in rounds, each round practising on the photos the swarm still gets wrong ("boosting"), about 67-68%.</p>
+          <div class="form">
+            <label class="f">Flies <div class="seg" id="swSize"><button data-v="9">9</button><button data-v="25" class="on">25</button><button data-v="50">50</button></div></label>
+            <label class="f">Practice per fly <div class="seg" id="swEps"><button data-v="150" class="on">Short</button><button data-v="300">Longer</button><button data-v="600">Longest</button></div></label>
+            <label class="f">Boosting <div class="seg" id="swBoost"><button data-v="1" class="on">On</button><button data-v="0">Off</button></div></label>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn primary" id="btnSwarm"><i data-icon="bolt"></i>Train the swarm</button>
+            <button class="btn" id="btnBest" title="Man or woman, every ability that measured as a win, a boosting swarm of 25 with longer practice">Set everything to the best setup</button>
+            <button class="btn" id="btnSwarmCancel" hidden>Cancel</button>
+            <span class="hint" id="swarmEta" style="margin:0"></span>
+          </div>
+          <div class="progress" id="swarmProgress" hidden><div class="bar"><i></i></div><span></span></div>
+          <div class="score">
+            <div class="bignum" id="swarmNum">–</div>
+            <div><div class="lbl">swarm score on new photos</div><div class="hint" id="swarmSub" style="margin:0">Train a swarm to see its score. Guessing scores 50%.</div></div>
+          </div>
+          <div class="row" style="align-items:flex-start;margin-top:10px">
+            <canvas id="swarmChart" width="420" height="150" aria-label="Swarm score as flies join" style="flex:2;min-width:220px"></canvas>
+            <canvas id="swarmMap" width="170" height="150" aria-label="Where each fly looks" style="flex:1;min-width:130px"></canvas>
+          </div>
+          <p class="note" id="swarmNote"></p>
         </div>
 
         <div class="card">
