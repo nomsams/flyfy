@@ -126,8 +126,9 @@ export class FamiliarSwarm {
     for (const sn of this.mapSnaps) { const cx = Math.min(nx - 1, Math.max(0, Math.floor(sn.x / G))), cy = Math.min(ny - 1, Math.max(0, Math.floor(sn.y / G))); cells[sn.bank][cy * nx + cx].push(sn); }
     let b = new Float64Array(n).fill(1 / n), last = null;
     return (q) => {
+      const ox = q.ox ?? q.x, oy = q.oy ?? q.y; // where its own odometry says it is (q.ox/oy, if the odometer is imperfect)
       if (last) { // move the belief by the fly's own displacement, blur a little, never fully sure
-        const dx = (q.x - last.x) / G, dy = (q.y - last.y) / G, ix = Math.floor(dx), iy = Math.floor(dy), fx = dx - ix, fy = dy - iy, nb = new Float64Array(n);
+        const dx = (ox - last.x) / G, dy = (oy - last.y) / G, ix = Math.floor(dx), iy = Math.floor(dy), fx = dx - ix, fy = dy - iy, nb = new Float64Array(n);
         for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) {
           const v = b[y * nx + x]; if (!v) continue;
           for (const [ox, oy, wt] of [[ix, iy, (1 - fx) * (1 - fy)], [ix + 1, iy, fx * (1 - fy)], [ix, iy + 1, (1 - fx) * fy], [ix + 1, iy + 1, fx * fy]]) {
@@ -140,7 +141,7 @@ export class FamiliarSwarm {
           b[y * nx + x] = sum / c + 0.001 / n;
         }
       }
-      last = { x: q.x, y: q.y };
+      last = { x: ox, y: oy };
       const north = new Uint8Array(this.brain.nKC); for (const j of this._northCode(q)) north[j] = 1;
       const here = cells[this.bankOf(q.alt)], match = new Float64Array(n);
       let mean = 0, cnt = 0;
@@ -180,6 +181,24 @@ export class FamiliarSwarm {
       }
     }
   }
+  // Calibration. "On the route" is judged by how new the best of nine directions looks; the level is a share of the firing cells (onRoute, 12% by default).
+  // That level only suits a route memory of medium fullness: with a long route, or the route flown several times, the memory fills up and
+  // everything looks below it (the fly believes it is on the route everywhere); with a short route nothing does. So after learning the fly measures
+  // the best direction's newness on the route (a little off it, facing roughly along it) and far from it, and sets its level frac of the way from
+  // the first to the second. Measured over six mazes: 54% -> 76-83% (three route passes); at 10 x 10: 38% -> 90%.
+  calibrate(frac = 0.25, rng = Math.random, alt = this.alts[0]) {
+    const w = this.F.w, R = w.route, n = R.x.length, per = this.brain.kActive * this.size, N = 30;
+    const best9 = (q) => Math.min(...this.rate(q).route) / per;
+    const tan = (i) => Math.atan2(R.y[Math.min(n - 1, i + 4)] - R.y[Math.max(0, i - 4)], R.x[Math.min(n - 1, i + 4)] - R.x[Math.max(0, i - 4)]);
+    let on = 0, off = 0;
+    for (let k = 0; k < N; k++) {
+      const i = Math.floor(n * (0.05 + 0.9 * rng())), th0 = tan(i), o = (rng() * 2 - 1) * 0.35 * w.cell;
+      on += best9({ x: R.x[i] - Math.sin(th0) * o, y: R.y[i] + Math.cos(th0) * o, th: wrap(th0 + (rng() * 2 - 1) * 0.6), alt });
+      for (;;) { const q = { x: rng() * w.W, y: rng() * w.H, th: (rng() * 2 - 1) * Math.PI, alt }; if (this.F.nearest(q, true).d > 1.5 * w.cell) { off += best9(q); break; } }
+    }
+    this.onRoute = on / N + frac * (off / N - on / N);
+    return { on: on / N, off: off / N, level: this.onRoute };
+  }
   // how unfamiliar each of the 9 directions looks, summed over the swarm, to the route memory and
   // to the approach memory (both from the same views)
   rate(q) {
@@ -215,8 +234,9 @@ export class FamiliarSwarm {
     const { n, BIN, th } = this._bins(), kA = this.brain.kActive;
     let b = new Float64Array(n).fill(1 / n), last = null;
     return (q, codes) => {
+      const ox = q.ox ?? q.x, oy = q.oy ?? q.y;
       if (last) { // move the belief on by how far the fly flew along the route's direction in each bin
-        const dist = Math.hypot(q.x - last.x, q.y - last.y), dir = Math.atan2(q.y - last.y, q.x - last.x), nb = new Float64Array(n);
+        const dist = Math.hypot(ox - last.x, oy - last.y), dir = Math.atan2(oy - last.y, ox - last.x), nb = new Float64Array(n);
         for (let k = 0; k < n; k++) {
           if (!b[k]) continue;
           const t = k + (dist * Math.cos(dir - th[k])) / BIN, k0 = Math.floor(t), f = t - k0;
@@ -228,7 +248,7 @@ export class FamiliarSwarm {
         for (let k = 0; k < n; k++) blur[k] = 0.25 * (b[k - 1] || 0) + 0.5 * b[k] + 0.25 * (b[k + 1] || 0) + 0.002 / n;
         b = blur;
       }
-      last = { x: q.x, y: q.y };
+      last = { x: ox, y: oy };
       // how well the view matches the stored patterns in each bin (best match, summed over the swarm)
       const bank = this.bankOf(q.alt), match = new Float64Array(n);
       this.members.forEach((m, mi) => {

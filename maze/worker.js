@@ -54,7 +54,7 @@ const H = {
   // a new fly over the same maze (colour, memory size); the route has to be taught again
   setFly(m) { run++; flyOpts = m.fly; if (world) H._makeFly(); },
   _makeFly() {
-    cfg = mergeConfig({ eye: { activeVision: 0, normalize: flyOpts.normalize ? 1 : 0 }, mb: { cells: flyOpts.kc, sparsity: flyOpts.kc >= 10000 ? 0.01 : 0.02 } },
+    cfg = mergeConfig({ eye: { activeVision: 0, normalize: flyOpts.normalize ? 1 : 0, ...(flyOpts.burst > 1 ? { burst: flyOpts.burst } : {}) }, mb: { cells: flyOpts.kc, sparsity: flyOpts.kc >= 10000 ? 0.01 : 0.02 } },
       mergeConfig(setupConfig('faces', { memory: true, colour: !!flyOpts.colour })));
     brain = new Brain(cfg); brain.setParams(brain.initParams(1)); brain.reset(false);
     F = new RouteFlight(world, cfg); swarm = null;
@@ -107,6 +107,8 @@ const H = {
         }
       }
     }
+    // it measures how new the best direction looks on and off the route, and judges "on the route" in between (a full memory makes everything look familiar)
+    if (m.approach) { postMessage({ type: 'train', pose: { x: world.start[0], y: world.start[1], th: 0, alt: 1 }, stage: 'Measuring what the route looks like', pass: passes.length, passes: passes.length, alt: 1, share: swarm.familiarShare(), members: swarm.members.map((mm) => [mm.gx, mm.gy]) }); swarm.calibrate(0.25, rnd, alts[0]); }
     H._flyOver(); // from now on it flies over the chosen version, in the chosen weather
     preview();
     if (variantV) { const { msg, transfer } = mapMessage(variantWorld, true); postMessage(msg, transfer); }

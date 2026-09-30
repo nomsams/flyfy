@@ -18,6 +18,12 @@
 //        [--weather fog] [--train-weather clear] (clear, haze, fog, overcast, dusk, night, noisy)
 //        [--normalize] (contrast filter: every view stretched to the same spread) [--edges] (edge boost)
 //        [--aversive] (a wrong-way memory) [--climb 1.4] (climb when unsure) [--row 2,3] (three circles in a row: side,middle members)
+//        [--burst 8] (the camera averages 8 frames per step: less noise) [--smooth 1] (spatial smoothing of every view)
+//        [--odo-bias 0.02 --odo-noise 0.05 --odo-scale 0.1] (imperfect odometry: heading bias/noise in radians per step, distance scale error)
+//        [--w0 3] (start at maze number 3, to test one particular maze)
+//        [--calibrate 0.5] (the fly measures how new the best direction looks on and off the route, and judges "on the route" halfway between)
+//        [--decay 0.9] (how much each learning-flight view dims the cells it uses; default 0.5)
+//        [--wind 0.3] (a steady wind of 0.3 x the flying speed, in a random direction, that the fly does not know about)
 //        [--policy steer|familiar] [--kc 4000] [--sparsity 0.02] (memory-centre size for familiarity)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -56,7 +62,7 @@ function tangent(world, i) { const { x, y } = world.route, j = Math.min(x.length
 // fly one flight; policy(p) returns +1 (right) or -1 (left) or a turn in radians (teacher)
 // lostAt: how far from the route (cells) counts as lost; global: search the whole route for the
 // nearest point every step (needed when the fly starts far from it)
-function fly(world, F, p, policy, { maxSteps, onStep, lostAt = 1.5, global = false }) {
+function fly(world, F, p, policy, { maxSteps, onStep, lostAt = 1.5, global = false, drift = null }) {
   const speed = world.cell / 8, goalS = world.route.length - 0.3 * world.cell, track = [];
   F.hint = F.nearest(p, true).i;
   let s0 = F.nearest(p).s, maxS = s0, dev = 0, n = 0, reached = false, lost = false, found = false, near = false, falseStop = false;
@@ -66,6 +72,12 @@ function fly(world, F, p, policy, { maxSteps, onStep, lostAt = 1.5, global = fal
     const turn = policy(p);
     if (p.arrived) { if (Math.hypot(p.x - gx, p.y - gy) < 0.8 * world.cell) near = true; else falseStop = true; break; } // it believes it is at the goal: it stops
     p.th = wrap(p.th + turn);
+    if (drift) { // imperfect odometry (its heading is off by a bias plus noise, its distance by a scale error) and wind (a steady push the fly does not know about)
+      if (!p.ox) { p.ox = p.x; p.oy = p.y; }
+      const thb = p.th + drift.bias + drift.noise * gauss(drift.rng), sc = 1 + drift.scale;
+      p.ox += sc * speed * Math.cos(thb); p.oy += sc * speed * Math.sin(thb);
+      p.x += drift.wind * speed * Math.cos(drift.windDir); p.y += drift.wind * speed * Math.sin(drift.windDir);
+    }
     p.x += speed * Math.cos(p.th); p.y += speed * Math.sin(p.th);
     const nr = F.nearest(p, global);
     maxS = Math.max(maxS, nr.s); dev += nr.d; n++; track.push([p.x, p.y]);
@@ -101,9 +113,9 @@ function releaseAnywhere(world, F, r, alt) {
 // itself, only what the world looked like while it was on it.
 export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt = 0, policy = 'steer', kc = 0, sparsity = 0, testVariant = 0,
   trainAlts = null, altBanks = false, testAlt = 0, swarm = 1, gazeR = 0.25, cast = false, castThr = 0.1, approach = 0, drop = false, track = false,
-  aversive = false, climb = 0, row = null, map = false, arrive = false, weather = 'clear', trainWeather = 'clear', normalize = false, edges = false }) {
+  aversive = false, climb = 0, row = null, map = false, arrive = false, weather = 'clear', trainWeather = 'clear', normalize = false, edges = false, burst = 0, smooth = 0, approachDecay = 0.5, calibrate = 0, odoBias = 0, odoNoise = 0, odoScale = 0, wind = 0 }) {
   const world = makeWonderland(worldOpts);
-  const over = { eye: { activeVision: 0, normalize: normalize ? 1 : 0, lateralInhib: edges ? 1.5 : 0 }, learn: { anneal: 0 } };
+  const over = { eye: { activeVision: 0, normalize: normalize ? 1 : 0, lateralInhib: edges ? 1.5 : 0, ...(burst ? { burst } : {}), ...(smooth ? { smooth: 1 } : {}) }, learn: { anneal: 0 } };
   if (kc) over.mb = { cells: kc, ...(sparsity ? { sparsity } : {}) };
   const cfg = mergeConfig(over, mergeConfig(setupConfig('faces', SETUPS[setup])));
   const brain = new Brain(cfg), theta = brain.initParams(seed);
@@ -122,7 +134,7 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
   if (policy === 'familiar') {
     // familiarity navigation (src/route/familiar.js, the same code the web app runs)
     const alts = trainAlts && trainAlts.length ? trainAlts : [1];
-    fam = new FamiliarSwarm(brain, F, { swarm, gazeR, alts, banks: altBanks, castThr, track, aversive, layout: row ? rowOfCircles(row) : null, mapTrack: map, arrive });
+    fam = new FamiliarSwarm(brain, F, { swarm, gazeR, alts, banks: altBanks, castThr, track, aversive, layout: row ? rowOfCircles(row) : null, mapTrack: map, arrive, approachDecay });
     // each member's "average view": one teacher flight along the route at every training height
     for (const h of alts) fly(world, F, { x: world.start[0], y: world.start[1], th: tangent(world, 0), alt: h }, (q) => { fam.addToAverage(q); return teacherTurn(q); }, { maxSteps: 2000 });
     fam.finishAverage();
@@ -135,6 +147,8 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
     }
     // learning flights toward the route from all over the map (the approach memory)
     if (approach) for (const h of alts) for (const _ of fam.approachFlights(world, { spacing: approach, h, rng: r })) { /* learning happens inside */ }
+    // calibrate: the fly measures how new the best direction looks on and off the route and judges "on the route" between the two (see FamiliarSwarm.calibrate)
+    if (calibrate) fam.calibrate(calibrate, r);
     // climb: when unsure, rise toward height `climb`; back to the release height when sure
     testPolicy = () => { let nav = null; return (q) => { nav ||= fam.navigator({ cast, climb: climb ? { cruise: q.alt, top: climb, rate: 0.04 } : null }); const r = nav(q); if (r.climb) q.alt += r.climb; if (r.arrived) q.arrived = true; return r.turn; }; };
   } else {
@@ -162,7 +176,9 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
     if (testAlt) p0.alt = testAlt;
     const maxSteps = Math.ceil((world.route.length / (world.cell / 8)) * (drop ? 3.5 : 2.5));
     const how = drop ? { maxSteps, lostAt: Infinity, global: true } : { maxSteps };
-    const res = fly(world, F, { ...p0 }, testPolicy(), how);
+    const windDir = rt() * 2 * Math.PI; // (always drawn, so runs with and without wind release the fly at the same places)
+    const drift = odoBias || odoNoise || odoScale || wind ? { bias: odoBias, noise: odoNoise, scale: odoScale, wind, windDir, rng: rt } : null;
+    const res = fly(world, F, { ...p0 }, testPolicy(), { ...how, drift });
     out.found += res.found / releases; out.near += res.near / releases; out.falseStop += res.falseStop / releases;
     out.reached += res.reached / releases; out.progress += res.progress / releases; out.dev += res.dev / releases;
     if (k < 8) out.tracks.push(res.track);
@@ -191,9 +207,10 @@ if (isMain && !args.one) {
   const common = { flights: +(args.flights || 40), releases: +(args.releases || 30), alt: +(args.alt || 0), policy: args.policy || 'steer', kc: +(args.kc || 0), sparsity: +(args.sparsity || 0), testVariant: +(args['test-variant'] || 0),
     trainAlts: args['train-alts'] ? args['train-alts'].split(',').map(Number) : null, altBanks: !!args.banks, testAlt: +(args['test-alt'] || 0),
     swarm: +(args.swarm || 1), gazeR: +(args.gaze ?? 0.25), cast: !!args.cast, castThr: +(args['cast-thr'] || 0.1), approach: +(args.approach || 0), drop: !!args.drop, track: !!args.track,
-    aversive: !!args.aversive, map: !!args.map, arrive: !!args.arrive, weather: args.weather || 'clear', trainWeather: args['train-weather'] || 'clear', normalize: !!args.normalize, edges: !!args.edges, climb: +(args.climb || 0), row: args.row ? (([side, mid]) => ({ side, mid }))(args.row.split(',').map(Number)) : null };
+    aversive: !!args.aversive, map: !!args.map, arrive: !!args.arrive, weather: args.weather || 'clear', trainWeather: args['train-weather'] || 'clear', normalize: !!args.normalize, edges: !!args.edges, burst: +(args.burst || 0), calibrate: +(args.calibrate || 0), approachDecay: +(args.decay || 0.5), smooth: +(args.smooth || 0), odoBias: +(args['odo-bias'] || 0), odoNoise: +(args['odo-noise'] || 0), odoScale: +(args['odo-scale'] || 0), wind: +(args.wind || 0), climb: +(args.climb || 0), row: args.row ? (([side, mid]) => ({ side, mid }))(args.row.split(',').map(Number)) : null };
   const jobs = [];
-  for (const setup of setups) for (let w = 1; w <= worlds; w++) for (let s = 1; s <= seeds; s++) jobs.push({ ...common, setup, seed: s, worldOpts: { ...worldBase, seed: w } });
+  const w0 = +(args.w0 || 1); // the first maze number (to test one particular maze)
+  for (const setup of setups) for (let w = w0; w < w0 + worlds; w++) for (let s = 1; s <= seeds; s++) jobs.push({ ...common, setup, seed: s, worldOpts: { ...worldBase, seed: w } });
   const runOne = (job) => new Promise((resolve, reject) => {
     const p = spawn(process.execPath, [self, '--one', JSON.stringify(job)], { stdio: ['ignore', 'pipe', 'inherit'] });
     let o = ''; p.stdout.on('data', (d) => (o += d));
@@ -211,7 +228,7 @@ if (isMain && !args.one) {
     console.log(setup.padEnd(10) + pct(m('reached')).padStart(14) + pct(m('progress')).padStart(13) + (m('dev').toFixed(2) + ' cells').padStart(12) + `   (${pct(m('teacher'))} / ${pct(m('blind'))})` + (common.drop ? `   found route ${pct(m('found'))}, got within 0.8 cells of the goal ${pct(m('near'))}, stopped somewhere else believing it was there ${pct(m('falseStop'))}` : `   got within 0.8 cells of the goal ${pct(m('near'))}, false stops ${pct(m('falseStop'))}`) + `   flies: ${per}`);
   }
   if (args.png) { // a picture of one fly's test flights
-    const { out, world } = trial({ ...common, setup: setups[setups.length - 1], seed: 1, worldOpts: { ...worldBase, seed: 1 } });
+    const { out, world } = trial({ ...common, setup: setups[setups.length - 1], seed: 1, worldOpts: { ...worldBase, seed: w0 } });
     const cols = [[255, 200, 0], [0, 220, 255], [255, 80, 200], [120, 255, 120], [255, 140, 40], [180, 120, 255], [255, 255, 255], [80, 160, 255]];
     fs.writeFileSync(args.png, encodePNG(world.W, world.H, mapImage(world, out.tracks.map((pts, i) => ({ pts, col: cols[i % cols.length] })))));
     console.log('picture: ' + args.png);

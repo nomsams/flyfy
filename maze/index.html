@@ -120,6 +120,9 @@
       <h2><span class="num">2</span>The fly</h2>
       <label class="switch"><input type="checkbox" id="colour" checked><span></span>Colour vision</label>
       <label class="switch"><input type="checkbox" id="normalize" checked><span></span>Contrast filter (stretches every view to the same contrast; keeps it working in haze, fog and dusk)</label>
+      <div class="f" style="display:grid;gap:4px;font-size:13px;color:var(--mut)">Camera frames averaged per step (less noise at night)
+        <div class="seg" id="burst"><button data-v="1" class="on">1</button><button data-v="4">4</button><button data-v="16">16</button></div>
+      </div>
       <div class="f" style="display:grid;gap:4px;font-size:13px;color:var(--mut)">Memory centre (Kenyon cells)
         <div class="seg" id="kc"><button data-v="5000">5,000</button><button data-v="10000">10,000</button><button data-v="20000" class="on">20,000</button></div>
       </div>
@@ -136,7 +139,7 @@
         <div class="checks" id="alts"><label><input type="checkbox" value="0.5" checked>low 0.5</label><label><input type="checkbox" value="0.7" checked>0.7</label><label><input type="checkbox" value="1" checked>1</label><label><input type="checkbox" value="1.4" checked>high 1.4</label></div>
       </div>
       <div class="grid2">
-        <label class="f">Passes per height <output id="passes-o">3</output><input type="range" id="passes" min="1" max="5" value="3"></label>
+        <label class="f">Passes per height (one is enough; more fills the memory and hurts on long routes) <output id="passes-o">1</output><input type="range" id="passes" min="1" max="5" value="1"></label>
         <label class="switch" style="align-self:end"><input type="checkbox" id="banks" checked><span></span>A memory per height</label>
       </div>
       <label class="switch"><input type="checkbox" id="track" checked><span></span>Keep track of where it is on the route (from its own speed and heading, and views stored in order)</label>

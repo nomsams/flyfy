@@ -405,8 +405,56 @@ anywhere, trained in clear weather (2 mazes x 2 flies x 10 drops), reached the g
 "Reached the goal" here means getting within 0.8 maze cells of it. The stricter test used before (within
 about half a cell of the route's very last point) undercounts when noise makes the fly hover around the
 goal: it gave 38% / 63% for the noisy camera, where 90% / 95% got within 0.8 cells. Camera noise alone
-is survivable; night, dark and noisy at once, is the weakest case (10% -> 28% with the filter). Averaging
-a few views over time is the next thing to try.
+is survivable; night, dark and noisy at once, is the weakest case (10% -> 28% with the filter).
+
+**Night, wind and a bad odometer** (2 mazes x 2 flies x 10 drops, "within 0.8 cells of the goal"; mazes 1 and 2,
+route flown three times). A real camera takes many frames while the fly flies one step, so `--burst k` averages
+k frames per step (noise / sqrt(k)); `--smooth 1` blurs every view over its neighbours. Both change what the
+brain gets, so the fly also learns with them.
+
+| night (light x 0.25, noise 0.05), contrast filter | within 0.8 cells |
+|---|---|
+| filter only | 20% |
+| + 4 frames per step | 80% |
+| + 16 frames per step | **93%** |
+| + smoothing | 77% |
+| + smoothing and 4 frames | 85% |
+| 16 frames, no filter | 8% (both are needed) |
+| moonless (light x 0.1): filter / + 16 frames / + 64 frames | 13% / 48% / 77% |
+| foggy night, filter + 16 frames | 40% |
+
+Wind (`--wind 0.4` = a steady push of 40% of the flying speed, unknown to the fly) and odometer errors
+(`--odo-bias`, `--odo-noise`, `--odo-scale`: its idea of heading and distance flown) cost little, because the
+pictures keep pulling the belief back: ideal 90%, wind 20% 88%, wind 40% 80%, heading off by 6 degrees 83%, by
+17 degrees 80%, noisy compass 93%, distance 25% off 90%. Night + filter + 16 frames + wind 30% + odometer 11
+degrees off and noisy: 93%.
+
+**Not every maze is easy - and why.** Everything above was measured on mazes 1 and 2. Over six 6 x 6 mazes
+(`--worlds 6`) the full fly with three route passes got only **54%** (per maze 81, 94, 88, 0, 25, 25%), and in
+bigger mazes it got worse (10 x 10: 38%, 12 x 12: 8%). Trying more memory cells, more or fewer learning flights,
+casting, climbing and a swarm changed little. The cause: the yes-or-no route memory fills up (79% of the cells
+after three passes of a 22-cell route). "On the route" is judged by the best of nine directions looking at most
+12% new, so in a full memory everything is below that level: the fly believes it is on the route everywhere and
+never uses its map. (In the in-page fly, new cells on the route / elsewhere: maze 1 16% / 20%, maze 4 4% / 8%,
+maze 6 10% / 10%.) Two fixes:
+
+1. **Fly the route once** (`--flights 1`): six mazes 54% -> **99%** (two passes: 75%).
+2. **The fly measures its own level** (`--calibrate 0.25`; `FamiliarSwarm.calibrate`): after learning it notes how
+   new the best direction looks on the route and far from it, and puts "on the route" a quarter of the way
+   between. Three passes: 54% -> 83%.
+
+| maze size (within 0.8 cells) | 3 passes | 1 pass | 1 pass + calibrated |
+|---|---|---|---|
+| 6 x 6 (6 mazes) | 54% | 99% | 94% |
+| 8 x 8 | 19% | 67% | 92% |
+| 10 x 10 | 47% | 38% | **90%** |
+| 12 x 12 | 6% | 8% | **92%** |
+| 14 x 14 | 13% | 6% | 75% |
+| 18 x 18 (2 mazes) | - | - | 67% |
+
+Six mazes, one pass, fixed level: fog + filter 97%, night + filter + 16 frames 92%, wind 40% 79%, odometer 17
+degrees off 97%. The maze app now flies the route once and calibrates by default. The guide has a widget
+that flies the same fly in four different mazes.
 
 Read the maze guide: **[maze-guide.html](maze-guide.html)** (https://nomsams.github.io/flyfy/maze-guide.html), a plain-language walk through the maze fly with a small fly you can run in the page. Try it in the browser: **[Fly Lab · Maze](maze/)** (`maze/`, same site). Build a maze, teach the route at
 chosen heights (with learning flights), tap anywhere on the map to drop the fly, and change its

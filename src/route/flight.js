@@ -18,6 +18,8 @@ export const WEATHER = {
   dusk: { light: 0.55, tint: [1.12, 0.95, 0.78] },
   night: { light: 0.25, tint: [0.8, 0.9, 1.2], noise: 0.05 },
   noisy: { noise: 0.08 },
+  deepnight: { light: 0.1, tint: [0.8, 0.9, 1.2], noise: 0.05 },
+  foggynight: { fog: 0.4, light: 0.25, tint: [0.8, 0.9, 1.2], noise: 0.05 },
 };
 
 export class RouteFlight {
@@ -84,10 +86,14 @@ export class RouteFlight {
       L[i] = 0.299 * col[0] + 0.587 * col[1] + 0.114 * col[2];
       Q[i] = e.colour ? col[0] - col[1] : 0;
       Q[R * C + i] = e.colour ? col[2] - (col[0] + col[1]) / 2 : 0;
-      if (wt.noise) { L[i] += wt.noise * this._gauss(); if (e.colour) { Q[i] += 0.5 * wt.noise * this._gauss(); Q[R * C + i] += 0.5 * wt.noise * this._gauss(); } }
+      if (wt.noise) { const nz = wt.noise / Math.sqrt(e.burst || 1); L[i] += nz * this._gauss(); if (e.colour) { Q[i] += 0.5 * nz * this._gauss(); Q[R * C + i] += 0.5 * nz * this._gauss(); } } // burst: the camera takes several frames per step and averages them
     }
     // what the camera itself saw (weather included), before any contrast filter: for showing
     if (e.normalize) { this.rawL = Float32Array.from(L); this.rawQ = Float32Array.from(Q); } else { this.rawL = L; this.rawQ = Q; }
+    if (e.smooth) { // spatial smoothing: every sensor averaged with its neighbours (less noise, less detail)
+      const box = (a, o) => { const src = Float32Array.from(a.subarray(o, o + R * C)); for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) { let s = 0, n = 0; for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { const rr = r + dr, cc = c + dc; if (rr >= 0 && rr < R && cc >= 0 && cc < C) { s += src[rr * C + cc]; n++; } } a[o + r * C + c] = s / n; } };
+      box(L, 0); if (e.colour) { box(Q, 0); box(Q, R * C); }
+    }
     if (e.normalize) { // contrast filter: stretch the view so its brightness always has the same spread
       let m = 0, v = 0;
       for (let i = 0; i < R * C; i++) m += L[i] / (R * C);
