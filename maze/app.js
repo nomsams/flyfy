@@ -18,7 +18,7 @@ document.querySelectorAll('.seg').forEach((seg) => seg.addEventListener('click',
 const segVal = (id) => +document.querySelector(`#${id} button.on`).dataset.v;
 const segVal2 = (id) => document.querySelector(`#${id} button.on`).dataset.v; // for segments whose values are words
 const mazeOpts = () => ({ seed: Math.max(1, +$('seed').value || 1), cells: segVal('cells'), wobble: +$('wobble').value, variety: +$('variety').value });
-const flyOpts = () => ({ colour: $('colour').checked, kc: segVal('kc'), swarm: segVal('swarm'), gaze: +$('gaze').value, normalize: $('normalize').checked });
+const flyOpts = () => ({ colour: $('colour').checked, kc: segVal('kc'), swarm: segVal('swarm'), gaze: +$('gaze').value, normalize: $('normalize').checked, burst: segVal('burst') });
 const bindOut = (id, fmt = (v) => v) => { const f = () => { $(id + '-o').textContent = fmt($(id).value); }; $(id).addEventListener('input', f); f(); };
 bindOut('wobble'); bindOut('variety'); bindOut('gaze'); bindOut('passes'); bindOut('alt', (v) => (+v).toFixed(2));
 
@@ -47,7 +47,7 @@ $('cells').addEventListener('change', rebuildSoon);
 ['wobble', 'variety', 'seed'].forEach((id) => $(id).addEventListener('change', rebuildSoon));
 $('weather').addEventListener('change', () => { S.weather = segVal2('weather'); S.dirty = true; worker.postMessage({ type: 'setWeather', weather: S.weather }); });
 ['colour', 'normalize'].forEach((id) => $(id).addEventListener('change', flyChanged));
-['kc', 'swarm'].forEach((id) => $(id).addEventListener('change', flyChanged));
+['kc', 'swarm', 'burst'].forEach((id) => $(id).addEventListener('change', flyChanged));
 $('gaze').addEventListener('change', flyChanged);
 function flyChanged() {
   if (!S.map) return;
