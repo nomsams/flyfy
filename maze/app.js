@@ -4,7 +4,7 @@ const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'modu
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
 const S = {
-  map: null, W: 1, H: 1, cell: 64, route: [], start: [0, 0], goal: [0, 0], length: 1,
+  weather: 'clear', map: null, W: 1, H: 1, cell: 64, route: [], start: [0, 0], goal: [0, 0], length: 1,
   trainTrail: [], flyTrail: [], pose: null, members: [[0, 0]], trained: false, flying: false, training: false,
   tally: { n: 0, ok: 0 }, fly: null, dirty: true,
 };
@@ -45,7 +45,7 @@ let rebuildTimer = null;
 const rebuildSoon = () => { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(build, 350); };
 $('cells').addEventListener('change', rebuildSoon);
 ['wobble', 'variety', 'seed'].forEach((id) => $(id).addEventListener('change', rebuildSoon));
-$('weather').addEventListener('change', () => worker.postMessage({ type: 'setWeather', weather: segVal2('weather') }));
+$('weather').addEventListener('change', () => { S.weather = segVal2('weather'); S.dirty = true; worker.postMessage({ type: 'setWeather', weather: S.weather }); });
 ['colour', 'normalize'].forEach((id) => $(id).addEventListener('change', flyChanged));
 ['kc', 'swarm'].forEach((id) => $(id).addEventListener('change', flyChanged));
 $('gaze').addEventListener('change', flyChanged);
@@ -119,13 +119,15 @@ worker.onmessage = (e) => {
     $('train-bar').style.width = ((100 * (m.pass - 0.5)) / m.passes).toFixed(0) + '%';
     $('train-t').textContent = `${m.stage}, height ${m.alt} (pass ${m.pass} of ${m.passes}) · ${(100 * m.share).toFixed(0)}% of Kenyon cells familiar`;
     S.dirty = true;
+  } else if (m.type === 'preview') {
+    drawViews(m.view);
   } else if (m.type === 'trained') {
     S.training = false; S.trained = true; S.approach = !!m.approach; S.members = m.members; S.pose = null;
     $('train-bar').style.width = '100%';
     $('train-t').textContent = `Learned. ${(100 * m.share).toFixed(0)}% of its Kenyon cells now mean "I've been on the route".` + (m.approach ? ' It also knows the way to the route from all over the map: drop it anywhere.' : ' Release it near the route.');
     setBusy(); S.dirty = true;
   } else if (m.type === 'fly') {
-    S.where = m.where; S.onMap = m.onMap;
+    S.where = m.where; S.onMap = m.onMap; S.lastFly = { status: m.status, dGoal: m.dGoal, steps: m.steps }; // (read by the tests)
     $('st-alt').textContent = m.pose.alt.toFixed(2);
     S.pose = m.pose; S.flyTrail.push([m.pose.x, m.pose.y, m.casting, m.mode === 'approach']); S.fly = m;
     const st = $('st-state'); st.className = 'pill ' + m.status;
@@ -133,7 +135,7 @@ worker.onmessage = (e) => {
     $('st-prog').textContent = m.found ? (100 * m.progress).toFixed(0) + '%' : 'not found yet';
     $('st-off').textContent = m.off.toFixed(2) + ' cells';
     $('st-where').textContent = m.where ? `${(100 * m.where.conf).toFixed(0)}% sure, ${(100 * m.where.s / S.length).toFixed(0)}% along the route` : m.mode === 'approach' ? (m.onMap ? `not on the route yet; ${(100 * m.onMap.conf).toFixed(0)}% sure where it is on the map` : 'not on the route yet') : 'not keeping track';
-    drawView(m.view); drawFan(m);
+    drawViews(m.view); drawFan(m);
     if (['reached', 'lost', 'tired'].includes(m.status)) {
       S.flying = false; S.tally.n++; if (m.status === 'reached') S.tally.ok++;
       $('st-tally').textContent = `${S.tally.ok} of ${S.tally.n}`; setBusy();
@@ -152,6 +154,7 @@ function drawMap() {
   mctx.clearRect(0, 0, Wc, Wc);
   if (!S.map) return;
   mctx.imageSmoothingEnabled = true; mctx.drawImage(S.map, 0, 0, Wc, Wc);
+  drawWeather(Wc);
   if ($('show-route').checked) {
     mctx.strokeStyle = 'rgba(255,255,255,.85)'; mctx.lineWidth = 2.5; mctx.setLineDash([6, 6]);
     mctx.beginPath(); S.route.forEach(([x, y], i) => (i ? mctx.lineTo(x * k, y * k) : mctx.moveTo(x * k, y * k))); mctx.stroke(); mctx.setLineDash([]);
@@ -187,14 +190,40 @@ function drawMap() {
     mctx.beginPath(); mctx.moveTo(12, 0); mctx.lineTo(-8, -7); mctx.lineTo(-4, 0); mctx.lineTo(-8, 7); mctx.closePath(); mctx.fill(); mctx.stroke(); mctx.restore();
   }
 }
-function drawView(v) {
-  const c = $('view'), ctx = c.getContext('2d'), img = ctx.createImageData(20, 14);
+// the weather drawn over the map, so a choice can be seen (the same haze, fog, light and noise the camera gets)
+const WEATHER_LOOK = {
+  clear: null,
+  haze: { veil: [200, 205, 210, 0.30] },
+  fog: { veil: [200, 205, 210, 0.62] },
+  overcast: { veil: [190, 196, 205, 0.18], dark: [190, 196, 205] },
+  dusk: { dark: [255, 190, 130], veil: [255, 160, 90, 0.10] },
+  night: { dark: [70, 90, 160], noise: 0.55 },
+  noisy: { noise: 0.5 },
+};
+let noiseTile = null;
+function drawWeather(Wc) {
+  const look = WEATHER_LOOK[S.weather]; if (!look) return;
+  if (look.dark) { mctx.globalCompositeOperation = 'multiply'; mctx.fillStyle = `rgb(${look.dark.join(',')})`; mctx.fillRect(0, 0, Wc, Wc); mctx.globalCompositeOperation = 'source-over'; }
+  if (look.veil) { mctx.fillStyle = `rgba(${look.veil.join(',')})`; mctx.fillRect(0, 0, Wc, Wc); }
+  if (look.noise) { // camera noise: a fixed speckle pattern
+    if (!noiseTile) { noiseTile = document.createElement('canvas'); noiseTile.width = noiseTile.height = 128; const g = noiseTile.getContext('2d'), im = g.createImageData(128, 128); for (let i = 0; i < 128 * 128; i++) { const v = Math.random() < 0.5 ? 0 : 255; im.data.set([v, v, v, 90 * Math.random()], i * 4); } g.putImageData(im, 0, 0); }
+    mctx.globalAlpha = look.noise; mctx.fillStyle = mctx.createPattern(noiseTile, 'repeat'); mctx.fillRect(0, 0, Wc, Wc); mctx.globalAlpha = 1;
+  }
+}
+// a 20 x 14 sensor view drawn to a canvas: colour from brightness plus the two colour differences
+function paintView(canvas, L, Q) {
+  const ctx = canvas.getContext('2d'), img = ctx.createImageData(20, 14);
   for (let i = 0; i < 280; i++) {
-    const l = v.L[i], rg = v.Q[i], by = v.Q[280 + i], g = l - 0.356 * rg - 0.114 * by, r = g + rg, b = by + g + rg / 2;
+    const l = L[i], rg = Q[i], by = Q[280 + i], g = l - 0.356 * rg - 0.114 * by, r = g + rg, b = by + g + rg / 2;
     img.data.set([255 * r, 255 * g, 255 * b, 255], i * 4);
   }
   const t = document.createElement('canvas'); t.width = 20; t.height = 14; t.getContext('2d').putImageData(img, 0, 0);
-  ctx.imageSmoothingEnabled = false; ctx.drawImage(t, 0, 0, c.width, c.height);
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(t, 0, 0, canvas.width, canvas.height);
+}
+function drawViews(v) {
+  paintView($('view'), v.rawL, v.rawQ);
+  paintView($('view2'), v.L, v.Q);
+  $('view2-t').textContent = v.filtered ? 'What the brain gets (after the contrast filter)' : 'What the brain gets (no contrast filter: the same)';
 }
 function drawFan(m) {
   const c = $('fan'), ctx = c.getContext('2d'), W = c.width, H = c.height, cx = W / 2, cy = H - 12, R = H - 24;

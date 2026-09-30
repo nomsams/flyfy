@@ -60,9 +60,9 @@ export class FamiliarSwarm {
   // brain: a Brain with the memory centre on; flight: a RouteFlight to render views with
   // onRoute: the share of a view's firing cells that may be unfamiliar for the route to count as found
   constructor(brain, flight, { swarm = 1, gazeR = 0.25, alts = [1], banks = false, castThr = 0.1, onRoute = 0.12, approachDecay = 0.5, track = false, trackGain = 0.6,
-    aversive = false, aversiveGain = 0.5, layout = null, mapTrack = false, mapGain = 1 } = {}) {
+    aversive = false, aversiveGain = 0.5, layout = null, mapTrack = false, mapGain = 1, arrive = false } = {}) {
     if (!brain.nKC) throw new Error('familiarity needs the memory centre');
-    Object.assign(this, { brain, F: flight, alts, banks, castThr, onRoute, approachDecay, hasApproach: false, track, trackGain, aversive, aversiveGain, mapTrack, mapGain });
+    Object.assign(this, { brain, F: flight, alts, banks, castThr, onRoute, approachDecay, hasApproach: false, track, trackGain, aversive, aversiveGain, mapTrack, mapGain, arrive });
     this.mapSnaps = []; this.routePts = []; // (mapTrack) north-up views of the map, and where the route lies
     const K = layout ? layout.length : Math.max(1, swarm), nb = banks ? alts.length : 1;
     const spot = (k) => (layout ? layout[k] : K > 1 ? [gazeR * Math.cos((2 * Math.PI * k) / K), gazeR * Math.sin((2 * Math.PI * k) / K)] : [0, 0]);
@@ -247,12 +247,21 @@ export class FamiliarSwarm {
   }
 
   // a navigator for one flight: for each pose returns
-  // { turn, ratings (of the memory in use), choice, mode: 'route' | 'approach', casting, where }
+  // { turn, ratings (of the memory in use), choice, mode: 'route' | 'approach', casting, where, onMap, arrived }
+  // arrived (only with the `arrive` option, off by default): the fly believes it is at the end of the route -
+  // by its route belief (route views recognised, belief near the last stored views, 5 steps in a row) or by
+  // its map belief (sure, near where the route ends, 8 steps in a row). A real helicopter would stop or land
+  // here. Measured: no gain in the simulation (the fly already gets within 0.8 cells of the goal), and a
+  // few false stops (2% in clear weather).
   // climb: { cruise, top, rate } - height to cruise at, to climb to when unsure, change per step
   navigator({ cast = false, climb = null } = {}) {
     const per = this.brain.kActive * this.size, castLimit = this.castThr * per, onLimit = this.onRoute * per;
     const best = (r) => { let c = 0; for (let i = 1; i < r.length; i++) if (r[i] < r[c] || (r[i] === r[c] && Math.abs(SCAN[i]) < Math.abs(SCAN[c]))) c = i; return c; };
-    let lastGood = null, castDir = 1, castLeft = 0, castLen = 4, tracker = null, out = 0, lastWhere = null;
+    let lastGood = null, castDir = 1, castLeft = 0, castLen = 4, tracker = null, out = 0, lastWhere = null, endVotes = 0;
+    const W = this.F.w, LEN = W.route.length, CELL = W.cell, goal = [W.route.x[W.route.x.length - 1], W.route.y[W.route.y.length - 1]];
+    const vote = (yes) => { endVotes = yes ? endVotes + 1 : 0; };
+    const needVotes = (mapBased) => (mapBased ? 8 : 5); // steps in a row (8 steps = one maze cell)
+    let endBy = 'route';
     const mapTracker = this.mapTrack && this.mapSnaps.length ? this._mapTracker() : null;
     const LOST_AFTER = 12; // steps (1.5 cells) out of sight before it gives up on where it thought it was
     // climbing when unsure, back down to cruising height when sure
@@ -273,20 +282,23 @@ export class FamiliarSwarm {
           const score = (i) => approach[i] / per + this.mapGain * onMap.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - onMap.want))) / 2;
           for (let i = 0; i < SCAN.length; i++) if (score(i) < score(ca)) ca = i;
         }
-        return { turn: SCAN[ca], ratings: approach, choice: ca, mode: 'approach', casting: false, where, onMap, climb: height(q, false) };
+        endBy = 'map'; vote(!!onMap && onMap.conf > 0.8 && Math.hypot(onMap.x - goal[0], onMap.y - goal[1]) < 0.7 * CELL);
+        const arrived = this.arrive && endVotes >= needVotes(true);
+        return { turn: SCAN[ca], ratings: approach, choice: ca, mode: 'approach', casting: false, where, onMap, arrived, climb: height(q, false) };
       }
       if (this.track) {
         tracker ||= this._tracker(); // (re)found the route: start keeping track afresh
         // the view in the most familiar direction, for every member, to match against the stored patterns
         const codes = this.members.map((m) => Uint8Array.from(this.see(m, { ...q, th: q.th + SCAN[cr] })));
         where = lastWhere = tracker(q, codes);
+        endBy = 'route'; vote(inSight && where.conf > 0.6 && where.best >= LEN - 0.5 * CELL);
         // prefer directions near the route's direction at the best guess, as much as the fly is sure of it
         const score = (i) => route[i] / per + avoid(i) + this.trackGain * where.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - where.want))) / 2;
         let c = 0; for (let i = 1; i < SCAN.length; i++) if (score(i) < score(c)) c = i;
         cr = c;
       }
       const sure = inSight && (!where || where.conf > 0.4);
-      if (!cast || route[cr] <= castLimit) { lastGood = q.th + SCAN[cr]; castLen = 4; castLeft = 0; return { turn: SCAN[cr], ratings: route, choice: cr, mode: 'route', casting: false, where, climb: height(q, sure) }; }
+      if (!cast || route[cr] <= castLimit) { lastGood = q.th + SCAN[cr]; castLen = 4; castLeft = 0; return { turn: SCAN[cr], ratings: route, choice: cr, mode: 'route', casting: false, where, arrived: this.arrive && endVotes >= needVotes(false), climb: height(q, sure) }; }
       if (lastGood === null) lastGood = q.th;
       if (castLeft <= 0) { castDir = -castDir; castLeft = castLen; castLen += 3; }
       castLeft--;

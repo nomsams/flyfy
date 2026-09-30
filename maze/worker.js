@@ -28,6 +28,16 @@ function mapMessage(w, keepRoute = false) {
   return { msg: { type: 'map', W: w.W, H: w.H, rgba, route, start: w.start, goal: w.goal, cell: w.cell, length: w.route.length, keepRoute }, transfer: [rgba.buffer] };
 }
 
+// the camera's own view (weather included) and the view the brain gets (after the contrast filter, if on)
+const viewOf = (Fl) => ({ L: Array.from(Fl.retinas[0]), Q: Array.from(Fl.chroma[0]), rawL: Array.from(Fl.rawL), rawQ: Array.from(Fl.rawQ), filtered: !!Fl.cfg.eye.normalize });
+// show the camera's view straight away (from where the fly is, or the start), so a change of weather or filter can be seen
+function preview() {
+  if (!Fshow || !world) return;
+  const q = H._q || { x: world.start[0], y: world.start[1], th: 0, alt: 1 };
+  Fshow.view({ ...q, gx: 0, gy: 0 });
+  postMessage({ type: 'preview', view: viewOf(Fshow) });
+}
+
 // one flight step for the teacher: turn toward a point a little further along the route
 const teacherTurn = (Fl, q, max) => Math.max(-max, Math.min(max, Fl.teacher(q).err));
 
@@ -48,7 +58,9 @@ const H = {
       mergeConfig(setupConfig('faces', { memory: true, colour: !!flyOpts.colour })));
     brain = new Brain(cfg); brain.setParams(brain.initParams(1)); brain.reset(false);
     F = new RouteFlight(world, cfg); swarm = null;
+    H._q = null;
     H._flyOver();
+    preview();
   },
   // the flight the fly is released into: the chosen version of the maze, in the chosen weather
   _flyOver() {
@@ -96,6 +108,7 @@ const H = {
       }
     }
     H._flyOver(); // from now on it flies over the chosen version, in the chosen weather
+    preview();
     if (variantV) { const { msg, transfer } = mapMessage(variantWorld, true); postMessage(msg, transfer); }
     postMessage({ type: 'trained', share: swarm.familiarShare(), members: swarm.members.map((mm) => [mm.gx, mm.gy]), approach: !!m.approach });
   },
@@ -104,10 +117,11 @@ const H = {
     run++;
     variantV = m.v; variantWorld = m.v ? makeWonderland({ ...mazeOpts, variant: m.v }) : null;
     H._flyOver();
+    preview();
     const { msg, transfer } = mapMessage(variantWorld || world, true);
     postMessage(msg, transfer);
   },
-  setWeather(m) { weather = m.weather; if (Fshow) Fshow.setWeather(weather); },
+  setWeather(m) { weather = m.weather; if (Fshow) Fshow.setWeather(weather); preview(); },
 
   async release(m) {
     if (!swarm) return;
@@ -130,13 +144,16 @@ const H = {
       if (found) maxS = Math.max(maxS, nr.s);
       offFor = nr.d > 1.2 * world.cell ? offFor + 1 : 0;
       let status = r.mode === 'approach' ? 'searching' : r.casting ? 'casting' : 'following';
-      if (nr.s >= world.route.length - 0.3 * world.cell && nr.d < 0.6 * world.cell) status = 'reached';
+      // arrived: within 0.7 cells of the goal, or it believes it is at the goal (and is within 1.2 cells) and stops there
+      const dGoal = Math.hypot(q.x - world.goal[0], q.y - world.goal[1]) / world.cell;
+      if (dGoal < 0.7 || (r.arrived && dGoal < 1.2)) status = 'reached';
+      else if (r.arrived) status = 'lost'; // it stopped, believing it was at the goal, somewhere else
       else if ((!swarm.hasApproach && offFor > 60) || q.x < -world.cell || q.y < -world.cell || q.x > world.W + world.cell || q.y > world.H + world.cell) status = 'lost';
       else if (steps > 4000) status = 'tired';
       Fshow.view(q); // the centre view, for the page
-      postMessage({ type: 'fly', pose: { ...q }, ratings: Array.from(r.ratings), choice: r.choice, casting: r.casting, mode: r.mode, found, status, steps, where: r.where ? { s: r.where.best, conf: r.where.conf } : null, onMap: r.onMap ? { x: r.onMap.x, y: r.onMap.y, conf: r.onMap.conf } : null,
-        progress: Math.max(0, Math.min(1, (maxS - s0) / Math.max(1, world.route.length - s0))), off: nr.d / world.cell,
-        view: { L: Array.from(Fshow.retinas[0]), Q: Array.from(Fshow.chroma[0]) }, kActive: brain.kActive * swarm.size });
+      postMessage({ type: 'fly', pose: { ...q }, ratings: Array.from(r.ratings), choice: r.choice, casting: r.casting, mode: r.mode, found, status, steps, arrived: !!r.arrived, dGoal, where: r.where ? { s: r.where.best, conf: r.where.conf } : null, onMap: r.onMap ? { x: r.onMap.x, y: r.onMap.y, conf: r.onMap.conf } : null,
+        progress: status === 'reached' ? 1 : Math.max(0, Math.min(1, (maxS - s0) / Math.max(1, world.route.length - s0))), off: nr.d / world.cell,
+        view: viewOf(Fshow), kActive: brain.kActive * swarm.size });
       if (status === 'reached' || status === 'lost' || status === 'tired') break;
       await sleep(H._delay);
     }

@@ -13,6 +13,7 @@
 //        [--approach 1] (learning flights toward the route from a grid every 1 cell over the map)
 //        [--drop] (release anywhere on the map instead of near the route)
 //        [--track] (keep a belief of where on the route it is, from its own motion and stored views)
+//        [--arrive] (the fly stops when it believes it has arrived; off by default: no gain measured, a few false stops)
 //        [--map] (a belief over the whole map from north-up views, used until the route is found)
 //        [--weather fog] [--train-weather clear] (clear, haze, fog, overcast, dusk, night, noisy)
 //        [--normalize] (contrast filter: every view stretched to the same spread) [--edges] (edge boost)
@@ -58,20 +59,24 @@ function tangent(world, i) { const { x, y } = world.route, j = Math.min(x.length
 function fly(world, F, p, policy, { maxSteps, onStep, lostAt = 1.5, global = false }) {
   const speed = world.cell / 8, goalS = world.route.length - 0.3 * world.cell, track = [];
   F.hint = F.nearest(p, true).i;
-  let s0 = F.nearest(p).s, maxS = s0, dev = 0, n = 0, reached = false, lost = false, found = false;
+  let s0 = F.nearest(p).s, maxS = s0, dev = 0, n = 0, reached = false, lost = false, found = false, near = false, falseStop = false;
+  const gx = world.route.x[world.route.x.length - 1], gy = world.route.y[world.route.y.length - 1];
   for (let t = 0; t < maxSteps; t++) {
+    p.arrived = false;
     const turn = policy(p);
+    if (p.arrived) { if (Math.hypot(p.x - gx, p.y - gy) < 0.8 * world.cell) near = true; else falseStop = true; break; } // it believes it is at the goal: it stops
     p.th = wrap(p.th + turn);
     p.x += speed * Math.cos(p.th); p.y += speed * Math.sin(p.th);
     const nr = F.nearest(p, global);
     maxS = Math.max(maxS, nr.s); dev += nr.d; n++; track.push([p.x, p.y]);
     if (nr.d < 0.3 * world.cell) found = true;
+    if (Math.hypot(p.x - gx, p.y - gy) < 0.8 * world.cell) near = true;
     onStep?.(nr);
     if (nr.s >= goalS && nr.d < 0.6 * world.cell) { reached = true; break; }
     if (nr.d > lostAt * world.cell || p.x < -world.cell || p.y < -world.cell || p.x > world.W + world.cell || p.y > world.H + world.cell) { lost = true; break; }
   }
   const remaining = world.route.length - s0;
-  return { reached, lost, found, progress: Math.max(0, Math.min(1, (maxS - s0) / Math.max(1, remaining))), dev: dev / Math.max(1, n) / world.cell, track };
+  return { reached, lost, found, near, falseStop, progress: Math.max(0, Math.min(1, (maxS - s0) / Math.max(1, remaining))), dev: dev / Math.max(1, n) / world.cell, track };
 }
 
 function releasePose(world, r, alt, spanEnd = 0.7) {
@@ -96,7 +101,7 @@ function releaseAnywhere(world, F, r, alt) {
 // itself, only what the world looked like while it was on it.
 export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt = 0, policy = 'steer', kc = 0, sparsity = 0, testVariant = 0,
   trainAlts = null, altBanks = false, testAlt = 0, swarm = 1, gazeR = 0.25, cast = false, castThr = 0.1, approach = 0, drop = false, track = false,
-  aversive = false, climb = 0, row = null, map = false, weather = 'clear', trainWeather = 'clear', normalize = false, edges = false }) {
+  aversive = false, climb = 0, row = null, map = false, arrive = false, weather = 'clear', trainWeather = 'clear', normalize = false, edges = false }) {
   const world = makeWonderland(worldOpts);
   const over = { eye: { activeVision: 0, normalize: normalize ? 1 : 0, lateralInhib: edges ? 1.5 : 0 }, learn: { anneal: 0 } };
   if (kc) over.mb = { cells: kc, ...(sparsity ? { sparsity } : {}) };
@@ -117,7 +122,7 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
   if (policy === 'familiar') {
     // familiarity navigation (src/route/familiar.js, the same code the web app runs)
     const alts = trainAlts && trainAlts.length ? trainAlts : [1];
-    fam = new FamiliarSwarm(brain, F, { swarm, gazeR, alts, banks: altBanks, castThr, track, aversive, layout: row ? rowOfCircles(row) : null, mapTrack: map });
+    fam = new FamiliarSwarm(brain, F, { swarm, gazeR, alts, banks: altBanks, castThr, track, aversive, layout: row ? rowOfCircles(row) : null, mapTrack: map, arrive });
     // each member's "average view": one teacher flight along the route at every training height
     for (const h of alts) fly(world, F, { x: world.start[0], y: world.start[1], th: tangent(world, 0), alt: h }, (q) => { fam.addToAverage(q); return teacherTurn(q); }, { maxSteps: 2000 });
     fam.finishAverage();
@@ -131,7 +136,7 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
     // learning flights toward the route from all over the map (the approach memory)
     if (approach) for (const h of alts) for (const _ of fam.approachFlights(world, { spacing: approach, h, rng: r })) { /* learning happens inside */ }
     // climb: when unsure, rise toward height `climb`; back to the release height when sure
-    testPolicy = () => { let nav = null; return (q) => { nav ||= fam.navigator({ cast, climb: climb ? { cruise: q.alt, top: climb, rate: 0.04 } : null }); const r = nav(q); if (r.climb) q.alt += r.climb; return r.turn; }; };
+    testPolicy = () => { let nav = null; return (q) => { nav ||= fam.navigator({ cast, climb: climb ? { cruise: q.alt, top: climb, rate: 0.04 } : null }); const r = nav(q); if (r.climb) q.alt += r.climb; if (r.arrived) q.arrived = true; return r.turn; }; };
   } else {
     // ---- training flights: the teacher flies part of the time (more at first), the fly the rest;
     // after every step the fly is rewarded if its chosen wing was the one the teacher would have used
@@ -151,14 +156,14 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
   // slightly changed version of the maze: same layout and route, different details)
   if (testVariant) { F = new RouteFlight(makeWonderland({ ...worldOpts, variant: testVariant }), cfg); if (fam) fam.F = F; }
   F.setWeather(weather); // the weather while it is tested
-  const rt = mulberry32(900001 + seed), out = { reached: 0, progress: 0, dev: 0, tracks: [], teacher: 0, blind: 0, found: 0 };
+  const rt = mulberry32(900001 + seed), out = { reached: 0, progress: 0, dev: 0, tracks: [], teacher: 0, blind: 0, found: 0, near: 0, falseStop: 0 };
   for (let k = 0; k < releases; k++) {
     const p0 = drop ? releaseAnywhere(world, F, rt, alt) : releasePose(world, rt, alt);
     if (testAlt) p0.alt = testAlt;
     const maxSteps = Math.ceil((world.route.length / (world.cell / 8)) * (drop ? 3.5 : 2.5));
     const how = drop ? { maxSteps, lostAt: Infinity, global: true } : { maxSteps };
     const res = fly(world, F, { ...p0 }, testPolicy(), how);
-    out.found += res.found / releases;
+    out.found += res.found / releases; out.near += res.near / releases; out.falseStop += res.falseStop / releases;
     out.reached += res.reached / releases; out.progress += res.progress / releases; out.dev += res.dev / releases;
     if (k < 8) out.tracks.push(res.track);
     // references on the same release: the teacher itself, and a blind fly that flies straight
@@ -186,7 +191,7 @@ if (isMain && !args.one) {
   const common = { flights: +(args.flights || 40), releases: +(args.releases || 30), alt: +(args.alt || 0), policy: args.policy || 'steer', kc: +(args.kc || 0), sparsity: +(args.sparsity || 0), testVariant: +(args['test-variant'] || 0),
     trainAlts: args['train-alts'] ? args['train-alts'].split(',').map(Number) : null, altBanks: !!args.banks, testAlt: +(args['test-alt'] || 0),
     swarm: +(args.swarm || 1), gazeR: +(args.gaze ?? 0.25), cast: !!args.cast, castThr: +(args['cast-thr'] || 0.1), approach: +(args.approach || 0), drop: !!args.drop, track: !!args.track,
-    aversive: !!args.aversive, map: !!args.map, weather: args.weather || 'clear', trainWeather: args['train-weather'] || 'clear', normalize: !!args.normalize, edges: !!args.edges, climb: +(args.climb || 0), row: args.row ? (([side, mid]) => ({ side, mid }))(args.row.split(',').map(Number)) : null };
+    aversive: !!args.aversive, map: !!args.map, arrive: !!args.arrive, weather: args.weather || 'clear', trainWeather: args['train-weather'] || 'clear', normalize: !!args.normalize, edges: !!args.edges, climb: +(args.climb || 0), row: args.row ? (([side, mid]) => ({ side, mid }))(args.row.split(',').map(Number)) : null };
   const jobs = [];
   for (const setup of setups) for (let w = 1; w <= worlds; w++) for (let s = 1; s <= seeds; s++) jobs.push({ ...common, setup, seed: s, worldOpts: { ...worldBase, seed: w } });
   const runOne = (job) => new Promise((resolve, reject) => {
@@ -203,7 +208,7 @@ if (isMain && !args.one) {
   for (const setup of setups) {
     const rs = res.filter((x) => x.job.setup === setup).map((x) => x.out), m = (k) => rs.reduce((a, o) => a + o[k], 0) / rs.length;
     const per = rs.map((o) => Math.round(o.reached * 100)).join(' ');
-    console.log(setup.padEnd(10) + pct(m('reached')).padStart(14) + pct(m('progress')).padStart(13) + (m('dev').toFixed(2) + ' cells').padStart(12) + `   (${pct(m('teacher'))} / ${pct(m('blind'))})` + (common.drop ? `   found route ${pct(m('found'))}` : '') + `   flies: ${per}`);
+    console.log(setup.padEnd(10) + pct(m('reached')).padStart(14) + pct(m('progress')).padStart(13) + (m('dev').toFixed(2) + ' cells').padStart(12) + `   (${pct(m('teacher'))} / ${pct(m('blind'))})` + (common.drop ? `   found route ${pct(m('found'))}, got within 0.8 cells of the goal ${pct(m('near'))}, stopped somewhere else believing it was there ${pct(m('falseStop'))}` : `   got within 0.8 cells of the goal ${pct(m('near'))}, false stops ${pct(m('falseStop'))}`) + `   flies: ${per}`);
   }
   if (args.png) { // a picture of one fly's test flights
     const { out, world } = trial({ ...common, setup: setups[setups.length - 1], seed: 1, worldOpts: { ...worldBase, seed: 1 } });

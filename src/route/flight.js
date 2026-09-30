@@ -86,6 +86,8 @@ export class RouteFlight {
       Q[R * C + i] = e.colour ? col[2] - (col[0] + col[1]) / 2 : 0;
       if (wt.noise) { L[i] += wt.noise * this._gauss(); if (e.colour) { Q[i] += 0.5 * wt.noise * this._gauss(); Q[R * C + i] += 0.5 * wt.noise * this._gauss(); } }
     }
+    // what the camera itself saw (weather included), before any contrast filter: for showing
+    if (e.normalize) { this.rawL = Float32Array.from(L); this.rawQ = Float32Array.from(Q); } else { this.rawL = L; this.rawQ = Q; }
     if (e.normalize) { // contrast filter: stretch the view so its brightness always has the same spread
       let m = 0, v = 0;
       for (let i = 0; i < R * C; i++) m += L[i] / (R * C);
