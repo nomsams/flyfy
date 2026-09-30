@@ -250,13 +250,16 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     <a href="#weather"><small>07</small>Fog, dusk and night</a>
     <a href="#swarm"><small>08</small>Many flies, one camera</a>
     <a href="#break"><small>09</small>Breaking it on purpose</a>
-    <a href="#tried"><small>10</small>Everything we tried</a>
-    <a href="#big"><small>11</small>How big, how long</a>
-    <a href="#uses"><small>12</small>Where else it could work</a>
-    <a href="#limits"><small>13</small>What this does not show</a>
-    <a href="#run"><small>14</small>Try it, run it</a>
-    <a href="#quiz"><small>15</small>Test yourself</a>
-    <a href="#words"><small>16</small>Words to know</a>
+    <a href="#attitude"><small>10</small>Roll, pitch and yaw</a>
+    <a href="#senses"><small>11</small>All of the fly's senses</a>
+    <a href="#swarms"><small>12</small>Bigger swarms, other ways</a>
+    <a href="#tried"><small>13</small>Everything we tried</a>
+    <a href="#big"><small>14</small>How big, how long</a>
+    <a href="#uses"><small>15</small>Where else it could work</a>
+    <a href="#limits"><small>16</small>What this does not show</a>
+    <a href="#run"><small>17</small>Try it, run it</a>
+    <a href="#quiz"><small>18</small>Test yourself</a>
+    <a href="#words"><small>19</small>Words to know</a>
   </nav>
 </aside>
 
@@ -273,13 +276,16 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <a href="#weather"><small>07</small>Fog, dusk and night</a>
   <a href="#swarm"><small>08</small>Many flies, one camera</a>
   <a href="#break"><small>09</small>Breaking it on purpose</a>
-  <a href="#tried"><small>10</small>Everything we tried</a>
-  <a href="#big"><small>11</small>How big, how long</a>
-  <a href="#uses"><small>12</small>Where else it could work</a>
-  <a href="#limits"><small>13</small>What this does not show</a>
-  <a href="#run"><small>14</small>Try it, run it</a>
-  <a href="#quiz"><small>15</small>Test yourself</a>
-  <a href="#words"><small>16</small>Words to know</a>
+  <a href="#attitude"><small>10</small>Roll, pitch and yaw</a>
+  <a href="#senses"><small>11</small>All of the fly's senses</a>
+  <a href="#swarms"><small>12</small>Bigger swarms, other ways</a>
+  <a href="#tried"><small>13</small>Everything we tried</a>
+  <a href="#big"><small>14</small>How big, how long</a>
+  <a href="#uses"><small>15</small>Where else it could work</a>
+  <a href="#limits"><small>16</small>What this does not show</a>
+  <a href="#run"><small>17</small>Try it, run it</a>
+  <a href="#quiz"><small>18</small>Test yourself</a>
+  <a href="#words"><small>19</small>Words to know</a>
 </details>
 <div class="mbar" role="status"><div class="num" id="mb-num">–</div><div class="what" id="mb-what">Nothing flown yet. First, the world.</div><div class="meter"><i id="mb-bar" style="width:0%"></i></div></div>
 
@@ -295,7 +301,14 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <div class="paths">
     <a href="#route"><small>5 minutes</small><b>Just the story</b><span>Read the short version above, then the "Where this leaves us" box at the end of each chapter.</span></a>
     <a href="#camera"><small>20 minutes</small><b>Play along</b><span>Each chapter has a widget with a small fly you can run. Guess first where a "Predict first" box asks you to, then check.</span></a>
-    <a href="#run"><small>Deeper</small><b>Reproduce the numbers</b><span>Every table comes from runs of one command-line tool. Chapter 14 shows how to repeat them.</span></a>
+    <a href="#run"><small>Deeper</small><b>Reproduce the numbers</b><span>Every table comes from runs of one command-line tool. Chapter 17 shows how to repeat them.</span></a>
+  </div>
+  <h3>What the colours on the maps mean</h3>
+  <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+    <div class="card"><b>The fly and its patch</b><p><i class="dot" style="background:#ffd23f;border:1px solid #111"></i> the helicopter, pointing where it flies. The <b>box</b> around it is the ground its camera sees. With a swarm there is one coloured box per member.</p></div>
+    <div class="card"><b>What it has learned</b><p><i class="dot" style="background:rgba(40,255,110,.9)"></i> <b>green squares</b>: ground along the route that it filed as "familiar". <i class="dot" style="background:rgba(60,220,190,.7)"></i> <b>teal squares and lines</b>: where its learning flights went.</p></div>
+    <div class="card"><b>Its flights</b><p><i class="dot" style="background:#4f9dff"></i> blue: following the route. <i class="dot" style="background:#ffa940"></i> orange line: heading for the route. A <b>dashed green ring</b> is where it believes it is on the map. A dot at the end: green = reached the goal, red = did not.</p></div>
+    <div class="card"><b>The world</b><p><i class="dot" style="background:#39d353"></i> start, <i class="dot" style="background:#f0605a"></i> goal. A white dashed line is the route it was shown (the fly never sees it). A red glow is "how alike does this place look".</p></div>
   </div>
   <p><a class="btn primary" style="display:inline-block;text-decoration:none" href="https://nomsams.github.io/flyfy/maze/">Open the full Maze app</a></p>
 </header>
@@ -318,6 +331,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
       </div>
     </div>
   </div>
+  <div class="idea"><small>The idea</small>A hedge maze is the hardest case for a fly that recognises places by how they look: every corridor looks like every other.</div>
   <h3>Why look-alike corridors are the hard part</h3>
   <p>Later, the fly will recognise where it is by its "fingerprint": the pattern of memory cells that fire for what its camera sees. So the first question is how alike different places look. Tap the map: the fly will compare the view at your tap with the view at every other place, and show where the look-alikes are.</p>
   <div class="widget" id="w-alike">
@@ -356,6 +370,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     </div>
   </div>
   <p>Lower down, the camera sees a smaller, sharper patch. Higher up it sees more, blurrier. Try to find a spot where you can tell, from the 20 × 14 picture alone, where you are. That is the fly's job.</p>
+  <div class="idea"><small>The idea</small>The fly never stores a picture. It stores which of its memory cells fired, a short fingerprint, and later asks how many of today's cells it has met before.</div>
   <h3>The brain behind the camera, stage by stage</h3>
   <p>It is the same kind of brain as in the <a href="https://nomsams.github.io/flyfy/guide.html">first guide</a>, cut down to what this job needs: a <b>memory centre</b> and nothing else. Walk through it one stage at a time.</p>
   <div class="widget" id="w-chain">
@@ -412,13 +427,31 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     <li><b>To navigate</b>, look in 9 directions (60° left to 60° right). For each, count how many of the firing cells are still <i>unfamiliar</i>. Fly the direction with the fewest.</li>
   </ol>
   <div class="idea"><small>The idea</small>Familiar means "I have seen this before, from the route." The fly rolls downhill toward whatever looks most familiar.</div>
+  <h3>Watch it learn</h3>
+  <p>Before anything is flown, here is what teaching looks like. The fly (white, with its camera boxes around it) flies the route once with a teacher. Every square of ground it passes turns <b>green</b>: those are the views it filed under "familiar". Then it makes its <b>learning flights</b>: from spots all over the map it flies toward the route, and every square it crosses turns <b>teal</b>. Those squares are where it can later say "I have been here, and from here the route is that way". Pick a swarm first if you like: each coloured box is one member looking at its own patch of ground.</p>
+  <div class="widget" id="w-teach">
+    <div class="wh"><h4>Teaching the fly</h4><span>press the button and watch the map</span></div>
+    <div class="rowc">
+      <div class="mapbox"><canvas class="map" id="tc-c" aria-label="The map while the fly learns: green where it learned the route, teal where it made learning flights"></canvas>
+        <div class="legend2"><span><i class="dot" style="background:rgba(40,255,110,.9)"></i>the route it learned</span><span><i class="dot" style="background:rgba(60,220,190,.6)"></i>where it practised flying to the route</span><span><i class="dot" style="background:transparent;border:2px solid #ffd23f"></i>a swarm member's patch of ground</span></div>
+        <div class="prog"><i id="tc-prog"></i></div></div>
+      <div class="side-panel">
+        <button class="btn primary" id="tc-go">Teach it</button>
+        <div class="f">Swarm (virtual flies sharing the camera)<div class="seg swarm-seg" role="group" aria-label="Swarm"><button aria-pressed="true" data-v="one">1 fly</button><button aria-pressed="false" data-v="c3">Circle of 3</button><button aria-pressed="false" data-v="c5">Circle of 5</button><button aria-pressed="false" data-v="row">3 circles in a row (7)</button></div></div>
+        <label class="switch-row"><input type="checkbox" class="learned-toggle" checked> Show what it has learned (green and teal) on every map</label>
+        <label class="switch-row"><input type="checkbox" id="tc-route"> Show the route it was shown</label>
+        <div class="status" id="tc-out">Press "Teach it". A bigger swarm takes longer: every member files its own view.</div>
+        <div class="tally" id="tc-stats"></div>
+      </div>
+    </div>
+  </div>
   <div class="predict" id="pr-familiar"></div>
   <p>Below is a small version of it that runs in your browser. Teach it the route, put it down near the route facing the wrong way, and watch. The fan shows how unfamiliar each direction looks (a long bar = new).</p>
   <div class="widget" id="w-route">
     <div class="wh"><h4>Which way looks familiar?</h4><span>a small version, in your browser</span></div>
     <div class="rowc">
       <div class="mapbox"><canvas class="map" id="w2-c" aria-label="The maze with the fly and its trails"></canvas>
-        <div class="legend2"><span><i class="dot" style="background:#4f9dff"></i>following the route</span><span><i class="dot" style="background:#3fd07a"></i>heading for the route</span></div>
+        <div class="legend2"><span><i class="dot" style="background:#4f9dff"></i>following the route</span><span><i class="dot" style="background:#ffa940"></i>heading for the route</span></div>
         <div class="prog"><i id="w2-prog"></i></div></div>
       <div class="side-panel">
         <div class="row"><button class="btn primary" id="w2-teach">Teach it the route</button></div>
@@ -426,6 +459,8 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
         <div class="controls" style="grid-template-columns:minmax(0,1fr)"><label for="w2-th">Facing <output id="w2-th-o"></output><input type="range" id="w2-th" min="-180" max="180" value="0"></label></div>
         <canvas class="fan" id="w2-fan" width="300" height="150" aria-label="How unfamiliar each direction looks"></canvas>
         <div class="f">Steering<div class="seg" id="w2-steer" role="group" aria-label="Steering"><button aria-pressed="true" data-v="0">Most familiar way</button><button aria-pressed="false" data-v="1">+ keep track (next chapter)</button></div></div>
+        <div class="f">Swarm<div class="seg swarm-seg" role="group" aria-label="Swarm"><button aria-pressed="true" data-v="one">1 fly</button><button aria-pressed="false" data-v="c3">Circle of 3</button><button aria-pressed="false" data-v="c5">Circle of 5</button><button aria-pressed="false" data-v="row">3 circles in a row (7)</button></div></div>
+        <label class="switch-row"><input type="checkbox" class="learned-toggle" checked> Show what it has learned (green, teal) and the swarm's boxes</label>
         <div class="row"><button class="btn" id="w2-fly">Fly it</button><button class="btn" id="w2-batch">Try 8 releases near the route</button><button class="btn" id="w2-stop">Stop</button></div>
         <label class="switch-row"><input type="checkbox" id="w2-showroute"> Show the route</label>
         <div class="tally" id="w2-tally"></div>
@@ -529,11 +564,13 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     <div class="wh"><h4>Drop it anywhere</h4><span>add the ideas one at a time</span></div>
     <div class="rowc">
       <div class="mapbox"><canvas class="map" id="w3-c" aria-label="The maze with the fly and its trails"></canvas>
-        <div class="legend2"><span><i class="dot" style="background:#4f9dff"></i>following the route</span><span><i class="dot" style="background:#3fd07a"></i>heading for the route</span><span><i class="dot" style="background:transparent;border:2px solid #9ff09f"></i>its guess on the map</span></div>
+        <div class="legend2"><span><i class="dot" style="background:#4f9dff"></i>following the route</span><span><i class="dot" style="background:#ffa940"></i>heading for the route</span><span><i class="dot" style="background:transparent;border:2px solid #9ff09f"></i>its guess on the map</span></div>
         <div class="prog"><i id="w3-prog"></i></div></div>
       <div class="side-panel">
         <div class="f">What it uses
           <div class="seg" id="w3-tier" role="group" aria-label="Ideas in use"><button aria-pressed="true" data-v="0">Route memory only</button><button aria-pressed="false" data-v="1">+ learning flights</button><button aria-pressed="false" data-v="2">+ keep track</button><button aria-pressed="false" data-v="3">+ the map</button></div></div>
+        <div class="f">Swarm<div class="seg swarm-seg" role="group" aria-label="Swarm"><button aria-pressed="true" data-v="one">1 fly</button><button aria-pressed="false" data-v="c3">Circle of 3</button><button aria-pressed="false" data-v="c5">Circle of 5</button><button aria-pressed="false" data-v="row">3 circles in a row (7)</button></div></div>
+        <label class="switch-row"><input type="checkbox" class="learned-toggle" checked> Show what it has learned (green, teal) and the swarm's boxes</label>
         <div class="row"><button class="btn primary" id="w3-drop">Drop it somewhere</button><button class="btn" id="w3-batch">Try 8 drops</button><button class="btn" id="w3-stop">Stop</button></div>
         <div class="status" id="w3-status">The first drop teaches it the route and the learning flights (a few seconds).</div>
         <div class="f">Fly over
@@ -560,6 +597,8 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
       <div class="mapbox"><canvas class="map" id="rc-c" aria-label="Four flights from the same drop"></canvas></div>
       <div class="side-panel">
         <button class="btn primary" id="rc-go">Race from a new drop</button>
+        <div class="f">Swarm<div class="seg swarm-seg" role="group" aria-label="Swarm"><button aria-pressed="true" data-v="one">1 fly</button><button aria-pressed="false" data-v="c3">Circle of 3</button><button aria-pressed="false" data-v="c5">Circle of 5</button><button aria-pressed="false" data-v="row">3 circles in a row (7)</button></div></div>
+        <label class="switch-row"><input type="checkbox" class="learned-toggle" checked> Show what it has learned (green, teal) and the swarm's boxes</label>
         <div class="f">Fly over<div class="seg" id="rc-var"><button aria-pressed="true" data-v="A">The maze it learned</button><button aria-pressed="false" data-v="B">A changed version</button></div></div>
         <div class="status" id="rc-out">Press the button.</div>
         <div id="rc-list" style="display:grid;gap:6px"></div>
@@ -678,6 +717,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <h2>Many flies, one camera</h2>
   <p class="question">How do the swarm tricks from the face guide carry over?</p>
   <p>The first guide found that a swarm only helps if its members see <i>differently</i>. Here the swarm is a set of "virtual flies" sharing one camera frame and one wiring: each member looks at its own patch of ground (its own centre of gaze), and every member's opinion about the nine directions is added up. Each extra member costs only its own set of familiar-or-not flags. A drone camera has far more pixels than a fly's eye, so a wide, sharp frame can be divided among members.</p>
+  <div class="idea"><small>The idea</small>Several looks at slightly different patches of ground are worth more than one look repeated, as long as the members see different things.</div>
   <div class="widget" id="w-swarm">
     <div class="wh"><h4>Where each fly looks</h4><span>pick a layout</span></div>
     <div class="seg" id="sw-layout" role="group" aria-label="Layout"><button aria-pressed="false" data-v="one">1 fly</button><button aria-pressed="true" data-v="c3">Circle of 3</button><button aria-pressed="false" data-v="c5">Circle of 5</button><button aria-pressed="false" data-v="row">Three circles in a row (2 + 3 + 2)</button></div>
@@ -712,6 +752,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <h2>Breaking it on purpose</h2>
   <p class="question">How much can the world go wrong before the fly fails?</p>
   <p>The results so far were for an ideal helicopter. A real drone is pushed by wind, and its idea of where it is (from its own motion) drifts. Meanwhile night was the one weather the contrast filter could not fix. We ran experiments on both. Each one changes one thing and measures the same "got within 0.8 cells of the goal" as before.</p>
+  <div class="idea"><small>The idea</small>Break one thing at a time and measure. Some of what looks fragile is not, and some of what looks solid (the maze itself) is.</div>
   <h3>Wind and a bad odometer</h3>
   <p>Two different problems. <b>Wind</b> pushes the helicopter sideways without the fly knowing: what it <i>sees</i> is still true. A <b>bad odometer</b> makes the fly's belief wrong: the belief on the route and on the map is moved on by its own motion, so a wrong estimate of heading or distance moves it to the wrong place.</p>
   <div class="predict" id="pr-wind"></div>
@@ -725,7 +766,14 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
           <label for="bk-bias">Odometer heading error (constant) <output id="bk-bias-o"></output><input type="range" id="bk-bias" min="0" max="30" step="1" value="0"></label>
           <label for="bk-noise">Odometer heading noise (each step) <output id="bk-noise-o"></output><input type="range" id="bk-noise" min="0" max="0.4" step="0.05" value="0"></label>
           <label for="bk-scale">Odometer distance error <output id="bk-scale-o"></output><input type="range" id="bk-scale" min="0" max="0.5" step="0.05" value="0"></label>
+          <label for="bk-tilt">Roll and pitch of the helicopter (typical size) <output id="bk-tilt-o"></output><input type="range" id="bk-tilt" min="0" max="30" step="1" value="0"></label>
+          <label for="bk-est">…if compensated: the error of its attitude estimate <output id="bk-est-o"></output><input type="range" id="bk-est" min="0" max="10" step="1" value="2"></label>
+          <label for="bk-yaw">Compass error (each step) <output id="bk-yaw-o"></output><input type="range" id="bk-yaw" min="0" max="0.5" step="0.05" value="0"></label>
         </div>
+        <label class="switch-row"><input type="checkbox" id="bk-comp"> Counter-rotate the camera from the attitude estimate (chapter 10)</label>
+        <label class="switch-row"><input type="checkbox" id="bk-flow"> Optic-flow odometer: sees the true ground motion, wind included (chapter 14)</label>
+        <div class="f">Swarm<div class="seg swarm-seg" role="group" aria-label="Swarm"><button aria-pressed="true" data-v="one">1 fly</button><button aria-pressed="false" data-v="c3">Circle of 3</button><button aria-pressed="false" data-v="c5">Circle of 5</button><button aria-pressed="false" data-v="row">3 circles in a row (7)</button></div></div>
+        <label class="switch-row"><input type="checkbox" class="learned-toggle" checked> Show what it has learned (green, teal) and the swarm's boxes</label>
         <div class="row"><button class="btn primary" id="bk-drop">Drop it somewhere</button><button class="btn" id="bk-batch">Try 8 drops</button><button class="btn" id="bk-stop">Stop</button></div>
         <div class="status" id="bk-status">Set the wind and the odometer errors, then drop the fly.</div>
         <div class="tally" id="bk-tally"></div>
@@ -811,7 +859,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>If the memory is what fills up, put less into it. Flying the route once instead of three times, with the same 20,000 memory cells, took the six-maze average from <b>54%</b> to <b>99%</b> of drops that got near the goal. Two passes gave 75%: the more times the route is flown, the worse. It is a case where more practice hurts, because a memory that says "familiar" about everything says nothing.</p>
   <h3>The second fix: let the fly measure its own "on the route" level</h3>
   <p>The fixed level of 12% is the deeper flaw: whatever the memory looks like, the fly should not need a number somebody chose. So after learning, the fly now measures it. It looks at views a little off the route (facing roughly along it) and at views far from it, notes how new the best of its nine directions looks in each case, and puts its "on the route" level a quarter of the way from the first to the second. With three passes this took the six mazes from 54% to <b>83%</b> (halfway between the two: 76%).</p>
-  <p>Alone, flying the route once helps in small mazes (99% in six 6 × 6 mazes) but stops working as the route gets longer: 67% at 8 × 8, 38% at 10 × 10 and 8% at 12 × 12. Together the two fixes gave 94%, 92%, 90% and 92% at those sizes (chapter 11). Both are now the maze app's defaults.</p>
+  <p>Alone, flying the route once helps in small mazes (99% in six 6 × 6 mazes) but stops working as the route gets longer: 67% at 8 × 8, 38% at 10 × 10 and 8% at 12 × 12. Together the two fixes gave 94%, 92%, 90% and 92% at those sizes (chapter 14). Both are now the maze app's defaults.</p>
   <div class="side warn"><b class="t">Watch out</b>
     The first numbers in this guide (and the "95–100%" in the short version) were measured on mazes 1 and 2 with three route passes. Those two happen to have a memory that is neither empty nor full. Measured over six mazes, the answer was 54%, until the route was flown once.</div>
   <h3>Then, in bad conditions, over six mazes</h3>
@@ -833,8 +881,149 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <div class="leaves"><span class="n">–</span><b>Where this leaves us</b><div>Wind, a bad odometer and night barely hurt the fly, and night is fixed by averaging frames. What did hurt was the maze itself: a route memory that fills up. Fixing that (fly the route once, and let the fly measure its own “on the route” level) took six mazes from 54% to 94–99%, and made 12 × 12 mazes work.</div></div>
 </section>
 
-<section class="ch" id="tried" data-score="95" data-what="Every idea together: 95% at normal height, 93% flown low.">
+<section class="ch" id="attitude" data-score="94" data-what="Roll, pitch and yaw: the fly barely noticed tilts and compass errors that a person would expect to hurt.">
   <div class="kicker">Chapter 10</div>
+  <h2>Roll, pitch and yaw</h2>
+  <p class="question">What if the helicopter is not level, and not sure which way north is?</p>
+  <p>So far the camera looked straight down from a helicopter that flew perfectly level. A real one is never level. It <b>rolls</b> (one side dips), <b>pitches</b> (nose up or down) and <b>yaws</b> (turns around its vertical axis: that is its heading). The camera is bolted to the body, so when the body tilts, the camera looks at a different patch of ground, and because the lens is wide, the patch is also stretched on the side that is leaning away. Yaw does two other things: the compass reading is what turns the camera picture "north-up" for the map (chapter 5), and the heading is what the odometer adds up when it keeps track (chapter 4).</p>
+  <div class="widget" id="w-tilt">
+    <div class="wh"><h4>Tilt the helicopter</h4><span>the white box is where a level camera looks, the red one where the tilted camera looks</span></div>
+    <div class="rowc">
+      <div class="mapbox"><canvas class="map" id="tl-c" aria-label="Map with the footprint of a level and of a tilted camera"></canvas></div>
+      <div class="side-panel">
+        <div class="controls" style="grid-template-columns:minmax(0,1fr)">
+          <label for="tl-roll">Roll (right side down) <output id="tl-roll-o"></output><input type="range" id="tl-roll" min="-40" max="40" value="15"></label>
+          <label for="tl-pitch">Pitch (nose up) <output id="tl-pitch-o"></output><input type="range" id="tl-pitch" min="-40" max="40" value="0"></label>
+          <label for="tl-pos">Position along the route <output id="tl-pos-o"></output><input type="range" id="tl-pos" min="0" max="100" value="45"></label>
+        </div>
+        <label class="switch-row"><input type="checkbox" id="tl-comp"> Compensate: counter-rotate the camera from the attitude estimate</label>
+        <label class="controls" style="grid-template-columns:minmax(0,1fr)"><span class="cap">If compensating: the estimate's error <output id="tl-est-o"></output></span><input type="range" id="tl-est" min="0" max="10" value="3"></label>
+        <div class="two"><div><canvas class="mini" id="tl-b" width="140" height="98" aria-label="What the tilted camera sees"></canvas><p class="cap">Tilted camera</p></div><div><canvas class="mini" id="tl-n" width="140" height="98" aria-label="What a level camera sees"></canvas><p class="cap">Level camera (what it learned)</p></div></div>
+        <div class="status" id="tl-out"></div>
+      </div>
+    </div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>Roll 15°, pitch 0: the red box slides sideways by a fifth of its length and the right side stretches (perspective).</li>
+    <li>Turn on compensation with an error of 3°: the boxes nearly coincide again.</li>
+    <li>Push the pitch to 40°: the camera looks half a box backwards, and the picture it gets has little in common with the learned one.</li></ol></div>
+  <div class="idea"><small>The idea</small>A tilt or a wrong heading does not make the fly blind. It makes the picture shift and the map rotate, and the fly can be given sensors that undo most of it.</div>
+  <h3>How a real fly copes</h3>
+  <p>A fly does not wait to be told it has tilted. The <b>halteres</b>, two tiny club-shaped hind wings, act as gyroscopes and report rotation; the fly's neck turns the head against the body's roll, so the eyes keep looking at the same piece of the world. The three <b>ocelli</b> on top of the head sense where the sky is brighter than the ground, which is a horizon sensor. A strip of the eye's upper edge senses the <b>polarised light</b> of the sky, a compass that does not drift. Each of these maps onto something a drone has (a gyroscope, a horizon estimate, a sky or magnetic compass), and all of them can be fed into the fly's brain as "sensor" inputs. Chapter 11 lists them all.</p>
+  <h3>What we tested</h3>
+  <p>The test helicopter's roll and pitch wander randomly and slowly (the tilt from one step to the next is 80% the same, like a gust), with the standard deviation in the table. The fly learned the route in calm air. "Compensated" means it counter-rotates its camera by its own attitude estimate, so only the error of the estimate is left. Six mazes × 2 flies × 6 drops each, dropped anywhere, one route pass and the calibrated level (<b>94%</b> with no tilt), about ±7 points.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Roll and pitch (standard deviation)</th><th>Got within 0.8 cells of the goal</th></tr></thead>
+    <tbody>
+      <tr><td>5°</td><td class="n">93%</td></tr>
+      <tr><td>10°</td><td class="n">86%</td></tr>
+      <tr><td>20°</td><td class="n">90%</td></tr>
+      <tr><td>35°</td><td class="n">78%</td></tr>
+      <tr><td>45°</td><td class="n">56%</td></tr>
+      <tr><td>20°, compensated exactly</td><td class="n">93%</td></tr>
+      <tr><td>20°, compensated with a 3° error</td><td class="n">90%</td></tr>
+      <tr><td>20°, compensated with a 6° error (an ocelli-like horizon sensor)</td><td class="n">94%</td></tr>
+      <tr><td>35°, compensated with a 3° error</td><td class="n">90%</td></tr>
+      <tr><td>10°, and the route also practised in rough air</td><td class="n">79%</td></tr>
+      <tr><td>20°, and the route also practised in rough air</td><td class="n">79%</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Yaw: the compass is wrong</th><th>Got within 0.8 cells of the goal</th></tr></thead>
+    <tbody>
+      <tr><td>a compass that is off by about 6° (0.1 rad) every step, without accumulating (a sky compass)</td><td class="n">86%</td></tr>
+      <tr><td>17° (0.3 rad)</td><td class="n">87%</td></tr>
+      <tr><td>34° (0.6 rad)</td><td class="n">79%</td></tr>
+      <tr><td>57° (1.0 rad)</td><td class="n">74%</td></tr>
+      <tr><td>a gyro compass whose error random-walks by 0.01 rad per step (about 0.2 rad after a 400-step flight)</td><td class="n">94%</td></tr>
+      <tr><td>0.03 rad per step</td><td class="n">89%</td></tr>
+      <tr><td>0.08 rad per step</td><td class="n">89%</td></tr>
+      <tr><td>0.15 rad per step</td><td class="n">75%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">Tilts up to 20° cost nothing we could measure (the reference is 94%, and differences under about 7 points are noise). At 35° the fly drops to 78% and at 45° to 56%; counter-rotating the camera with a 3° estimate error brings 35° back to 90%. So attitude sensing matters only for big tilts, but then it pays well. Practising the route in rough air made it worse (79%, 79%): the memory then holds shifted, stretched views of every place, which makes everything look familiar. A compass that is off by 6–17° at every step cost little; at 34° to 57° it cost 15 to 20 points. A gyro compass that drifts by 0.01 to 0.08 rad per step was harmless, and only 0.15 rad per step (several radians over a flight, so north is lost) hurt clearly. Why so robust: steering compares nine looks taken from the same tilted camera, so a tilt shifts all of them alike, and the map belief gathers many looks, so a single wrong one is outvoted.</p>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>In chapter 9's "Try to break it" widget, which now has sliders for roll and pitch, the compass and an optic-flow odometer, set the roll and pitch to 20° and press "Try 8 drops". Then switch on "Counter-rotate the camera".</li>
+    <li>Set the compass error to 0.5 rad and watch the dashed green ring: the map guess gets worse before the fly does.</li></ol></div>
+  <div class="leaves"><span class="n">–</span><b>Where this leaves us</b><div>Roll, pitch and yaw errors that would worry a pilot barely worry this fly until they get large: tilts over 30° and compass errors of half a radian or more. A gyro to steady the camera and a compass that does not drift buy back most of what is lost.</div></div>
+</section>
+
+<section class="ch" id="senses" data-score="94" data-what="Every sense of a fly, and which one of a drone's sensors would feed it.">
+  <div class="kicker">Chapter 11</div>
+  <h2>All of the fly's senses</h2>
+  <p class="question">A fly is more than an eye. Which of its other senses could help a helicopter find its way?</p>
+  <p>Until now the maze fly had one sense: a downward camera. A real fly has a whole sensor suite, and each of its parts has a counterpart on a drone. Tap a sense to see what it does, what the drone's version is, what it could give the navigator, and whether we tested it.</p>
+  <div class="widget" id="w-senses">
+    <div class="wh"><h4>The fly's senses and a drone's</h4><span>tap a sense</span></div>
+    <div class="chain" id="sn-chain" role="group" aria-label="Senses"></div>
+    <div class="detail" id="sn-detail" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Fly sense</th><th>A drone's version</th><th>What it adds for navigation</th><th>Tested here</th></tr></thead>
+    <tbody>
+      <tr><td>Compound eyes</td><td>The camera</td><td>Views of the ground: everything so far</td><td>yes</td></tr>
+      <tr><td>Motion vision (optic flow)</td><td>Optic-flow sensor</td><td>Ground speed and drift, including the wind</td><td>yes: wind 40% 69% → 78%, wind 70% 33% → 44%</td></tr>
+      <tr><td>Halteres</td><td>Gyroscope (an IMU)</td><td>Roll and pitch for counter-rotating the camera; heading change</td><td>yes: chapter 10</td></tr>
+      <tr><td>Ocelli</td><td>A horizon or sky-brightness sensor</td><td>A coarse attitude without gyros (5–10° error); light level for exposure</td><td>yes, as a 6° attitude error</td></tr>
+      <tr><td>Polarised-light compass</td><td>Sky polarisation or magnetic compass</td><td>An absolute heading that does not drift</td><td>yes: compass error without and with accumulation, chapter 10</td></tr>
+      <tr><td>Antennae (Johnston's organ)</td><td>Airspeed and vibration sensor</td><td>Speed through the air, not over the ground: alone it cannot see the wind</td><td>implied by the odometer without optic flow</td></tr>
+      <tr><td>Antennae (smell)</td><td>Chemical sensors</td><td>Landmarks by odour, plume following</td><td>no</td></tr>
+      <tr><td>Bristles and strain sensors</td><td>Contact and whisker sensors</td><td>Bumping into a hedge, a last resort</td><td>no</td></tr>
+      <tr><td>Temperature and humidity</td><td>Weather sensors</td><td>Little for this job</td><td>no</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Putting several together</h3>
+  <p>Roll, pitch, wind and compass errors all at once (tilt 10°, compass 6° each step, wind of 40% of the flying speed) got within 0.8 cells of the goal <b>69%</b> of the time. With the camera counter-rotated to within 3°, a better compass (3° each step) and an optic-flow odometer, <b>78%</b>. A harsher pile (tilt 35°, compass 34°, wind 70%) got <b>14%</b>, and with the sensors above, <b>44%</b>.</p>
+  <div class="side remember"><b class="t">Keep in mind</b>
+    Every sense here is a <i>correction</i> to something the camera-only fly already does. None of them replaces the camera. The camera fingerprints say where the fly is; the other senses say how it moved and how it is leaning, so the fly can trust the fingerprints more.</div>
+  <div class="leaves"><span class="n">–</span><b>Where this leaves us</b><div>No extra sense was needed for the mazes in this guide: the camera does the navigating. The other senses are insurance. Optic flow helps in strong wind, a gyro in big tilts, a steady compass in big heading errors, and together they turned the harshest test (tilt 35°, compass error 34°, wind of 70% of the flying speed) from 14% to 44%.</div></div>
+</section>
+
+<section class="ch" id="swarms" data-score="94" data-what="Bigger swarms: what they buy the maze fly, and what they bought the face fly.">
+  <div class="kicker">Chapter 12</div>
+  <h2>Bigger swarms, and other ways to go further</h2>
+  <p class="question">What does a bigger swarm buy, and which other tricks make a fly see more?</p>
+  <p>A swarm is several virtual flies that share one camera and one wiring, each looking at its own patch of ground (chapter 8). Every member adds its opinion about the nine directions. This chapter asks what a bigger or cleverer swarm adds, for the maze fly and for the fly in the main <a href="https://nomsams.github.io/flyfy/">Fly Lab app</a> that tells men from women.</p>
+  <div class="cards">
+    <div class="card"><b>A circle of gaze</b><p>Each member looks a little ahead, behind, left or right of the centre. The simplest way to make members see different things. Used in chapters 3–9.</p></div>
+    <div class="card"><b>Three circles in a row</b><p>Seven members in three small rings across the frame: the widest spread of patches (chapter 8).</p></div>
+    <div class="card"><b>Different zoom levels</b><p>One member looks at the ground at normal size, one close up, one wide. A close view has detail, a wide view has context, and all three change together when the height changes.</p></div>
+    <div class="card"><b>A swarm that votes on the map</b><p>The members' north-up fingerprints are added up when the fly works out where it is. Available in the lab tool (<code>--map-swarm</code>); with the maze results this good we had little room to show a gain.</p></div>
+    <div class="card"><b>Boosting</b><p>The swarm joins in rounds. After each round the photos (or places) it still gets wrong are shown more often to the next round, so newcomers become specialists. Used for the face fly.</p></div>
+    <div class="card"><b>Different viewing distances</b><p>In the face fly, members can also look from slightly nearer or further. One more way to differ (tested below).</p></div>
+  </div>
+  <h3>In the maze: height is where a swarm pays</h3>
+  <p>In clear weather at the height it learned at, a swarm added little to the maze fly (chapter 8: +7 points, before the fixes of chapter 9). The zoomed swarm was really meant for another problem: flying at a height the fly did not practise. Learned at height 1 and flown low (0.6) or high (1.5), six mazes, dropped anywhere, one route pass:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Flown at height</th><th>One fly</th><th>Swarm of 3 (circle)</th><th>Swarm of 3 at different zooms</th></tr></thead>
+    <tbody>
+      <tr><td>0.6 (low)</td><td class="n">60%</td><td class="n">64%</td><td class="n"><b>69%</b></td></tr>
+      <tr><td>1.5 (high)</td><td class="n">71%</td><td class="n">–</td><td class="n"><b>69%</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">6 mazes × 2 flies × 6 drops, about ±7 points. The fly learned at height 1 only, in one memory.</p>
+  <p>Flown low (0.6) one fly got 60%, a circle of three 64%, and three members at different zoom levels 69%. The zoom levels move together when the height changes, so one member always sees something close to what was learned. Flown high (1.5) the single fly already did well (71%) and the zoomed swarm did not add (69%): a higher, wider view only blurs detail, which costs little. So a zoomed swarm buys robustness mostly when flying lower than learned.</p>
+  <h3>For faces: a swarm of 25 that boosts</h3>
+  <p>The face fly of the main app is a different job (men or women, from 32 × 32 photos) but the same idea. One fly scores about 60% on 500 photos it never saw. With <b>25 flies</b>, each looking from its own point of a circle and trained in rounds, the swarm reached <b>68–69%</b>. The swarm is now built into the app: Train tab, step 3b.</p>
+  <div class="widget ladder" id="w-faceswarm">
+    <div class="wh"><h4>Faces: one fly and swarms</h4><span>share of 500 new photos right (men and women counted equally)</span></div>
+    <div class="where">
+      <div class="stepline"><div class="lbl"><b>One fly</b></div><div class="bar"><i style="width:60%"></i></div><div class="readout">60%</div></div>
+      <div class="stepline"><div class="lbl"><b>A swarm of 9 (circle of gaze)</b></div><div class="bar"><i style="width:65%"></i></div><div class="readout">65%</div></div>
+      <div class="stepline"><div class="lbl"><b>25 flies that boost, equal votes</b></div><div class="bar"><i style="width:68.1%"></i></div><div class="readout">68.1%</div></div>
+      <div class="stepline now"><div class="lbl"><b>…votes weighted by each fly's say, 300 sessions each</b></div><div class="bar"><i style="width:69.2%"></i></div><div class="readout">69.2%</div></div>
+      <div class="stepline"><div class="lbl"><b>50 flies that boost</b></div><div class="bar"><i style="width:68.5%"></i></div><div class="readout">68.5%</div></div>
+      <div class="stepline"><div class="lbl"><b>25 flies, 600 sessions each</b></div><div class="bar"><i style="width:67.9%"></i></div><div class="readout">67.9%</div></div>
+    </div>
+    <p class="cap">One run each, about ±2 points. More flies and longer practice stop adding past 25 flies and 300 sessions; boosting only pays off from about 15 flies (a boosting swarm of 10 scored 61% against 64% without). Looking from different distances as well (0.9, 1 and 1.1 of the set distance, or 0.85 to 1.15) made no difference (68.8% and 66.7% with equal votes, 68.2% and 69.0% weighted), and the circle of gaze has a sweet spot near 10° (6°: 66.7%, 15°: 65.1%).</p>
+  </div>
+  <div class="side remember"><b class="t">Keep in mind</b>
+    A swarm is worth having only when its members make <i>different</i> mistakes. Flies that look at the same thing vote alike and gain about a point. Flies that look at different patches, distances or zoom levels, or that specialise on what the others get wrong, gain 5 to 9 points. That is the same lesson for faces and for mazes.</div>
+  <div class="leaves"><span class="n">–</span><b>Where this leaves us</b><div>A swarm is worth having when its members differ: in the maze, different zoom levels when flying low (+9 points); for faces, 25 flies that each look from their own spot and train on what the others get wrong (60% → 68–69%, now in the app). Past 25 flies, or with longer practice, nothing more was gained.</div></div>
+</section>
+
+<section class="ch" id="tried" data-score="95" data-what="Every idea together: 95% at normal height, 93% flown low.">
+  <div class="kicker">Chapter 13</div>
   <h2>Everything we tried</h2>
   <p class="question">Which changes moved the numbers, and which did not?</p>
   <div class="tbl"><table>
@@ -867,7 +1056,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="big" data-score="95" data-what="Measured to 18 × 18 with the two fixes; 12 × 12 is solid.">
-  <div class="kicker">Chapter 11</div>
+  <div class="kicker">Chapter 14</div>
   <h2>How big a maze, and how long would it take?</h2>
   <p class="question">Could this fly a real area, like 100 × 100 maze cells, or 1,000 × 1,000?</p>
   <p>Training time is dominated by the learning flights, because they cover the whole map, so it grows with the <i>area</i>. Learning the route itself grows only with its length. Move the sliders to plan a real flight: one maze cell is taken to be about the flying height, since the camera sees a patch of ground roughly 1.5 times as long as it is high.</p>
@@ -912,7 +1101,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="uses" data-score="95" data-what="Ideas for where the same trick could work; none has been tried outside the simulation.">
-  <div class="kicker">Chapter 12</div>
+  <div class="kicker">Chapter 15</div>
   <h2>Where else the same trick could work</h2>
   <p class="question">Who would want a tiny brain that repeats a route it was shown once?</p>
   <p>"Visual teach and repeat" is a real technique in robotics: show a robot a route once, and it repeats it using a camera. What is unusual here is how <i>small</i> it is: one yes-or-no flag per memory cell, 2.5 KB per route, no map, no GPS, and a brain that could run on a camera board costing a few dollars. Some ideas, none tried outside the simulation:</p>
@@ -937,7 +1126,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="limits" data-score="95" data-what="Everything here is a simulation. Here is what it leaves out.">
-  <div class="kicker">Chapter 13</div>
+  <div class="kicker">Chapter 16</div>
   <h2>What this does not show</h2>
   <p class="question">How far can the results be trusted?</p>
   <ul>
@@ -945,7 +1134,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     <li><b>An almost ideal helicopter.</b> It knows its heading, speed and height, and the camera always points straight down. Chapter 9 gave it wind and a bad odometer, but not a wobbling, tilting camera or a changing height between frames.</li>
     <li><b>A still world.</b> No cars or people move, the sun never moves, nothing grows. Weather is simulated as changes to the picture (fade, darken, tint, speckle), not photographed.</li>
     <li><b>Small samples.</b> Each figure comes from 20–40 drops, good to about ±8 points, on a few mazes of one kind.</li>
-    <li><b>Small mazes.</b> The lab's results are mostly on 6 × 6 mazes, with a few on 10 × 10. Bigger mazes hit memory and compute limits (chapter 11).</li>
+    <li><b>Small mazes.</b> The lab's results are mostly on 6 × 6 mazes, with a few on 10 × 10. Bigger mazes hit memory and compute limits (chapter 14).</li>
     <li><b>The in-page fly is smaller.</b> The widgets use 10,000 cells and a small map so they run in a browser tab; their numbers differ from the lab's, and 8 releases is a tiny sample.</li>
     <li><b>Hardware estimates are estimates.</b> The camera-board sizes and times come from counting operations, not from a board.</li>
   </ul>
@@ -953,7 +1142,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="run" data-score="95" data-what="Try it, or reproduce every number.">
-  <div class="kicker">Chapter 14</div>
+  <div class="kicker">Chapter 17</div>
   <h2>Try it, run it</h2>
   <p class="question">How do I fly it myself?</p>
   <p><a class="btn primary" style="display:inline-block;text-decoration:none" href="https://nomsams.github.io/flyfy/maze/">Open the Maze app</a> Build a maze (size, wobble, variety), teach the fly the route at chosen heights, tap anywhere on the map to drop it, and watch what it sees and how unfamiliar each direction looks. Change its height mid-flight, switch on the swarm layouts, the wrong-way memory or climbing, pick the weather and the contrast filter, and fly over a changed version of the maze.</p>
@@ -979,7 +1168,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="quiz" data-score="95" data-what="Everything here is a simulation. Test what stuck.">
-  <div class="kicker">Chapter 15</div>
+  <div class="kicker">Chapter 18</div>
   <h2>Test yourself</h2>
   <p class="question">Did the story stick? Ten quick questions.</p>
   <div class="widget">
@@ -990,7 +1179,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="words" data-score="95" data-what="Everything here is a simulation. Test what stuck.">
-  <div class="kicker">Chapter 16</div>
+  <div class="kicker">Chapter 19</div>
   <h2>Words to know</h2>
   <dl class="glossary">
     <dt>Familiarity navigation</dt><dd>Following a route by turning toward whichever direction looks most familiar, the way ants and bees are thought to do it.</dd>
@@ -1034,10 +1223,18 @@ function makeEngine(opt) {
   const E = {
     N, KACT, SCAN, wrap, R, C, NS,
     map: null, W: 0, H: 0, cell: 32, route: null, rs: null, start: null, goal: null,
-    filter: false, burst: 1, smooth: false, weather: { fog: 0, light: 1, tint: [1, 1, 1], noise: 0 },
-    mean: new Float32Array(NIN), fam: new Uint8Array(N).fill(1), app: new Float32Array(N).fill(1),
-    snaps: [], flightSnaps: [], hasApproach: false, views: 0,
+    filter: false, burst: 1, smooth: false, roll: 0, pitch: 0, weather: { fog: 0, light: 1, tint: [1, 1, 1], noise: 0 },
+    mean: new Float32Array(NIN), hasApproach: false, views: 0, hookRoute: null, hookFlight: null,
   };
+  // a swarm: layout = [[ahead, right], ...] gaze offsets in view lengths; every member has its own route memory (fam: 1 = new, 0 = familiar),
+  // graded approach memory (app), the views along the route in order (snaps) and the north-up views of the learning flights (flightSnaps)
+  E.setSwarm = (layout) => {
+    E.layout = layout && layout.length ? layout : [[0, 0]]; E.K = E.layout.length;
+    E.members = E.layout.map(([gx, gy]) => ({ gx, gy, fam: new Uint8Array(N).fill(1), app: new Float32Array(N).fill(1), snaps: [], flightSnaps: [] }));
+    E.fam = E.members[0].fam; E.app = E.members[0].app; E.snaps = E.members[0].snaps; E.flightSnaps = E.members[0].flightSnaps; // (member 0, for the widgets that show one memory)
+    E.bins = null; E.lattice = null; E.hasApproach = false;
+  };
+  E.setSwarm([[0, 0]]);
   // ---------------------------------------------------------------- the world
   E.setWorld = (rgb, size, route, cell, start, goal) => {
     E.map = rgb; E.W = size; E.H = size; E.cell = cell; E.start = start; E.goal = goal;
@@ -1064,8 +1261,11 @@ function makeEngine(opt) {
   E.camera = (x, y, th, alt, gx, gy) => {
     const len = E.cell * 1.6 * (alt || 1), wid = (len * C) / R, fx = Math.cos(th), fy = Math.sin(th), rx = -fy, ry = fx, sp = (len / R) * 0.35;
     const cx = x + ((gx || 0) * fx + (gy || 0) * rx) * len, cy = y + ((gx || 0) * fy + (gy || 0) * ry) * len, w = E.weather, t = [0, 0, 0], a = [0, 0, 0];
+    const roll = E.roll || 0, pitch = E.pitch || 0, tilted = roll !== 0 || pitch !== 0, Hh = E.cell * (alt || 1), cr = Math.cos(roll), sr = Math.sin(roll), cp = Math.cos(pitch), spi = Math.sin(pitch);
     for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
-      const f = fwd[r] * len, s = side[c] * wid, bx = cx + fx * f + rx * s, by = cy + fy * f + ry * s;
+      let f = fwd[r] * len, s = side[c] * wid;
+      if (tilted) { const x1 = f * cp - Hh * spi, z1 = f * spi + Hh * cp, y2 = s * cr + z1 * sr, z2 = -s * sr + z1 * cr, t = Hh / Math.max(0.17 * Hh, z2); f = x1 * t; s = y2 * t; }
+      const bx = cx + fx * f + rx * s, by = cy + fy * f + ry * s;
       a[0] = a[1] = a[2] = 0;
       for (const [ox, oy] of [[0, 0], [sp, 0], [-sp, 0], [0, sp], [0, -sp]]) { px(bx + ox, by + oy, t); a[0] += t[0] / 5; a[1] += t[1] / 5; a[2] += t[2] / 5; }
       const i = r * C + c;
@@ -1087,6 +1287,8 @@ function makeEngine(opt) {
     }
     return inp;
   };
+  E.footprint = (x, y, th, alt, roll, pitch) => { const len = E.cell * 1.6 * alt, wid = (len * C) / R, Hh = E.cell * alt, cr = Math.cos(roll), sr = Math.sin(roll), cp = Math.cos(pitch), spi = Math.sin(pitch), fx = Math.cos(th), fy = Math.sin(th), rx = -fy, ry = fx;
+    return [[1, -1], [1, 1], [-1, 1], [-1, -1]].map(([a, b]) => { let f = (a * len) / 2, s = (b * wid) / 2; const x1 = f * cp - Hh * spi, z1 = f * spi + Hh * cp, y2 = s * cr + z1 * sr, z2 = -s * sr + z1 * cr, t = Hh / Math.max(0.17 * Hh, z2); f = x1 * t; s = y2 * t; return [x + fx * f + rx * s, y + fy * f + ry * s]; }); };
   // what the brain gets, as RGB (for drawing)
   E.inputsToRGB = (v, out) => { for (let i = 0; i < NS; i++) { const l = v[i], rg = v[NS + i], by = v[2 * NS + i], g = l - 0.356 * rg - 0.114 * by; out[i * 3] = g + rg; out[i * 3 + 1] = g; out[i * 3 + 2] = by + g + rg / 2; } return out; };
   E.rgbView = () => rgb; // the camera's own picture after the weather (before the filter)
@@ -1132,14 +1334,14 @@ function makeEngine(opt) {
       for (let t = 0; t < 4000; t++) {
         const v = E.camera(q.x, q.y, q.th, alt);
         if (!learn) { for (let i = 0; i < NIN; i++) E.mean[i] += v[i]; n++; }
-        else { const c = E.code(v), s = E.nearest(q.x, q.y).s; for (let j = 0; j < KACT; j++) E.fam[c[j]] = 0; E.snaps.push({ on: Int32Array.from(c), s, th: q.th }); }
+        else { const s = E.nearest(q.x, q.y).s; for (const m of E.members) { const c = m === E.members[0] ? E.code(v) : E.code(E.camera(q.x, q.y, q.th, alt, m.gx, m.gy)); for (let j = 0; j < KACT; j++) m.fam[c[j]] = 0; m.snaps.push({ on: Int32Array.from(c), s, th: q.th }); } if (E.hookRoute) E.hookRoute(q, alt); }
         q.th = wrap(q.th + teacherTurn(q, 0.17) + (learn ? (rng() - 0.5) * 0.06 : 0));
         q.x += sp * Math.cos(q.th); q.y += sp * Math.sin(q.th);
         if (E.nearest(q.x, q.y).s >= E.length - 0.3 * E.cell) break;
       }
     };
     pass(false, 1); for (let i = 0; i < NIN; i++) E.mean[i] /= n; // the "average view" the cells are centred on
-    E.fam.fill(1); E.snaps = [];
+    for (const m of E.members) { m.fam.fill(1); m.snaps.length = 0; }
     for (const a of alts) for (let p = 0; p < passes; p++) pass(true, a);
     E.weather = w0; E.bins = null;
   };
@@ -1147,15 +1349,15 @@ function makeEngine(opt) {
   E.learningFlights = (rng, onStep) => {
     const w0 = E.weather; E.weather = { fog: 0, light: 1, tint: [1, 1, 1], noise: 0 };
     const sp = E.cell / 8, g = E.cell; let count = 0;
-    E.app.fill(1); E.flightSnaps = []; E.hasApproach = true;
+    for (const m of E.members) { m.app.fill(1); m.flightSnaps.length = 0; } E.hasApproach = true;
     for (let gy = g / 2; gy < E.H; gy += g) for (let gx = g / 2; gx < E.W; gx += g) {
       const q = { x: gx + (rng() - 0.5) * g * 0.5, y: gy + (rng() - 0.5) * g * 0.5, th: 0 };
       if (E.nearest(q.x, q.y, true).d < 0.5 * E.cell) continue;
       for (let t = 0; t < 60; t++) {
         const nr = E.nearest(q.x, q.y, true), j = Math.min(E.route.length - 1, nr.i + Math.round(0.5 * E.cell)), tg = E.route[j], want = Math.atan2(tg[1] - q.y, tg[0] - q.x);
         q.th = t === 0 ? want : wrap(q.th + Math.max(-0.35, Math.min(0.35, wrap(want - q.th))));
-        const c = E.code(E.camera(q.x, q.y, q.th, 1)); for (let k = 0; k < KACT; k++) E.app[c[k]] *= 0.5;
-        const cn = E.code(E.camera(q.x, q.y, 0, 1)); E.flightSnaps.push({ on: Int32Array.from(cn), x: q.x, y: q.y });
+        for (const m of E.members) { const c = E.code(E.camera(q.x, q.y, q.th, 1, m.gx, m.gy)); for (let k = 0; k < KACT; k++) m.app[c[k]] *= 0.5; const cn = E.code(E.camera(q.x, q.y, 0, 1, m.gx, m.gy)); m.flightSnaps.push({ on: Int32Array.from(cn), x: q.x, y: q.y }); }
+        if (E.hookFlight) E.hookFlight(q, t);
         count++; if (nr.d < 0.3 * E.cell) break;
         q.x += sp * Math.cos(q.th); q.y += sp * Math.sin(q.th);
       }
@@ -1167,8 +1369,8 @@ function makeEngine(opt) {
   E.rate = (q) => {
     const route = new Float32Array(9), approach = new Float32Array(9);
     for (let i = 0; i < 9; i++) {
-      const c = E.codeAt(q.x, q.y, q.th + SCAN[i], q.alt || 1); let r = 0, a = 0;
-      for (let j = 0; j < KACT; j++) { r += E.fam[c[j]]; a += E.app[c[j]]; }
+      let r = 0, a = 0;
+      for (const m of E.members) { const c = E.codeAt(q.x, q.y, q.th + SCAN[i], q.alt || 1, m.gx, m.gy); for (let j = 0; j < KACT; j++) { r += m.fam[c[j]]; a += m.app[c[j]]; } }
       route[i] = r; approach[i] = a;
     }
     return { route, approach };
@@ -1192,9 +1394,8 @@ function makeEngine(opt) {
         b = new Float64Array(n); for (let k = 0; k < n; k++) b[k] = 0.25 * (nb[k - 1] || 0) + 0.5 * nb[k] + 0.25 * (nb[k + 1] || 0) + 0.002 / n;
       }
       last = { x: ox, y: oy };
-      const has = new Uint8Array(N); for (let j = 0; j < KACT; j++) has[code[j]] = 1;
       const match = new Float64Array(n);
-      for (const sn of E.snaps) { let o = 0; for (let j = 0; j < sn.on.length; j++) o += has[sn.on[j]]; const k = Math.min(n - 1, Math.floor(sn.s / BIN)); if (o / KACT > match[k]) match[k] = o / KACT; }
+      E.members.forEach((m, mi) => { const has = new Uint8Array(N), cd = code[mi]; for (let j = 0; j < KACT; j++) has[cd[j]] = 1; const best = new Float64Array(n); for (const sn of m.snaps) { let o = 0; for (let j = 0; j < sn.on.length; j++) o += has[sn.on[j]]; const k = Math.min(n - 1, Math.floor(sn.s / BIN)); if (o / KACT > best[k]) best[k] = o / KACT; } for (let k = 0; k < n; k++) match[k] += best[k] / E.K; });
       let mean = 0; for (let k = 0; k < n; k++) mean += match[k] / n; let tot = 0;
       for (let k = 0; k < n; k++) { b[k] *= Math.exp(12 * (match[k] - mean)); tot += b[k]; }
       let bi = 0; for (let k = 0; k < n; k++) { b[k] /= tot; if (b[k] > b[bi]) bi = k; }
@@ -1211,8 +1412,8 @@ function makeEngine(opt) {
     return (E.lattice = { nx, ny, cells });
   }
   // the match of a north-up view at (x, y) with every lattice square (best overlap of stored views there), 0..1
-  E.mapMatch = (x, y) => {
-    const { nx, ny, cells } = lattice(), c = E.codeAt(x, y, 0, 1), has = new Uint8Array(N); for (let j = 0; j < KACT; j++) has[c[j]] = 1;
+  E.mapMatch = (x, y, yaw) => {
+    const { nx, ny, cells } = lattice(), c = E.codeAt(x, y, yaw || 0, 1), has = new Uint8Array(N); for (let j = 0; j < KACT; j++) has[c[j]] = 1;
     const m = new Float64Array(nx * ny);
     for (let i = 0; i < nx * ny; i++) { let best = 0; for (const sn of cells[i]) { let o = 0; for (let j = 0; j < sn.on.length; j++) o += has[sn.on[j]]; if (o > best) best = o; } m[i] = best / KACT; }
     return { nx, ny, m };
@@ -1228,7 +1429,7 @@ function makeEngine(opt) {
         for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { let s = 0, c = 0; for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) { const X = x + ox, Y = y + oy; if (X >= 0 && Y >= 0 && X < nx && Y < ny) { const k = ox || oy ? 0.5 : 2; s += nb[Y * nx + X] * k; c += k; } } b[y * nx + x] = s / c + 0.001 / n; }
       }
       last = { x: ox, y: oy };
-      const { m } = E.mapMatch(q.x, q.y); let mean = 0, cnt = 0; for (let i = 0; i < n; i++) if (cells[i].length) { mean += m[i]; cnt++; } mean /= Math.max(1, cnt);
+      const { m } = E.mapMatch(q.x, q.y, q.yawErr); let mean = 0, cnt = 0; for (let i = 0; i < n; i++) if (cells[i].length) { mean += m[i]; cnt++; } mean /= Math.max(1, cnt);
       let tot = 0; for (let i = 0; i < n; i++) { if (cells[i].length) b[i] *= Math.exp(12 * (m[i] - mean)); tot += b[i]; }
       let bi = 0; for (let i = 0; i < n; i++) { b[i] /= tot; if (b[i] > b[bi]) bi = i; }
       const bx = (bi % nx + 0.5) * G, by = (Math.floor(bi / nx) + 0.5) * G; let conf = 0;
@@ -1241,7 +1442,7 @@ function makeEngine(opt) {
   // a navigator for one flight (options: track, approach, map): pose -> { turn, mode, ratings, where, onMap }
   E.navigator = (o) => {
     o = o || {};
-    const per = KACT, onLimit = (o.onFrac != null ? o.onFrac : 0.12) * per; let tracker = null, mt = null, out = 0, lastWhere = null;
+    const per = KACT * E.K, onLimit = (o.onFrac != null ? o.onFrac : 0.12) * per; let tracker = null, mt = null, out = 0, lastWhere = null;
     if (o.map && E.flightSnaps.length) mt = mapTracker();
     const best = (r) => { let c = 0; for (let i = 1; i < r.length; i++) if (r[i] < r[c] || (r[i] === r[c] && Math.abs(SCAN[i]) < Math.abs(SCAN[c]))) c = i; return c; };
     return (q) => {
@@ -1258,7 +1459,7 @@ function makeEngine(opt) {
       }
       if (o.track) {
         tracker = tracker || routeTracker();
-        const c = Int32Array.from(E.codeAt(q.x, q.y, q.th + SCAN[cr], 1)); where = lastWhere = tracker(q, c);
+        const c = E.members.map((m) => Int32Array.from(E.codeAt(q.x, q.y, q.th + SCAN[cr], 1, m.gx, m.gy))); where = lastWhere = tracker(q, c);
         const sc = (i) => route[i] / per + 0.6 * where.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - where.want))) / 2; cr = 0; for (let i = 1; i < 9; i++) if (sc(i) < sc(cr)) cr = i;
       }
       return { turn: SCAN[cr], mode: 'route', ratings: route, choice: cr, where, onMap: null };
@@ -1287,16 +1488,29 @@ const CLEAR = { fog: 0, light: 1, tint: [1, 1, 1], noise: 0 };
 const mkrng = (s) => () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
 let rng = mkrng(7);
 const say = (m, t) => { m.tk = trained; self.postMessage(m, t || []); }; // (every reply says which training the fly currently has)
-function ensure(filter, verbose, smooth) {          // train the route and the learning flights (in clear weather), for this filter (and smoothing) setting
-  const key = (filter ? 1 : 0) + (smooth ? 2 : 0);
+const ring = (n, r, cy) => Array.from({ length: n }, (_, k) => (n === 1 ? [0, cy] : [r * Math.cos((2 * Math.PI * k) / n), cy + r * Math.sin((2 * Math.PI * k) / n)]));
+const layoutOf = (name, r) => { r = r || 0.25; return name === 'c3' ? ring(3, r, 0) : name === 'c5' ? ring(5, r, 0) : name === 'row' ? [...ring(2, 0.48 * r, -2 * r), ...ring(3, r, 0), ...ring(2, 0.48 * r, 2 * r)] : [[0, 0]]; };
+const keyOf = (c) => ((c && c.filter) ? 1 : 0) + ((c && c.smooth) ? 2 : 0) + '|' + ((c && c.swarm) || 'one');
+let curSwarm = 'one';
+function ensure(cond, verbose, ignoreSwarm) {   // train the route and the learning flights (in clear weather) for this filter, smoothing and swarm
+  cond = Object.assign({}, cond || {}); if (ignoreSwarm) cond.swarm = curSwarm;
+  const key = keyOf(cond);
   if (trained === key) return;
-  smoothTrain = !!smooth;
-  E.filter = !!filter; E.weather = CLEAR; E.burst = 1; E.smooth = !!smoothTrain; E.map = maps.A; E.fam.fill(1); E.snaps = []; E.bins = null; E.lattice = null; E.hasApproach = false;
-  rng = mkrng(7 + (filter ? 1 : 0));
+  curSwarm = cond.swarm || 'one'; smoothTrain = !!cond.smooth;
+  E.setSwarm(layoutOf(curSwarm)); E.filter = !!cond.filter; E.weather = CLEAR; E.burst = 1; E.smooth = smoothTrain; E.map = maps.A;
+  rng = mkrng(7 + (cond.filter ? 1 : 0));
+  // what the fly does while it learns is sent to the page in small batches, so the page can draw it
+  say({ type: 'viz', kind: 'reset', layout: E.layout });
+  let rb = [], fb = [];
+  const flushR = () => { if (rb.length) { say({ type: 'viz', kind: 'route', pts: rb }); rb = []; } };
+  const flushF = () => { if (fb.length) { say({ type: 'viz', kind: 'flight', pts: fb }); fb = []; } };
+  E.hookRoute = (q, alt) => { rb.push([Math.round(q.x * 10) / 10, Math.round(q.y * 10) / 10, Math.round(q.th * 100) / 100]); if (rb.length >= 10) flushR(); };
+  E.hookFlight = (q, t) => { if (t === 0) flushF(); fb.push([Math.round(q.x * 10) / 10, Math.round(q.y * 10) / 10, Math.round(q.th * 100) / 100]); };
   if (verbose) say({ type: 'progress', what: 'route', v: 0 });
-  E.trainRoute(1, rng);
+  E.trainRoute(1, rng); flushR();
   if (verbose) say({ type: 'progress', what: 'flights', v: 0.05 });
-  E.learningFlights(rng, (f) => { if (verbose) say({ type: 'progress', what: 'flights', v: 0.05 + 0.95 * f }); });
+  E.learningFlights(rng, (fr) => { flushF(); if (verbose) say({ type: 'progress', what: 'flights', v: 0.05 + 0.95 * fr }); });
+  flushF(); E.hookRoute = null; E.hookFlight = null; say({ type: 'viz', kind: 'done' });
   trained = key;
 }
 function setCond(c) { E.map = maps[c.variant || 'A']; E.weather = Object.assign({}, CLEAR, c.weather || {}); E.filter = !!c.filter; E.burst = c.burst || 1; E.smooth = !!c.smooth; }
@@ -1308,23 +1522,35 @@ function dropPose(any) {
     if (E.nearest(x, y, true).d > (any ? 0.6 : 0.05) * E.cell) return { x, y, th };
   }
 }
-// one flight: like E.fly, but it also records the fly's guess of where it is on the map
+// one flight: like E.fly, but it also records the fly's guess of where it is on the map.
+// drift (all optional): wind (share of the flying speed, unknown to the fly), windDir, bias / noise (odometer heading error), scale (odometer distance error),
+// flow (an optic-flow odometer that sees the true ground motion), compass / walk (heading error per step / random walk, radians),
+// tilt (roll and pitch, degrees, standard deviation), tiltComp (the fly counter-rotates its camera from its gyro) and tiltEst (the error of that estimate, degrees)
 function flight(pose, o, maxSteps, drift) {
-  const nav = E.navigator(o), q = { x: pose.x, y: pose.y, th: pose.th }, sp = E.cell / 8, track = [], guess = [], bel = [], dr = drift || null;
+  const nav = E.navigator(o), q = { x: pose.x, y: pose.y, th: pose.th }, sp = E.cell / 8, track = [], guess = [], bel = [], dr = drift || null, DEG = Math.PI / 180;
   let ds = 12345; const dg = () => { let u = 0; for (let i = 0; i < 4; i++) { ds = (Math.imul(ds, 1664525) + 1013904223) >>> 0; u += ds / 4294967296; } return (u - 2) * 1.732; };
   if (dr) { q.ox = q.x; q.oy = q.y; }
+  let aR = 0, aP = 0, walkS = 0; const AR = 0.8;
   E.resetHint(q.x, q.y);
-  for (let t = 0; t < maxSteps; t++) {
-    const r = nav(q); q.th = E.wrap(q.th + r.turn);
-    if (dr) { const thb = q.th + (dr.bias || 0) + (dr.noise || 0) * dg(), sc = 1 + (dr.scale || 0); q.ox += sc * sp * Math.cos(thb); q.oy += sc * sp * Math.sin(thb); q.x += (dr.wind || 0) * sp * Math.cos(dr.windDir || 0); q.y += (dr.wind || 0) * sp * Math.sin(dr.windDir || 0); }
-    q.x += sp * Math.cos(q.th); q.y += sp * Math.sin(q.th);
-    bel.push([r.where ? Math.round(r.where.best) : null, r.where ? Math.round(r.where.conf * 100) / 100 : null, Math.round(E.nearest(q.x, q.y, true).s)]);
-    track.push([Math.round(q.x * 10) / 10, Math.round(q.y * 10) / 10, r.mode === 'route' ? 0 : 1]);
-    guess.push(r.onMap ? [Math.round(r.onMap.x), Math.round(r.onMap.y), Math.round(r.onMap.conf * 100) / 100] : null);
-    if (Math.hypot(q.x - E.goal[0], q.y - E.goal[1]) < 0.7 * E.cell) return { reached: true, steps: t + 1, track, guess, bel };
-    if (q.x < -E.cell || q.y < -E.cell || q.x > E.W + E.cell || q.y > E.H + E.cell) break;
-  }
-  return { reached: false, steps: track.length, track, guess, bel };
+  try {
+    for (let t = 0; t < maxSteps; t++) {
+      if (dr && dr.tilt) { const sd = dr.tilt * DEG; aR = AR * aR + Math.sqrt(1 - AR * AR) * sd * dg(); aP = AR * aP + Math.sqrt(1 - AR * AR) * sd * dg(); const est = (dr.tiltEst || 0) * DEG; E.roll = dr.tiltComp ? est * dg() : aR; E.pitch = dr.tiltComp ? est * dg() : aP; }
+      if (dr && (dr.compass || dr.walk)) { walkS += (dr.walk || 0) * dg(); q.yawErr = walkS + (dr.compass || 0) * dg(); }
+      const r = nav(q); q.th = E.wrap(q.th + r.turn);
+      if (dr) {
+        const e = (dr.bias || 0) + (dr.noise || 0) * dg() + (q.yawErr || 0), sc = 1 + (dr.scale || 0), wx = (dr.wind || 0) * sp * Math.cos(dr.windDir || 0), wy = (dr.wind || 0) * sp * Math.sin(dr.windDir || 0);
+        const tx = sp * Math.cos(q.th) + wx, ty = sp * Math.sin(q.th) + wy, bx = dr.flow ? tx : sp * Math.cos(q.th), by = dr.flow ? ty : sp * Math.sin(q.th);
+        q.ox += sc * (bx * Math.cos(e) - by * Math.sin(e)); q.oy += sc * (bx * Math.sin(e) + by * Math.cos(e)); q.x += wx; q.y += wy;
+      }
+      q.x += sp * Math.cos(q.th); q.y += sp * Math.sin(q.th);
+      bel.push([r.where ? Math.round(r.where.best) : null, r.where ? Math.round(r.where.conf * 100) / 100 : null, Math.round(E.nearest(q.x, q.y, true).s)]);
+      track.push([Math.round(q.x * 10) / 10, Math.round(q.y * 10) / 10, r.mode === 'route' ? 0 : 1]);
+      guess.push(r.onMap ? [Math.round(r.onMap.x), Math.round(r.onMap.y), Math.round(r.onMap.conf * 100) / 100] : null);
+      if (Math.hypot(q.x - E.goal[0], q.y - E.goal[1]) < 0.7 * E.cell) return { reached: true, steps: t + 1, track, guess, bel };
+      if (q.x < -E.cell || q.y < -E.cell || q.x > E.W + E.cell || q.y > E.H + E.cell) break;
+    }
+    return { reached: false, steps: track.length, track, guess, bel };
+  } finally { E.roll = 0; E.pitch = 0; }
 }
 self.onmessage = (ev) => {
   const m = ev.data;
@@ -1332,16 +1558,16 @@ self.onmessage = (ev) => {
     if (m.type === 'init') {
       E = makeEngine({ cells: m.cells || 10000 }); maps = { A: m.A, B: m.B }; E.setWorld(m.A, m.size, m.route, m.cell, m.start, m.goal);
       say({ type: 'ready' });
-    } else if (m.type === 'train') { ensure(m.filter, true, m.smooth); say({ type: 'trained', id: m.id, filter: !!m.filter, smooth: !!m.smooth, familiar: 1 - E.fam.reduce((a, b) => a + b, 0) / E.N });
-    } else if (m.type === 'rate') { ensure(m.cond.filter, false, m.cond.smooth); setCond(m.cond); const r = E.rate(m.pose); say({ type: 'rated', id: m.id, route: Array.from(r.route), approach: Array.from(r.approach), per: E.KACT });
-    } else if (m.type === 'fly') { ensure(m.cond.filter, false, m.cond.smooth); setCond(m.cond); rng = mkrng(m.seed || seedN++); const r = flight(m.pose, m.o, m.maxSteps || 600, m.drift); say({ type: 'flown', id: m.id, r });
+    } else if (m.type === 'train') { if (m.force) trained = null; ensure(m.cond, true); say({ type: 'trained', id: m.id, familiar: 1 - E.fam.reduce((a, b) => a + b, 0) / E.N });
+    } else if (m.type === 'rate') { ensure(m.cond); setCond(m.cond); const r = E.rate(m.pose); say({ type: 'rated', id: m.id, route: Array.from(r.route), approach: Array.from(r.approach), per: E.KACT * E.K });
+    } else if (m.type === 'fly') { ensure(m.cond); setCond(m.cond); rng = mkrng(m.seed || seedN++); const r = flight(m.pose, m.o, m.maxSteps || 600, m.drift); say({ type: 'flown', id: m.id, r });
     } else if (m.type === 'cancel') { cancelled = m.id;
     } else if (m.type === 'batch') {
-      ensure(m.cond.filter, false, m.cond.smooth); const seed = m.seed || 1000 + seedN++; let ok = 0, k = 0; cancelled = -1;
+      ensure(m.cond); const seed = m.seed || 1000 + seedN++; let ok = 0, k = 0; cancelled = -1;
       const step = () => { // one drop per turn of the event loop, so a "cancel" message can get through
         if (cancelled === m.id) { say({ type: 'batchDone', id: m.id, ok, n: k, cancelled: true }); return; }
         if (k >= m.n) { say({ type: 'batchDone', id: m.id, ok, n: m.n }); return; }
-        ensure(m.cond.filter, false, m.cond.smooth); setCond(m.cond); rng = mkrng(seed + 97 * k);
+        ensure(m.cond); setCond(m.cond); rng = mkrng(seed + 97 * k);
         const pose = dropPose(m.any), r = flight(pose, m.o, m.any ? 600 : 300, m.drift ? Object.assign({ windDir: rng() * 2 * Math.PI }, m.drift) : null); ok += r.reached ? 1 : 0; k++;
         say({ type: 'drop', id: m.id, k, n: m.n, ok, r: { reached: r.reached, steps: r.steps, track: r.track, pose } });
         setTimeout(step, 0);
@@ -1361,11 +1587,11 @@ self.onmessage = (ev) => {
       };
       step();
     } else if (m.type === 'codeinfo') { // the firing Kenyon cells for a view, and which of them are already familiar
-      ensure(m.cond.filter, false, m.cond.smooth); setCond(m.cond); const c = E.codeAt(m.pose.x, m.pose.y, m.pose.th, m.pose.alt || 1), on = Int32Array.from(c), fam = new Uint8Array(on.length), app = new Float32Array(on.length);
+      ensure(m.cond, false, true); setCond(m.cond); const c = E.codeAt(m.pose.x, m.pose.y, m.pose.th, m.pose.alt || 1), on = Int32Array.from(c), fam = new Uint8Array(on.length), app = new Float32Array(on.length);
       for (let j = 0; j < on.length; j++) { fam[j] = E.fam[on[j]]; app[j] = E.app[on[j]]; }
       say({ type: 'coded', id: m.id, N: E.N, on, fam, app, famAll: E.fam.slice() });
     } else if (m.type === 'field') { // for a grid of spots: how unfamiliar each of 12 compass headings looks, to the route memory and to the approach memory
-      ensure(m.cond.filter, false, m.cond.smooth); setCond(m.cond); const n = m.n, H = 12, route = new Float32Array(n * n * H), app = new Float32Array(n * n * H), g = E.W / n;
+      ensure(m.cond, false, true); setCond(m.cond); const n = m.n, H = 12, route = new Float32Array(n * n * H), app = new Float32Array(n * n * H), g = E.W / n;
       for (let gy = 0; gy < n; gy++) for (let gx = 0; gx < n; gx++) for (let h = 0; h < H; h++) {
         const c = E.codeAt((gx + 0.5) * g, (gy + 0.5) * g, (h * 2 * Math.PI) / H - Math.PI, 1); let r = 0, a = 0; for (let j = 0; j < E.KACT; j++) { r += E.fam[c[j]]; a += E.app[c[j]]; }
         route[(gy * n + gx) * H + h] = r; app[(gy * n + gx) * H + h] = a;
@@ -1374,7 +1600,7 @@ self.onmessage = (ev) => {
     } else if (m.type === 'cliff') { // how well the route memory tells "on the route" from "elsewhere" at other heights
       const mk = () => { const e = makeEngine({ cells: m.cells || 10000 }); e.setWorld(maps.A, E.W, E.route, E.cell, E.start, E.goal); return e; };
       if (!E2) { E2 = mk(); E2.trainRoute(1, mkrng(11), [0.5, 0.7, 1, 1.4]); EH = { 0.5: mk(), 0.7: mk(), 1.4: mk() }; for (const h of [0.5, 0.7, 1.4]) EH[h].trainRoute(1, mkrng(12), [h]); }
-      ensure(false, false, false); E.weather = CLEAR; E.filter = false; E.burst = 1; E.smooth = false; E.map = maps.A; const r5 = mkrng(5), offs = [];
+      ensure({}, false, true); E.weather = CLEAR; E.filter = false; E.burst = 1; E.smooth = false; E.map = maps.A; const r5 = mkrng(5), offs = [];
       while (offs.length < 40) { const x = r5() * E.W, y = r5() * E.H; if (E.nearest(x, y, true).d > 0.7 * E.cell) offs.push([x, y, r5() * 6.28 - 3.14]); }
       const newShare = (eng, x, y, th, a) => { const c = eng.codeAt(x, y, th, a); let f = 0; for (let j = 0; j < eng.KACT; j++) f += eng.fam[c[j]]; return f / eng.KACT; };
       const gap = (eng, a) => { let on = 0, n = 0, off = 0; for (let i = 30; i < E.route.length - 30; i += Math.floor(E.route.length / 10)) { const p = E.route[i]; on += newShare(eng, p[0], p[1], E.tangent(i), a); n++; } for (const [x, y, th] of offs) off += newShare(eng, x, y, th, a); return (100 * (off / offs.length - on / n)); };
@@ -1383,16 +1609,16 @@ self.onmessage = (ev) => {
       let sh = 0; for (let j = 0; j < E2.N; j++) sh += 1 - E2.fam[j]; out.sharedFilled = sh / E2.N; sh = 0; for (let j = 0; j < E.N; j++) sh += 1 - E.fam[j]; out.oneFilled = sh / E.N;
       say({ type: 'cliffed', id: m.id, out });
     } else if (m.type === 'disc') { // how new does one view look: on the route (aligned, and turned 90 degrees), and elsewhere?
-      ensure(m.cond.filter, false, m.cond.smooth); setCond(m.cond); const r7 = mkrng(21), on = [], rot = [], off = [];
+      ensure(m.cond, false, true); setCond(m.cond); const r7 = mkrng(21), on = [], rot = [], off = [];
       const nw = (x, y, th) => { const c = E.codeAt(x, y, th, 1); let f = 0; for (let j = 0; j < E.KACT; j++) f += E.fam[c[j]]; return (100 * f) / E.KACT; };
       for (let k = 0; k < m.n; k++) { const i = 30 + Math.floor(r7() * (E.route.length - 60)), p = E.route[i], t = E.tangent(i); on.push(nw(p[0], p[1], t)); rot.push(nw(p[0], p[1], t + Math.PI / 2));
         for (;;) { const x = r7() * E.W, y = r7() * E.H; if (E.nearest(x, y, true).d > 0.7 * E.cell) { off.push(nw(x, y, r7() * 6.28 - 3.14)); break; } } }
       say({ type: 'discd', id: m.id, on, rot, off });
     } else if (m.type === 'memfill') { // how many times each Kenyon cell was used by the first k learning-flight views (in a fixed scrambled order)
-      ensure(m.cond.filter, false, m.cond.smooth); const tot = E.flightSnaps.length, k = Math.max(0, Math.min(tot, m.k)), cnt = new Uint16Array(E.N);
+      ensure(m.cond, false, true); const tot = E.flightSnaps.length, k = Math.max(0, Math.min(tot, m.k)), cnt = new Uint16Array(E.N);
       for (let i = 0; i < k; i++) { const sn = E.flightSnaps[(i * 7919) % tot]; for (let j = 0; j < sn.on.length; j++) cnt[sn.on[j]]++; }
       say({ type: 'memfilled', id: m.id, total: tot, k, counts: cnt, N: E.N });
-    } else if (m.type === 'where') { ensure(m.cond.filter, false, m.cond.smooth); setCond(m.cond); const r = E.mapMatch(m.x, m.y); say({ type: 'located', id: m.id, nx: r.nx, ny: r.ny, m: Array.from(r.m) }); }
+    } else if (m.type === 'where') { ensure(m.cond, false, true); setCond(m.cond); const r = E.mapMatch(m.x, m.y); say({ type: 'located', id: m.id, nx: r.nx, ny: r.ny, m: Array.from(r.m) }); }
   } catch (e) { say({ type: 'error', message: String(e && e.stack || e) }); }
 };
 
@@ -1461,6 +1687,21 @@ function drawBase(cv, variant, showRoute, wd) { // wd: another maze (default: th
   for (const [p, col] of [[st, '#39d353'], [gl, '#f0605a']]) { c.beginPath(); c.arc(p[0] * k, p[1] * k, 6.5, 0, 7); c.fillStyle = col; c.fill(); c.lineWidth = 2; c.strokeStyle = '#fff'; c.stroke(); }
   return s;
 }
+// what the fly has learned, on a map: squares the route passed through (green), squares the learning flights visited (teal) with their trails, and, while it is learning, the fly and its swarm boxes
+function drawLearned(s) {
+  if (!LEARNED.on) return; const c = s.c, k = s.k;
+  c.save();
+  c.fillStyle = 'rgba(60,220,190,.13)'; TV.cellsF.forEach((key) => { const [a, b] = key.split(',').map(Number); c.fillRect(a * 16 * k, b * 16 * k, 16 * k, 16 * k); });
+  c.lineWidth = 1.2; c.strokeStyle = 'rgba(110,255,220,.38)'; TV.flights.forEach((fl) => { c.beginPath(); fl.forEach((p, i) => (i ? c.lineTo(p[0] * k, p[1] * k) : c.moveTo(p[0] * k, p[1] * k))); c.stroke(); });
+  c.fillStyle = 'rgba(40,255,110,.75)'; TV.cellsR.forEach((key) => { const [a, b] = key.split(',').map(Number); c.fillRect(a * 8 * k, b * 8 * k, 8 * k, 8 * k); });
+  c.restore();
+  if (TV.live && TV.busy) { drawSwarmBoxes(s, TV.live[0], TV.live[1], TV.live[2], TV.layout); drawFly(s, TV.live[0], TV.live[1], TV.live[2], '#fff'); }
+}
+// the swarm: every member's patch of ground (its own gaze), as a coloured box around the fly
+const SW_COL = ['#ff6b6b', '#ffd23f', '#4fd1c5', '#4f9dff', '#c084fc', '#ff9f43', '#9ff09f'];
+function drawSwarmBoxes(s, x, y, th, layout, alt) {
+  (layout || [[0, 0]]).forEach(([gx, gy], k) => { const col = layout && layout.length > 1 ? SW_COL[k % 7] : '#ffffff'; drawFoot(s, x, y, th, alt || 1, gx, gy, col, col + '1c'); });
+}
 function drawFly(s, x, y, th, col) {
   const c = s.c, k = s.k; c.save(); c.translate(x * k, y * k); c.rotate(th); c.beginPath(); c.moveTo(9, 0); c.lineTo(-6, 5.5); c.lineTo(-3, 0); c.lineTo(-6, -5.5); c.closePath();
   c.fillStyle = col || '#ffd23f'; c.fill(); c.lineWidth = 1.6; c.strokeStyle = '#111'; c.stroke(); c.restore();
@@ -1505,7 +1746,12 @@ const wxItems = Object.keys(WX).map((k) => [k, WX_NAME[k]]);
 
 // ---------------------------------------------------------------- the worker (owns the trained fly)
 let wk = null, wkP = null, nextId = 1, onProg = null, trainedKey = null;
-const keyOf = (c) => (c && c.filter ? 1 : 0) + (c && c.smooth ? 2 : 0); // which training a condition needs
+// what the fly does while it learns (streamed by the worker), kept so every map can show it: the route it flew, the learning flights, the swarm's gaze layout
+const TV = { route: [], flights: [], layout: [[0, 0]], done: false, live: null, cellsR: new Set(), cellsF: new Set(), busy: false };
+const LAYOUT = (name, r) => { r = r || 0.25; const ring = (n, rr, cy) => Array.from({ length: n }, (_, k) => (n === 1 ? [0, cy] : [rr * Math.cos((2 * Math.PI) * k / n), cy + rr * Math.sin((2 * Math.PI) * k / n)])); return name === 'c3' ? ring(3, r, 0) : name === 'c5' ? ring(5, r, 0) : name === 'row' ? [...ring(2, 0.48 * r, -2 * r), ...ring(3, r, 0), ...ring(2, 0.48 * r, 2 * r)] : [[0, 0]]; };
+const SWARM = { name: 'one' }, LEARNED = { on: true }; let tvTimer = 0; const tvListeners = [];
+function tvChanged() { if (tvTimer) return; tvTimer = setTimeout(() => { tvTimer = 0; tvListeners.forEach((f) => f()); }, 60); }
+const keyOf = (c) => (c && c.filter ? 1 : 0) + (c && c.smooth ? 2 : 0) + '|' + ((c && c.swarm) || 'one'); // which training a condition needs (contrast filter, smoothing, swarm)
 const pend = new Map(), dropCb = new Map();
 function workerSource() { return $('engine-script').textContent + '\n' + $('worker-glue').textContent; }
 function startWorker() {
@@ -1516,6 +1762,13 @@ function startWorker() {
     wk.onmessage = (ev) => {
       const m = ev.data; if (m.tk !== undefined) trainedKey = m.tk;
       if (m.type === 'ready') res();
+      else if (m.type === 'viz') {
+        if (m.kind === 'reset') { TV.route = []; TV.flights = []; TV.cellsR = new Set(); TV.cellsF = new Set(); TV.layout = m.layout; TV.done = false; TV.busy = true; TV.live = null; }
+        else if (m.kind === 'route') { m.pts.forEach((p) => { TV.route.push(p); TV.cellsR.add(Math.floor(p[0] / 8) + ',' + Math.floor(p[1] / 8)); }); TV.live = m.pts[m.pts.length - 1]; }
+        else if (m.kind === 'flight') { TV.flights.push(m.pts); m.pts.forEach((p) => TV.cellsF.add(Math.floor(p[0] / 16) + ',' + Math.floor(p[1] / 16))); TV.live = m.pts[m.pts.length - 1]; }
+        else if (m.kind === 'done') { TV.done = true; TV.busy = false; TV.live = null; }
+        tvChanged();
+      }
       else if (m.type === 'progress') onProg && onProg(m);
       else if (m.type === 'error') { console.error(m.message); pend.forEach((p) => p({ error: m.message })); pend.clear(); }
       else if (m.type === 'drop') { const f = dropCb.get(m.id); f && f(m); }
@@ -1526,12 +1779,15 @@ function startWorker() {
   return wkP;
 }
 async function ask(msg) { await startWorker(); const id = nextId++; msg.id = id; return new Promise((res) => { pend.set(id, res); wk.postMessage(msg); }); }
-async function ensureTrained(cond, progress) { // cond: { filter, smooth }
+async function ensureTrained(cond, progress, force) { // cond: { filter, smooth, swarm }; force: teach again (and show it again)
   if (typeof cond !== 'object') cond = { filter: !!cond };
-  if (trainedKey === keyOf(cond)) return true;
-  onProg = progress || null; const r = await ask({ type: 'train', filter: !!cond.filter, smooth: !!cond.smooth }); onProg = null;
+  if (!force && trainedKey === keyOf(cond)) return true;
+  onProg = progress || null; const r = await ask({ type: 'train', force: !!force, cond: { filter: !!cond.filter, smooth: !!cond.smooth, swarm: cond.swarm || 'one' } }); onProg = null;
   return !r.error;
 }
+// the swarm choice is shared by every widget that flies the fly: one set of buttons in each, kept in step
+function wireSwarmSegs(onChange) { document.querySelectorAll('.swarm-seg').forEach((box) => box.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { SWARM.name = b.dataset.v; document.querySelectorAll('.swarm-seg').forEach((bx) => bx.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x.dataset.v === SWARM.name))); onChange && onChange(); }))); }
+function wireLearnedToggles(onChange) { document.querySelectorAll('.learned-toggle').forEach((cb) => cb.addEventListener('change', () => { LEARNED.on = cb.checked; document.querySelectorAll('.learned-toggle').forEach((x) => { x.checked = LEARNED.on; }); onChange && onChange(); })); }
 const progText = (m) => (m.what === 'route' ? 'Flying the route once…' : 'Learning flights over the whole map… ' + Math.round(m.v * 100) + '%');
 // replay a track: draw(upTo) is called with growing indices; returns a cancel function
 function replay(track, draw, done, per) {
@@ -1539,7 +1795,7 @@ function replay(track, draw, done, per) {
   const tick = () => { i = Math.min(n, i + step); draw(i); if (i < n) tm = setTimeout(tick, 16); else if (done) done(); };
   tm = setTimeout(tick, 16); return () => clearTimeout(tm);
 }
-const MODE_COL = ['#4f9dff', '#3fd07a'];
+const MODE_COL = ['#4f9dff', '#ffa940'];
 function drawTrack(s, tr, upTo, alpha) {
   const c = s.c, k = s.k; c.lineWidth = 2.4; c.lineCap = 'round'; c.globalAlpha = alpha == null ? 1 : alpha;
   for (let i = 1; i < upTo; i++) { c.beginPath(); c.strokeStyle = MODE_COL[tr[i][2]]; c.moveTo(tr[i - 1][0] * k, tr[i - 1][1] * k); c.lineTo(tr[i][0] * k, tr[i][1] * k); c.stroke(); }
@@ -1586,14 +1842,14 @@ function makeFlyer(cfg) {
   const say = (t) => { stat.textContent = t; };
   const lock = (b) => { S.busy = b; cfg.buttons.forEach((id) => { $(id).disabled = b && id !== cfg.stop; }); $(cfg.stop).disabled = !b; };
   function draw() {
-    const s = drawBase(cv, cfg.cond().variant, cfg.showRoute && cfg.showRoute());
+    const s = drawBase(cv, cfg.cond().variant, cfg.showRoute && cfg.showRoute()); drawLearned(s);
     S.trails.forEach((t) => { drawTrack(s, t.track, t.track.length, 0.6); const e = t.track[t.track.length - 1]; s.c.beginPath(); s.c.arc(e[0] * s.k, e[1] * s.k, 4, 0, 7); s.c.fillStyle = t.reached ? '#3fd07a' : '#f0605a'; s.c.fill(); s.c.lineWidth = 1.5; s.c.strokeStyle = '#fff'; s.c.stroke(); });
     if (S.live) {
       drawTrack(s, S.live.track, S.live.i, 1);
       const g = S.live.guess && S.live.guess[S.live.i - 1];
       if (g) { s.c.beginPath(); s.c.arc(g[0] * s.k, g[1] * s.k, 0.6 * CELL * s.k, 0, 7); s.c.setLineDash([4, 3]); s.c.lineWidth = 2; s.c.strokeStyle = '#9ff09f'; s.c.stroke(); s.c.setLineDash([]); }
-      const q = S.live.track[Math.max(0, S.live.i - 1)], q0 = S.live.track[Math.max(0, S.live.i - 2)]; drawFly(s, q[0], q[1], Math.atan2(q[1] - q0[1], q[0] - q0[0]) || S.pose.th);
-    } else if (S.pose) drawFly(s, S.pose.x, S.pose.y, S.pose.th);
+      const q = S.live.track[Math.max(0, S.live.i - 1)], q0 = S.live.track[Math.max(0, S.live.i - 2)]; const qth = Math.atan2(q[1] - q0[1], q[0] - q0[0]) || S.pose.th; drawSwarmBoxes(s, q[0], q[1], qth, LAYOUT(SWARM.name)); drawFly(s, q[0], q[1], qth);
+    } else if (S.pose) { drawSwarmBoxes(s, S.pose.x, S.pose.y, S.pose.th, LAYOUT(SWARM.name)); drawFly(s, S.pose.x, S.pose.y, S.pose.th); }
   }
   async function teach() {
     const c = cfg.cond(); lock(true); prog.style.width = '0%';
@@ -1632,6 +1888,7 @@ function makeFlyer(cfg) {
   function stop() { if (S.cancel) S.cancel(); if (S.batch) wk && wk.postMessage({ type: 'cancel', id: S.batch }); if (S.live) { S.live = null; lock(false); say('Stopped.'); draw(); } }
   cv.addEventListener('pointerdown', (ev) => { if (S.busy) return; const p = pt(ev, cv); place(p[0], p[1]); if (cfg.onPlace) cfg.onPlace(); });
   $(cfg.stop).addEventListener('click', stop);
+  tvListeners.push(draw);
   return { draw, teach, place, flyOne, runBatch, S, rate, clear() { S.trails = []; S.live = null; S.ok = S.n = 0; tally.textContent = ''; cfg.onClear && cfg.onClear(); draw(); }, setHeading(th) { if (S.pose) { S.pose.th = th; S.live = null; draw(); rate(); } } };
 }
 
@@ -1654,7 +1911,7 @@ function drawFan(r) {
 }
 const F2 = makeFlyer({
   canvas: 'w2-c', status: 'w2-status', prog: 'w2-prog', tally: 'w2-tally', stop: 'w2-stop', buttons: ['w2-teach', 'w2-fly', 'w2-batch'],
-  cond: () => ({ variant: 'A', weather: {}, filter: false }), opts: () => ({ track: W2.steer === 1 }), any: false, batchSize: 8, maxSteps: 300,
+  cond: () => ({ variant: 'A', weather: {}, filter: false, swarm: SWARM.name }), opts: () => ({ track: W2.steer === 1 }), any: false, batchSize: 8, maxSteps: 300,
   showRoute: () => $('w2-showroute').checked, heading: () => +$('w2-th').value * DEG, fan: drawFan, taught: 'Taught. Now tap the map near the route to put the fly down, turn it with "Facing", and press "Fly it".',
   batchNote: 'In the lab: about 13% without keeping track, 70% with it (on many more releases).',
   onFlown: (r) => drawBelief($('w2-bel'), r.bel), onClear: () => drawBelief($('w2-bel'), null),
@@ -1670,7 +1927,7 @@ const W3 = { tier: 0, variant: 'A', wx: 'clear', burst: 1 };
 const TIERS = [{}, { approach: true }, { approach: true, track: true }, { approach: true, track: true, map: true }];
 const F3 = makeFlyer({
   canvas: 'w3-c', status: 'w3-status', prog: 'w3-prog', tally: 'w3-tally', stop: 'w3-stop', buttons: ['w3-drop', 'w3-batch'],
-  cond: () => ({ variant: W3.variant, weather: WX[W3.wx], filter: $('w3-filter').checked, burst: W3.burst, smooth: $('w3-smooth').checked }), opts: () => TIERS[W3.tier], any: true, batchSize: 8, maxSteps: 600,
+  cond: () => ({ variant: W3.variant, weather: WX[W3.wx], filter: $('w3-filter').checked, burst: W3.burst, smooth: $('w3-smooth').checked, swarm: SWARM.name }), opts: () => TIERS[W3.tier], any: true, batchSize: 8, maxSteps: 600,
   batchNote: 'A small sample of 8: the lab used 40 per setting.', onFlown: (r) => drawBelief($('w3-bel'), r.bel), onClear: () => drawBelief($('w3-bel'), null),
 });
 $('w3-drop').addEventListener('click', () => { const p = randomPose(true); F3.place(p.x, p.y); F3.S.pose.th = p.th; F3.draw(); F3.flyOne(); });
@@ -1684,7 +1941,7 @@ redraws.push(F3.draw, () => drawBelief($('w3-bel'), null)); $('w3-stop').disable
 // 5b. where am I on the map
 const W4 = { x: null, y: null, wx: 'clear', busy: false, res: null };
 function drawWhere() {
-  const s = drawBase($('w4-c'), 'A', false), c = s.c, k = s.k;
+  const s = drawBase($('w4-c'), 'A', false), c = s.c, k = s.k; drawLearned(s);
   if (W4.res) {
     const { nx, ny, m } = W4.res; let mean = 0, mx = -1, bi = 0, cnt = 0; for (let i = 0; i < m.length; i++) { if (m[i] > 0) { mean += m[i]; cnt++; } if (m[i] > mx) { mx = m[i]; bi = i; } } mean /= Math.max(1, cnt);
     for (let i = 0; i < m.length; i++) { const v = Math.max(0, (m[i] - mean) / (mx - mean + 1e-9)); if (v < 0.02) continue; c.fillStyle = 'rgba(255,40,40,' + Math.min(0.85, 0.8 * v * v) + ')'; c.fillRect((i % nx) * 16 * k, Math.floor(i / nx) * 16 * k, 16 * k + 0.5, 16 * k + 0.5); }
@@ -1695,7 +1952,7 @@ function drawWhere() {
 }
 async function locate() {
   if (W4.x == null || W4.busy) return; W4.busy = true; const st = $('w4-status'), filter = $('w4-filter').checked;
-  if (trainedKey !== keyOf({ filter })) { st.textContent = 'Learning the map first (a few seconds)…'; if (!(await ensureTrained({ filter }, (m) => { st.textContent = progText(m); }))) { st.textContent = 'The fly could not start (this browser blocked the background worker).'; W4.busy = false; return; } }
+  if (trainedKey !== keyOf({ filter, swarm: SWARM.name })) { st.textContent = 'Learning the map first (a few seconds)…'; if (!(await ensureTrained({ filter, swarm: SWARM.name }, (m) => { st.textContent = progText(m); }))) { st.textContent = 'The fly could not start (this browser blocked the background worker).'; W4.busy = false; return; } }
   const r = await ask({ type: 'where', cond: { variant: 'A', weather: WX[W4.wx], filter }, x: W4.x, y: W4.y }); W4.busy = false; if (r.error) { st.textContent = 'Something went wrong (see the console).'; return; }
   W4.res = r; drawWhere(); const g = W4.guess, e = Math.hypot(g[0] - W4.x, g[1] - W4.y);
   st.textContent = 'Its best guess is ' + cellsOf(e) + ' maze cells away from where it really is' + (e < 0.6 * CELL ? ': it knows where it is.' : e < 1.5 * CELL ? ': close.' : ': a bad guess (a look-alike place).');
@@ -1741,7 +1998,6 @@ function swarmSpots() {
   if (SW.layout === 'c5') return ring(5, r, 0);
   return [...ring(2, 0.48 * r, -2 * r), ...ring(3, r, 0), ...ring(2, 0.48 * r, 2 * r)]; // three circles in a row across the frame
 }
-const SW_COL = ['#ff6b6b', '#ffd23f', '#4fd1c5', '#4f9dff', '#c084fc', '#ff9f43', '#9ff09f'];
 function drawSwarm() {
   const i = Math.round((+$('sw-pos').value / 100) * (ROUTE.length - 1)), p = ROUTE[i], th = ME.tangent(i), spots = swarmSpots();
   $('sw-r-o').textContent = (+$('sw-r').value).toFixed(2) + ' view lengths'; $('sw-pos-o').textContent = $('sw-pos').value + '%';
@@ -1782,7 +2038,7 @@ function drawPlan() {
 
 
 // ================================================================ more widgets (each one shows a single idea)
-const COND0 = () => ({ variant: 'A', weather: {}, filter: false });
+const COND0 = () => ({ variant: 'A', weather: {}, filter: false, swarm: SWARM.name });
 const TEAL = () => css('--teal') || '#1f8f7a';
 const cellsTxt = (px_) => (px_ / CELL).toFixed(1);
 const bg = () => css('--bg') || '#111';
@@ -1799,14 +2055,14 @@ function ring(s, x, y, col, r) { const c = s.c; c.beginPath(); c.arc(x * s.k, y 
 // ---------------------------------------------------------------- 1. which other places look like this one?
 const AL = { x: null, y: null, res: null, twin: null, busy: false };
 function drawAlike() {
-  const s = drawBase($('al-c'), 'A', false);
+  const s = drawBase($('al-c'), 'A', false); drawLearned(s);
   if (AL.res) { heatOverlay(s, AL.res); if (AL.twin) ring(s, AL.twin[0], AL.twin[1], '#ffa940', 12); }
   if (AL.x != null) { s.c.beginPath(); s.c.arc(AL.x * s.k, AL.y * s.k, 5, 0, 7); s.c.fillStyle = '#ffd23f'; s.c.fill(); s.c.lineWidth = 2; s.c.strokeStyle = '#111'; s.c.stroke(); }
 }
 async function alikeAt(x, y) {
   AL.x = x; AL.y = y; AL.res = null; AL.twin = null; drawAlike(); paintSensors($('al-v'), seeCamera('A', x, y, 0, 1, {}));
   const st = $('al-out'); if (AL.busy) return; AL.busy = true;
-  if (trainedKey === null) { st.textContent = 'Waking up the fly’s memory centre (a few seconds)…'; await ensureTrained({}, (m) => { st.textContent = progText(m); }); }
+  if (trainedKey === null) { st.textContent = 'Waking up the fly’s memory centre (a few seconds)…'; await ensureTrained(COND0(), (m) => { st.textContent = progText(m); }); }
   const r = await ask({ type: 'where', cond: COND0(), x, y }); AL.busy = false; if (r.error) { st.textContent = 'Something went wrong (see the console).'; return; }
   AL.res = r; const { nx, m } = r; let bi = -1;
   for (let i = 0; i < m.length; i++) { const px_ = ((i % nx) + 0.5) * 16, py_ = (Math.floor(i / nx) + 0.5) * 16; if (Math.hypot(px_ - AL.x, py_ - AL.y) > 1.5 * CELL && (bi < 0 || m[i] > m[bi])) bi = i; }
@@ -1822,13 +2078,13 @@ const CD = { x: ROUTE[80][0], y: ROUTE[80][1], th: 0, info: null, on: true };
 async function codeShow() {
   const st = $('cd-out'); CD.th = +$('cd-th').value * DEG; $('cd-th-o').textContent = $('cd-th').value + '°';
   paintSensors($('cd-view'), seeCamera('A', CD.x, CD.y, CD.th, 1, {})); drawCodeMap();
-  if (trainedKey === null) { st.textContent = 'Waking up the memory centre (a few seconds)…'; await ensureTrained({}, (m) => { st.textContent = progText(m); }); }
+  if (trainedKey === null) { st.textContent = 'Waking up the memory centre (a few seconds)…'; await ensureTrained(COND0(), (m) => { st.textContent = progText(m); }); }
   const r = await ask({ type: 'codeinfo', cond: COND0(), pose: { x: CD.x, y: CD.y, th: CD.th } }); if (r.error) { st.textContent = 'Something went wrong (see the console).'; return; }
   CD.info = r; drawCodeGrid();
   let nw = 0; for (let j = 0; j < r.fam.length; j++) nw += r.fam[j];
   st.innerHTML = '<b>' + r.on.length + '</b> of the ' + r.N.toLocaleString('en') + ' Kenyon cells fire for this view. <b>' + (r.on.length - nw) + '</b> of them are already in the route memory (green), <b>' + nw + '</b> are new (red): <b>' + Math.round((100 * nw) / r.on.length) + '% new</b>.';
 }
-function drawCodeMap() { const s = drawBase($('cd-c'), 'A', $('cd-route').checked); drawFoot(s, CD.x, CD.y, CD.th, 1, 0, 0, '#fff', 'rgba(255,255,255,.2)'); drawFly(s, CD.x, CD.y, CD.th); }
+function drawCodeMap() { const s = drawBase($('cd-c'), 'A', $('cd-route').checked); drawLearned(s); drawFoot(s, CD.x, CD.y, CD.th, 1, 0, 0, '#fff', 'rgba(255,255,255,.2)'); drawFly(s, CD.x, CD.y, CD.th); }
 function drawCodeGrid() {
   const cv = $('cd-grid'), c = cv.getContext('2d'), r = CD.info, S = 100, k = cv.width / S; c.fillStyle = bg(); c.fillRect(0, 0, cv.width, cv.height);
   if (!r) return;
@@ -1856,7 +2112,7 @@ function drawHist(r) {
 }
 let discRes = null;
 $('cd-measure').addEventListener('click', async () => {
-  const st = $('cd-hist-out'), b = $('cd-measure'); b.disabled = true; st.textContent = 'Measuring…'; if (trainedKey === null) await ensureTrained({}, (m) => { st.textContent = progText(m); });
+  const st = $('cd-hist-out'), b = $('cd-measure'); b.disabled = true; st.textContent = 'Measuring…'; if (trainedKey === null) await ensureTrained(COND0(), (m) => { st.textContent = progText(m); });
   const r = await ask({ type: 'disc', cond: COND0(), n: 40 }); b.disabled = false; if (r.error) { st.textContent = 'Something went wrong (see the console).'; return; } discRes = r; drawHist(r);
 });
 redraws.push(() => drawHist(discRes));
@@ -1864,7 +2120,7 @@ redraws.push(() => drawHist(discRes));
 // ---------------------------------------------------------------- 3. the familiarity landscape
 const LD = { res: null, busy: false };
 function drawLand() {
-  const s = drawBase($('ld-c'), 'A', false), c = s.c, k = s.k, r = LD.res; if (!r) return;
+  const s = drawBase($('ld-c'), 'A', false), c = s.c, k = s.k, r = LD.res; drawLearned(s); if (!r) return;
   const mode = $('ld-mode').querySelector('[aria-pressed=true]').dataset.v, data = mode === 'route' ? r.route : r.app, { n, H, per } = r, g = SIZE / n;
   const best = new Float32Array(n * n), dir = new Int8Array(n * n); let lo = Infinity, hi = -Infinity;
   for (let i = 0; i < n * n; i++) { let bj = 0; for (let h = 1; h < H; h++) if (data[i * H + h] < data[i * H + bj]) bj = h; best[i] = data[i * H + bj] / per; dir[i] = bj; lo = Math.min(lo, best[i]); hi = Math.max(hi, best[i]); }
@@ -1879,7 +2135,7 @@ function drawLand() {
 async function landscape() {
   if (LD.busy) return; LD.busy = true; const st = $('ld-out'), b = $('ld-go'); b.disabled = true;
   st.textContent = trainedKey === null ? 'Teaching it the route first…' : 'Looking around from 324 spots in 12 directions each (a few seconds)…';
-  if (trainedKey === null) await ensureTrained({}, (m) => { st.textContent = progText(m); });
+  if (trainedKey === null) await ensureTrained(COND0(), (m) => { st.textContent = progText(m); });
   st.textContent = 'Looking around from 324 spots in 12 directions each (a few seconds)…';
   const r = await ask({ type: 'field', cond: COND0(), n: 18 }); LD.busy = false; b.disabled = false; if (r.error) { st.textContent = 'Something went wrong (see the console).'; return; }
   LD.res = r; drawLand(); ldText();
@@ -1916,7 +2172,7 @@ function drawFill() {
 }
 let mfT = 0;
 async function fillAsk() {
-  const st = $('mf-out'); if (trainedKey === null) { st.textContent = 'Teaching the fly first (a few seconds)…'; await ensureTrained({}, (m) => { st.textContent = progText(m); }); }
+  const st = $('mf-out'); if (trainedKey === null) { st.textContent = 'Teaching the fly first (a few seconds)…'; await ensureTrained(COND0(), (m) => { st.textContent = progText(m); }); }
   const k = +$('mf-k').value, r = await ask({ type: 'memfill', cond: COND0(), k }); if (r.error) return; MF.total = r.total; MF.res = r; if (+$('mf-k').max !== r.total) { $('mf-k').max = r.total; } $('mf-k-o').textContent = r.k.toLocaleString('en') + ' of ' + r.total.toLocaleString('en'); drawFill();
 }
 $('mf-k').addEventListener('input', () => { $('mf-k-o').textContent = (+$('mf-k').value).toLocaleString('en'); clearTimeout(mfT); mfT = setTimeout(fillAsk, 120); });
@@ -1928,14 +2184,14 @@ const RACE = { busy: false, stop: null };
 const RC_TIERS = [['Route memory only', '#ff5a5a'], ['+ learning flights', '#ffa940'], ['+ keep track', '#4f9dff'], ['+ the map', '#38e08a']];
 let raceTracks = [];
 function drawRace(upTo, pose) {
-  const s = drawBase($('rc-c'), $('rc-var').querySelector('[aria-pressed=true]').dataset.v, false), c = s.c, k = s.k;
+  const s = drawBase($('rc-c'), $('rc-var').querySelector('[aria-pressed=true]').dataset.v, false), c = s.c, k = s.k; drawLearned(s);
   raceTracks.forEach((t, ti) => { c.lineWidth = 2.6; c.lineCap = 'round'; c.strokeStyle = RC_TIERS[ti][1]; c.beginPath(); for (let i = 0; i < Math.min(upTo, t.track.length); i++) { const p = t.track[i]; if (i) c.lineTo(p[0] * k, p[1] * k); else c.moveTo(p[0] * k, p[1] * k); } c.stroke(); if (upTo >= t.track.length) { const e = t.track[t.track.length - 1]; c.beginPath(); c.arc(e[0] * k, e[1] * k, 5, 0, 7); c.fillStyle = t.reached ? '#38e08a' : '#ff5a5a'; c.fill(); c.lineWidth = 2; c.strokeStyle = '#fff'; c.stroke(); } });
   if (pose) drawFly(s, pose.x, pose.y, pose.th);
 }
 async function race() {
   if (RACE.busy) return; RACE.busy = true; const st = $('rc-out'), go = $('rc-go'); go.disabled = true; raceTracks = []; const variant = $('rc-var').querySelector('[aria-pressed=true]').dataset.v, pose = randomPose(true); drawRace(0, pose); $('rc-list').innerHTML = '';
-  if (trainedKey === null) { st.textContent = 'Teaching the fly first (a few seconds)…'; await ensureTrained({}, (m) => { st.textContent = progText(m); }); }
-  st.textContent = 'Four fliers, one drop…'; const cond = { variant, weather: {}, filter: false }, seed = (Date.now() & 0xffff) + 3;
+  if (trainedKey === null) { st.textContent = 'Teaching the fly first (a few seconds)…'; await ensureTrained(COND0(), (m) => { st.textContent = progText(m); }); }
+  st.textContent = 'Four fliers, one drop…'; const cond = { variant, weather: {}, filter: false, swarm: SWARM.name }, seed = (Date.now() & 0xffff) + 3;
   for (let ti = 0; ti < 4; ti++) { const r = await ask({ type: 'fly', cond, pose, o: TIERS[ti], maxSteps: 600, seed }); if (r.error) { st.textContent = 'Something went wrong (see the console).'; RACE.busy = false; go.disabled = false; return; } raceTracks.push({ track: r.r.track, reached: r.r.reached, steps: r.r.steps }); }
   const most = Math.max(...raceTracks.map((t) => t.track.length)); let i = 0;
   const tick = () => { i = Math.min(most, i + 4); drawRace(i, pose); if (i < most) setTimeout(tick, 16); else { RACE.busy = false; go.disabled = false; finish(); } };
@@ -1960,7 +2216,7 @@ function drawCliff() {
 }
 async function cliff() {
   if (HC.busy) return; HC.busy = true; const st = $('hc-out'), b = $('hc-go'); b.disabled = true; st.textContent = 'Teaching four more flies and measuring (about 10 seconds)…';
-  if (trainedKey === null) await ensureTrained({}, (m) => { st.textContent = progText(m); });
+  if (trainedKey === null) await ensureTrained(COND0(), (m) => { st.textContent = progText(m); });
   const r = await ask({ type: 'cliff', cells: 10000 }); HC.busy = false; b.disabled = false; if (r.error) { st.textContent = 'Something went wrong (see the console).'; return; }
   HC.res = r.out; drawCliff(); const o = r.out;
   st.innerHTML = 'The number is how much newer a random spot away from the route looks than a spot on it: a bigger gap means a clearer signal. The fly that learned at height 1 loses most of it as soon as it flies higher or lower. Practising at four heights in <b>one</b> memory fills it up (<b>' + Math.round(100 * o.sharedFilled) + '%</b> of its cells are familiar, against <b>' + Math.round(100 * o.oneFilled) + '%</b>) and the signal shrinks to almost nothing. A memory per height keeps it, and even makes it stronger when flying low, except halfway between two practised heights, where the nearest memory is a poor fit.';
@@ -1970,12 +2226,12 @@ $('hc-go').addEventListener('click', cliff); redraws.push(drawCliff);
 // ---------------------------------------------------------------- 8. breaking it on purpose: wind and a bad odometer
 const F4 = makeFlyer({
   canvas: 'bk-c', status: 'bk-status', prog: 'bk-prog', tally: 'bk-tally', stop: 'bk-stop', buttons: ['bk-drop', 'bk-batch'],
-  cond: () => ({ variant: 'A', weather: {}, filter: false }), opts: () => ({ approach: true, track: true, map: true }), any: true, batchSize: 8, maxSteps: 600,
-  drift: () => ({ wind: +$('bk-wind').value, bias: (+$('bk-bias').value * DEG), noise: +$('bk-noise').value, scale: +$('bk-scale').value, windDir: Math.random() * 2 * Math.PI }),
+  cond: () => ({ variant: 'A', weather: {}, filter: false, swarm: SWARM.name }), opts: () => ({ approach: true, track: true, map: true }), any: true, batchSize: 8, maxSteps: 600,
+  drift: () => ({ wind: +$('bk-wind').value, bias: (+$('bk-bias').value * DEG), noise: +$('bk-noise').value, scale: +$('bk-scale').value, windDir: Math.random() * 2 * Math.PI, tilt: +$('bk-tilt').value, tiltComp: $('bk-comp').checked, tiltEst: +$('bk-est').value, compass: +$('bk-yaw').value, flow: $('bk-flow').checked }),
   onFlown: (r) => { drawBelief($('bk-bel'), r.bel); }, batchNote: 'A small sample of 8.',
 });
-function bkLabels() { $('bk-wind-o').textContent = (+$('bk-wind').value * 100).toFixed(0) + '% of its speed'; $('bk-bias-o').textContent = $('bk-bias').value + '° per step'; $('bk-noise-o').textContent = (+$('bk-noise').value).toFixed(2) + ' rad'; $('bk-scale-o').textContent = ((+$('bk-scale').value) * 100).toFixed(0) + '%'; }
-['bk-wind', 'bk-bias', 'bk-noise', 'bk-scale'].forEach((id) => $(id).addEventListener('input', () => { bkLabels(); F4.clear(); })); bkLabels();
+function bkLabels() { $('bk-tilt-o').textContent = $('bk-tilt').value + '°'; $('bk-est-o').textContent = $('bk-est').value + '°'; $('bk-yaw-o').textContent = (+$('bk-yaw').value).toFixed(2) + ' rad (' + Math.round(+$('bk-yaw').value / DEG) + '°)'; $('bk-wind-o').textContent = (+$('bk-wind').value * 100).toFixed(0) + '% of its speed'; $('bk-bias-o').textContent = $('bk-bias').value + '° per step'; $('bk-noise-o').textContent = (+$('bk-noise').value).toFixed(2) + ' rad'; $('bk-scale-o').textContent = ((+$('bk-scale').value) * 100).toFixed(0) + '%'; }
+['bk-wind', 'bk-bias', 'bk-noise', 'bk-scale', 'bk-tilt', 'bk-est', 'bk-yaw'].forEach((id) => $(id).addEventListener('input', () => { bkLabels(); F4.clear(); })); ['bk-comp', 'bk-flow'].forEach((id) => $(id).addEventListener('change', () => F4.clear())); bkLabels();
 $('bk-drop').addEventListener('click', () => { const p = randomPose(true); F4.place(p.x, p.y); F4.S.pose.th = p.th; F4.draw(); F4.flyOne(); });
 $('bk-batch').addEventListener('click', F4.runBatch); $('bk-stop').disabled = true; redraws.push(F4.draw, () => drawBelief($('bk-bel'), null));
 
@@ -2040,9 +2296,9 @@ function mzInfo() { const l = MZ_LAB[MZ.k]; $('mz-info').innerHTML = 'Maze <b>' 
 async function mzRun() {
   if (MZ.busy) return; MZ.busy = true; const st = $('mz-status'), go = $('mz-batch'), prog = $('mz-prog'); go.disabled = true; $('mz-stop').disabled = false; MZ.trails = []; drawMz(); $('mz-tally').textContent = ''; prog.style.width = '0%';
   const k = MZ.k, o = { approach: true, track: true, map: true };
-  if (k === 1 ? trainedKey !== 0 : !MZ.ready[k]) {
+  if (k === 1 ? trainedKey !== keyOf(COND0()) : !MZ.ready[k]) {
     st.textContent = 'Teaching this maze’s fly (about 10 seconds)…'; onProg = (m) => { st.textContent = progText(m); prog.style.width = Math.round(m.what === 'route' ? 0 : m.v * 100) + '%'; };
-    if (k === 1) await ensureTrained({}, onProg);
+    if (k === 1) await ensureTrained(COND0(), onProg);
     else { await startWorker(); const w = WORLDS[k]; const r = await ask({ type: 'maze', k, rgb: RGB['m' + k], size: SIZE, route: w.route, cell: CELL, start: w.start, goal: w.goal, cells: 10000 }); if (!r.error) MZ.ready[k] = true; }
     onProg = null;
   }
@@ -2068,6 +2324,50 @@ function drawScatter() {
     c.beginPath(); c.arc(x, ys(v1), 10, 0, 7); c.fillStyle = '#38e08a'; c.fill(); c.fillStyle = '#111'; c.font = 'bold 12px system-ui,sans-serif'; c.fillText(k, x, ys(v1) + 4); });
 }
 redraws.push(drawScatter);
+
+// ---------------------------------------------------------------- 12. tilt the helicopter
+const TL = { i: 70 };
+function inQuad(q, x, y) { let s = 0; for (let k = 0; k < 4; k++) { const a = q[k], b = q[(k + 1) % 4], c = (b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]); if (c !== 0) { if (!s) s = c > 0 ? 1 : -1; else if ((c > 0 ? 1 : -1) !== s) return false; } } return true; }
+function drawTiltW() {
+  const i = Math.round((+$('tl-pos').value / 100) * (ROUTE.length - 1)), p = ROUTE[i], th = ME.tangent(i), roll = +$('tl-roll').value * DEG, pitch = +$('tl-pitch').value * DEG, comp = $('tl-comp').checked, est = +$('tl-est').value * DEG;
+  $('tl-roll-o').textContent = $('tl-roll').value + '°'; $('tl-pitch-o').textContent = $('tl-pitch').value + '°'; $('tl-est-o').textContent = $('tl-est').value + '°'; $('tl-pos-o').textContent = $('tl-pos').value + '%';
+  const rr = comp ? est : roll, rp = comp ? est : pitch; // with compensation, only the error of the attitude estimate is left
+  const s = drawBase($('tl-c'), 'A', false), c = s.c, k = s.k, nadir = ME.footprint(p[0], p[1], th, 1, 0, 0), tq = ME.footprint(p[0], p[1], th, 1, rr, rp);
+  for (const [q, col, dash] of [[nadir, '#ffffff', true], [tq, '#ff5a5a', false]]) { c.beginPath(); q.forEach((pt_, j) => (j ? c.lineTo(pt_[0] * k, pt_[1] * k) : c.moveTo(pt_[0] * k, pt_[1] * k))); c.closePath(); c.setLineDash(dash ? [5, 4] : []); c.lineWidth = 2.4; c.strokeStyle = col; c.stroke(); if (!dash) { c.fillStyle = 'rgba(255,90,90,.18)'; c.fill(); } }
+  c.setLineDash([]); drawFly(s, p[0], p[1], th);
+  ME.roll = rr; ME.pitch = rp; const tv = seeCamera('A', p[0], p[1], th, 1, {}); ME.roll = 0; ME.pitch = 0; const nv = seeCamera('A', p[0], p[1], th, 1, {});
+  paintSensors($('tl-b'), tv); paintSensors($('tl-n'), nv);
+  let inside = 0, tot = 0; const r0 = nadir; for (let a = 0; a < 20; a++) for (let b = 0; b < 20; b++) { const u = (a + 0.5) / 20, v = (b + 0.5) / 20, x = (1 - u) * ((1 - v) * r0[3][0] + v * r0[2][0]) + u * ((1 - v) * r0[0][0] + v * r0[1][0]), y = (1 - u) * ((1 - v) * r0[3][1] + v * r0[2][1]) + u * ((1 - v) * r0[0][1] + v * r0[1][1]); tot++; if (inQuad(tq, x, y)) inside++; }
+  let d = 0; for (let j = 0; j < 280; j++) d += Math.abs(tv[j * 3] * 0.3 + tv[j * 3 + 1] * 0.59 + tv[j * 3 + 2] * 0.11 - (nv[j * 3] * 0.3 + nv[j * 3 + 1] * 0.59 + nv[j * 3 + 2] * 0.11)) / 280;
+  $('tl-out').innerHTML = 'The straight-down view and the tilted one share <b>' + Math.round((100 * inside) / tot) + '%</b> of their ground, and the sensors differ by <b>' + (100 * d).toFixed(0) + '%</b> of full brightness on average. ' + (comp ? 'Compensation is on: the camera is counter-rotated by the fly\u2019s attitude estimate, and what is left is the estimate\u2019s error (' + $('tl-est').value + '°).' : 'Nothing compensates the tilt: the fly reads a different piece of ground than the one it learned.');
+}
+['tl-roll', 'tl-pitch', 'tl-est', 'tl-pos'].forEach((id) => $(id).addEventListener('input', drawTiltW)); $('tl-comp').addEventListener('change', drawTiltW); redraws.push(drawTiltW);
+
+// ---------------------------------------------------------------- 13. all of the fly's senses
+stepper('sn-chain', 'sn-detail', [
+  ['Compound eyes', 'About 800 facets per eye, each with 8 light cells. They see brightness, colour and ultraviolet across a huge field of view.', 'A drone has a camera. Ours has 280 sensors on the ground below; that is the sense every other chapter uses. It supplies the fingerprints: "this is what the ground looks like here".'],
+  ['Motion vision', 'Cells in the lobula plate add up how the picture slides across the eye. Flies use it to hold a course, to measure how fast they move over the ground and to avoid collisions.', 'A drone version is an optic-flow sensor (the chip in a computer mouse, pointed at the ground). It measures velocity over the ground, so the wind shows up in it. Without it, the odometer trusts the commanded speed and heading and cannot see a cross-wind. Tested: it helps, by about 10 points in a strong wind.'],
+  ['Halteres', 'Two tiny club-shaped hind wings that beat with the wings. Their bases sense the forces when the body rotates: a gyroscope.', 'A drone has a gyroscope. It gives roll, pitch and the change of heading. Fed into the camera (counter-rotating it) it removes the tilt; fed into the odometer it gives a heading that drifts slowly. Tested in chapter 10: the fly was already robust to the tilt, so the gain is small in these mazes.'],
+  ['Ocelli', 'Three simple eyes on top of the head. They do not form pictures; they compare light from above and below, a horizon sensor that helps keep flight level, and they react quickly to changes of brightness.', 'A horizon or sky-brightness sensor. Coarse (5–10° of error) but it needs no integration and does not drift. Tested as a 6° error in the attitude estimate. Its brightness reading could also set the camera exposure, which is what the contrast filter does in software (chapter 7).'],
+  ['Polarised-light compass', 'A strip of ommatidia on the upper rim of the eye, the dorsal rim area, senses the pattern of polarised light in the sky. Insects use it as a compass.', 'A sky-polarisation or magnetic compass: an absolute heading. Its error does not add up. We tested a compass that is wrong by a random angle each step, against a gyro compass whose error random-walks. Both matter through the map (north-up views) and the odometer.'],
+  ['Antennae (touch and wind)', 'The second segment of the antenna, Johnston\u2019s organ, senses vibration and the airflow against the antenna: the fly knows its airspeed.', 'An airspeed sensor. It says how fast the air moves past the helicopter, not how fast the ground does, so in a steady wind it says nothing about drift. Optic flow does.'],
+  ['Antennae (smell)', 'About 1,300 smell neurons per antenna, tuned to about 50 kinds of odour. Flies follow odour plumes upwind to food.', 'Chemical sensors. In a hedge maze there is no odour trail to follow, but a smell landmark (a bakery, a silage pit) could be another fingerprint. Not tested.'],
+  ['Bristles and strain sensors', 'Hairs over the body sense touch and air movement; strain sensors at the joints and in the wings sense load and posture.', 'Contact sensors, whiskers, strain gauges. They could detect a collision with a hedge or a gust hitting the frame. A last resort, not a navigation sense. Not tested.'],
+]);
+
+// ---------------------------------------------------------------- 14. watch it learn
+function drawTeachW() {
+  const s = drawBase($('tc-c'), 'A', $('tc-route').checked); drawLearned(s);
+  if (!TV.busy) { drawSwarmBoxes(s, ROUTE[0][0] + 40, ROUTE[0][1], ME.tangent(0), LAYOUT(SWARM.name)); drawFly(s, ROUTE[0][0] + 40, ROUTE[0][1], ME.tangent(0)); }
+  const views = TV.route.length + TV.flights.reduce((a, f) => a + f.length, 0);
+  $('tc-stats').innerHTML = TV.route.length || TV.flights.length ? '<b>' + TV.route.length + '</b> views along the route (green) · <b>' + TV.flights.length + '</b> learning flights with <b>' + TV.flights.reduce((a, f) => a + f.length, 0) + '</b> views (teal) · <b>' + TV.cellsR.size + '</b> green squares and <b>' + TV.cellsF.size + '</b> teal squares of ground covered · a swarm of <b>' + (TV.layout || [[0, 0]]).length + '</b>' : 'Nothing learned yet. Press the button.';
+}
+$('tc-go').addEventListener('click', async () => {
+  const b = $('tc-go'), st = $('tc-out'), pr = $('tc-prog'); b.disabled = true; pr.style.width = '0%'; st.textContent = 'Teaching…';
+  const ok = await ensureTrained(COND0(), (m) => { st.textContent = m.what === 'route' ? 'Flying the route once with a teacher (green)…' : 'Learning flights from all over the map toward the route (teal)… ' + Math.round(m.v * 100) + '%'; pr.style.width = Math.round(m.what === 'route' ? 2 : m.v * 100) + '%'; }, true);
+  b.disabled = false; pr.style.width = ok ? '100%' : '0%'; st.textContent = ok ? 'Taught. Green: where it flew the route and filed what it saw. Teal: where it practised flying to the route. Every other map in this guide shows the same squares when "Show what it has learned" is on.' : 'The fly could not start (this browser blocked the background worker).';
+});
+tvListeners.push(drawTeachW); $('tc-route').addEventListener('change', drawTeachW); redraws.push(drawTeachW);
 
 // 14. quiz
 const QUIZ = [
@@ -2101,6 +2401,8 @@ $('quiz-reset').onclick = drawQuiz; drawQuiz();
 
 // ---------------------------------------------------------------- start
 const redrawAll = () => redraws.forEach((f) => f());
+wireLearnedToggles(redrawAll);
+wireSwarmSegs(() => { [F2, F3, F4].forEach((F) => F.clear()); redrawAll(); const t = 'The swarm changed to ' + ({ one: 'one fly', c3: 'a circle of 3', c5: 'a circle of 5', row: 'three circles in a row (7)' })[SWARM.name] + ': the fly has to be taught again. Press "Teach it" (chapter 3) or just drop it.'; ['w2-status', 'w3-status', 'bk-status', 'tc-out'].forEach((id) => { const el = $(id); if (el) el.textContent = t; }); });
 let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(redrawAll, 150); });
 if (window.ResizeObserver) { const ro = new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(redrawAll, 60); }); document.querySelectorAll('.mapbox').forEach((el) => ro.observe(el)); }
 matchMedia('(prefers-color-scheme: dark)').addEventListener && matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawAll);
