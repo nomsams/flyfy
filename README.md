@@ -260,7 +260,26 @@ What it shows:
 Boosting is the first result above the 66% straight-line ceiling, which fits: a swarm of specialists
 is not a single straight-line reader. The boosted newcomers are poor on their own (49-54% on the
 exam after round 2) and valuable only together. Two runs, each good to about +-2 points: promising,
-not proven. Also checked: only 6 of the 500 exam photos (1.2%) have a near-copy among the training
+not proven.
+
+**The swarm in the app** (Train tab, step 3b; `src/swarm.js`, `src/swarm-ui.js`; the same code as `tools/boost.mjs`).
+Every fly trains in its own Web Worker; the page adds up their scaled margins (each fly's margin over 4 looks,
+divided by its own typical size) and, with boosting, the votes weighted by each fly's AdaBoost "say". One run each
+(500 exam photos, men and women counted equally, about +-2 points):
+
+| boosting swarm, gaze circle 10 degrees | equal votes | votes weighted by say |
+|---|---|---|
+| 25 flies, 150 sessions each | 68.1% | 68.1% |
+| 25 flies, 300 sessions each (the "best setup") | 67.9% | **69.2%** |
+| 25 flies, 600 sessions each | 67.3% | 67.9% |
+| 50 flies, 150 sessions each | 67.8% | 68.5% |
+
+So about 68-69% is where this swarm levels off: more flies (50) and longer practice (600 sessions) add nothing
+measurable, and the weighted votes are only ahead from about 15 flies on (at 10 flies they were 6-7 points behind).
+The app therefore uses equal votes below 15 flies and weighted votes from 15 flies up. **Set everything to the best
+setup** selects 25 flies, boosting and 300 sessions. One fly alone is about 60%.
+
+Also checked: only 6 of the 500 exam photos (1.2%) have a near-copy among the training
 photos, so duplicate leakage flatters results by at most about half a point.
 
 ### On a microcontroller (ESP32-CAM)

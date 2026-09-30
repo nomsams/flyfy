@@ -2,7 +2,7 @@
 // answer. Each fly trains in its own Web Worker (Quick learn), then answers the never-seen exam photos;
 // the page adds up their scaled margins. With boosting the flies join in rounds and each round practises on
 // the photos the swarm so far gets wrong. Measured (README): one fly 60%, a swarm of 9-25 about 65-66%,
-// a boosting swarm of 25 about 67-68%.
+// a boosting swarm of 25 about 68-69%.
 
 import { mergeConfig, DEFAULTS } from './config.js';
 import { TASKS, setupConfig } from './abilities.js';
@@ -13,7 +13,7 @@ const SECONDS_PER_FLY = 18; // rough: training 150 sessions + answering the exam
 
 export function initSwarm(ctx) {
   const { S, $, log, toast, taskSets, readCfg, currentAbilities, syncButtons } = ctx;
-  let size = 25, episodes = 150, boost = true, running = null;
+  let size = 25, episodes = 150, userBoost = true, running = null;
   const LOOKS = 4, RADIUS = 12; // each fly also takes 4 looks (mirrored, a little nearer and further) at every exam photo; gaze circle in degrees
 
   const segClick = (id, set) => $(id).querySelectorAll('button').forEach((b) => b.onclick = () => {
@@ -21,7 +21,7 @@ export function initSwarm(ctx) {
   });
   segClick('swSize', (v) => { size = +v; });
   segClick('swEps', (v) => { episodes = +v; });
-  segClick('swBoost', (v) => { boost = v === '1'; });
+  segClick('swBoost', (v) => { userBoost = v === '1'; });
 
   // the current fly's numbers and brain build with this challenge's settings and the given abilities (as in the Compare tab)
   function cfgFor(taskId, abil) {
@@ -35,9 +35,12 @@ export function initSwarm(ctx) {
 
   function refresh() {
     const workers = Math.max(1, (navigator.hardwareConcurrency || 4) - 1);
-    const secs = Math.ceil(size / workers) * SECONDS_PER_FLY * (0.35 + 0.65 * episodes / 150) * (boost ? 1.1 : 1);
+    const secs = Math.ceil(size / workers) * SECONDS_PER_FLY * (0.35 + 0.65 * episodes / 150) * (userBoost && size >= 15 ? 1.1 : 1);
     $('swarmEta').textContent = running ? '' : `${size} flies on ${workers} core${workers > 1 ? 's' : ''}: about ${secs < 90 ? Math.ceil(secs) + ' seconds' : Math.round(secs / 60) + ' minutes'}.`;
-    $('swarmNote').textContent = S.taskId !== 'faces' ? 'The swarm works on the face photos, so it will use "Man or woman" whatever challenge is picked above.' : '';
+    const notes = [];
+    if (S.taskId !== 'faces') notes.push('The swarm works on the face photos, so it will use "Man or woman" whatever challenge is picked above.');
+    if (userBoost && size < 15) notes.push('Boosting only pays off from about 15 flies on (measured), so a swarm of ' + size + ' votes without it.');
+    $('swarmNote').textContent = notes.join(' ');
   }
 
   // where the flies look: a circle of gaze centres, coloured by how well each fly does alone
@@ -56,6 +59,7 @@ export function initSwarm(ctx) {
 
   async function run() {
     if (running || S.comparing) return;
+    const boost = userBoost && size >= 15; // measured: boosting only pays off from about 15 flies on (a swarm of 10 that boosts scored 61% against 64% without)
     if (S.training) { S.training = false; syncButtons(); toast('Training paused so the swarm gets the whole computer.'); }
     S.comparing = true; syncButtons();
     $('btnSwarm').disabled = true; $('btnSwarmCancel').hidden = false; $('swarmProgress').hidden = false; $('swarmEta').textContent = '';
@@ -86,7 +90,7 @@ export function initSwarm(ctx) {
           const idx = boost ? j * rounds + r : j; // every round covers the whole circle
           return { slot: flies.length + j, cfg: mergeConfig(gazeConfig(spots[idx]), base), seed: 1 + r * per + j, spot: idx };
         });
-        const out = new Array(per);
+        const out = new Array(per), jobFlies = new Array(per);
         let next = 0;
         const n = Math.min(per, Math.max(1, (navigator.hardwareConcurrency || 4) - 1));
         const lane = () => new Promise((resolve, reject) => {
@@ -105,7 +109,7 @@ export function initSwarm(ctx) {
             if (m.type === 'error') { w.terminate(); return reject(new Error(m.message)); }
             if (m.type === 'result') {
               out[m.id] = m.results; frac[jobs[m.id].slot] = 1;
-              flies.push({ test: m.results.test, train: m.results.train, spot: jobs[m.id].spot });
+              jobFlies[m.id] = { test: m.results.test, train: m.results.train, spot: jobs[m.id].spot, say: 1 }; flies.push(jobFlies[m.id]);
               const sc = scoresNow(), acc = swarmAcc(sc);
               S.swarmHist.push({ gen: flies.length, acc });
               $('swarmNum').textContent = `${(acc * 100).toFixed(0)}%`;
@@ -120,20 +124,22 @@ export function initSwarm(ctx) {
         });
         await Promise.all(Array.from({ length: n }, lane));
         if (running.cancelled) break;
-        if (boost && r < rounds - 1) { // the swarm so far tells the next round which photos are hard
+        if (boost) { // each fly's say (from its error on the photos as weighted when it practised); the swarm so far then tells the next round which photos are hard
           const wNow = weights || new Array(trainL.length).fill(1);
-          for (const o of out) {
-            const m = o.train.margin, sd = Math.sqrt(m.reduce((s, v) => s + v * v, 0) / m.length) || 1;
-            says.push(flySay(trainL, m, wNow).say); trainScores.push(m.map((v) => v / sd));
-          }
-          weights = boostWeights(trainL, trainScores, says, 1, 4);
+          out.forEach((o, q) => {
+            const m = o.train.margin, sd = Math.sqrt(m.reduce((s, v) => s + v * v, 0) / m.length) || 1, sy = flySay(trainL, m, wNow).say;
+            jobFlies[q].say = sy; says.push(sy); trainScores.push(m.map((v) => v / sd));
+          });
+          if (r < rounds - 1) weights = boostWeights(trainL, trainScores, says, 1, 4);
         }
       }
       if (running.cancelled) { $('swarmSub').textContent = 'Cancelled.'; return; }
-      const sc = scoresNow(), acc = swarmAcc(sc), singles = flies.map((f) => balanced(testL, (q) => flyScore(f.test, q, LOOKS, 1)));
+      const sc = scoresNow(), equalAcc = swarmAcc(sc), weightedAcc = boost ? balanced(testL, (i) => sc.reduce((a, s, k) => a + flies[k].say * s[i], 0)) : equalAcc;
+      const acc = boost && K >= 15 ? weightedAcc : equalAcc; // with boosting, votes weighted by each fly's say came out ahead from 15 flies on (README)
+      const singles = flies.map((f) => balanced(testL, (q) => flyScore(f.test, q, LOOKS, 1)));
       const one = singles.reduce((a, b) => a + b, 0) / singles.length, best = Math.max(...singles), corr = mistakeCorrelation(testL, flies.map((f) => Array.from({ length: nTe }, (_, i) => flyScore(f.test, i, LOOKS, 1))));
       $('swarmNum').textContent = `${(acc * 100).toFixed(1)}%`;
-      $('swarmSub').textContent = `Swarm of ${K}${boost ? ' (boosting)' : ''} on ${nTe} photos it never saw, men and women counted equally (guessing 50%). One fly alone: ${(one * 100).toFixed(1)}% on average, the best ${(best * 100).toFixed(1)}%. Mistakes alike: ${corr.toFixed(2)} (0 = independent, 1 = identical).`;
+      $('swarmSub').textContent = `Swarm of ${K}${boost ? (K >= 15 ? ' (boosting, votes weighted by each fly\u2019s say)' : ' (boosting)') : ''} on ${nTe} photos it never saw, men and women counted equally (guessing 50%). Equal votes: ${(equalAcc * 100).toFixed(1)}%. One fly alone: ${(one * 100).toFixed(1)}% on average, the best ${(best * 100).toFixed(1)}%. Mistakes alike: ${corr.toFixed(2)} (0 = independent, 1 = identical).`;
       drawMap(spots.map((_, i) => { const f = flies.find((x) => x.spot === i); return f ? balanced(testL, (q) => flyScore(f.test, q, LOOKS, 1)) : null; }));
       log(`swarm of ${K}${boost ? ' boosting' : ''}, ${episodes} sessions each: ${(acc * 100).toFixed(1)}% (one fly ${(one * 100).toFixed(1)}%)`);
     } catch (e) {
@@ -150,5 +156,5 @@ export function initSwarm(ctx) {
   $('btnSwarm').onclick = run;
   $('btnSwarmCancel').onclick = () => { if (running) { running.cancelled = true; running.workers.forEach((w) => w.terminate()); } };
   drawMap([]); refresh();
-  return { refresh, run, setOptions(o) { if (o.size) { size = o.size; } if (o.episodes) episodes = o.episodes; if (o.boost != null) boost = o.boost; const mark = (id, v) => $(id).querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(v))); mark('swSize', size); mark('swEps', episodes); mark('swBoost', boost ? 1 : 0); refresh(); } };
+  return { refresh, run, setOptions(o) { if (o.size) { size = o.size; } if (o.episodes) episodes = o.episodes; if (o.boost != null) userBoost = o.boost; const mark = (id, v) => $(id).querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(v))); mark('swSize', size); mark('swEps', episodes); mark('swBoost', userBoost ? 1 : 0); refresh(); } };
 }
