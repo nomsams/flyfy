@@ -28,6 +28,8 @@
 //        [--yaw-walk 0.01] (a gyro compass: the heading error random-walks, radians per step) [--yaw-compass 0.1] (a sky compass: error each step, radians, does not accumulate)
 //        [--flow-odo] (optic flow: the odometer sees the true ground motion, wind included)
 //        [--scales 1,0.7,1.4] (swarm members look at the ground zoomed by different amounts: a normal, a close and a wide view)
+//        [--regions 4] (the route is cut into stretches of 4 maze cells, each with its own route memory, picked by where the fly believes it is on the route)
+//        [--corridor 6] (learning flights only within 6 maze cells of the route)  [--scout 10] (unsure of the map for 10 steps in a row: fly straight on)
 //        [--map-swarm] (every swarm member also votes in the map localisation) [--map-sharp 20] (a sharper map belief)
 //        [--decay 0.9] (how much each learning-flight view dims the cells it uses; default 0.5)
 //        [--wind 0.3] (a steady wind of 0.3 x the flying speed, in a random direction, that the fly does not know about)
@@ -128,7 +130,7 @@ function releaseAnywhere(world, F, r, alt) {
 // itself, only what the world looked like while it was on it.
 export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt = 0, policy = 'steer', kc = 0, sparsity = 0, testVariant = 0,
   trainAlts = null, altBanks = false, testAlt = 0, swarm = 1, gazeR = 0.25, cast = false, castThr = 0.1, approach = 0, drop = false, track = false,
-  aversive = false, climb = 0, row = null, map = false, arrive = false, weather = 'clear', trainWeather = 'clear', normalize = false, edges = false, burst = 0, smooth = 0, approachDecay = 0.5, calibrate = 0, odoBias = 0, odoNoise = 0, odoScale = 0, wind = 0, tilt = 0, tiltEst = 0, tiltComp = false, tiltTrain = false, yawWalk = 0, yawCompass = 0, flowOdo = false, mapSwarm = false, mapSharp = 12, scales = null }) {
+  aversive = false, climb = 0, row = null, map = false, arrive = false, weather = 'clear', trainWeather = 'clear', normalize = false, edges = false, burst = 0, smooth = 0, approachDecay = 0.5, calibrate = 0, odoBias = 0, odoNoise = 0, odoScale = 0, wind = 0, tilt = 0, tiltEst = 0, tiltComp = false, tiltTrain = false, yawWalk = 0, yawCompass = 0, flowOdo = false, mapSwarm = false, mapSharp = 12, scales = null, regions = 0, corridor = 0, scout = 0 }) {
   const world = makeWonderland(worldOpts);
   const over = { eye: { activeVision: 0, normalize: normalize ? 1 : 0, lateralInhib: edges ? 1.5 : 0, ...(burst ? { burst } : {}), ...(smooth ? { smooth: 1 } : {}) }, learn: { anneal: 0 } };
   if (kc) over.mb = { cells: kc, ...(sparsity ? { sparsity } : {}) };
@@ -150,7 +152,7 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
   if (policy === 'familiar') {
     // familiarity navigation (src/route/familiar.js, the same code the web app runs)
     const alts = trainAlts && trainAlts.length ? trainAlts : [1];
-    fam = new FamiliarSwarm(brain, F, { swarm, gazeR, alts, banks: altBanks, castThr, track, aversive, layout: row ? rowOfCircles(row) : null, mapTrack: map, arrive, approachDecay, mapSwarm, mapSharp, scales });
+    fam = new FamiliarSwarm(brain, F, { swarm, gazeR, alts, banks: altBanks, castThr, track, aversive, layout: row ? rowOfCircles(row) : null, mapTrack: map, arrive, approachDecay, mapSwarm, mapSharp, scales, regionCells: regions, corridor, scout });
     const trainAtt = () => (tilt && tiltTrain ? mkAtt(r) : null); // (practise the route in rough air, too)
     // each member's "average view": one teacher flight along the route at every training height
     for (const h of alts) fly(world, F, { x: world.start[0], y: world.start[1], th: tangent(world, 0), alt: h }, (q) => { fam.addToAverage(q); return teacherTurn(q); }, { maxSteps: 2000, att: trainAtt() });
@@ -225,7 +227,7 @@ if (isMain && !args.one) {
   const common = { flights: +(args.flights || 40), releases: +(args.releases || 30), alt: +(args.alt || 0), policy: args.policy || 'steer', kc: +(args.kc || 0), sparsity: +(args.sparsity || 0), testVariant: +(args['test-variant'] || 0),
     trainAlts: args['train-alts'] ? args['train-alts'].split(',').map(Number) : null, altBanks: !!args.banks, testAlt: +(args['test-alt'] || 0),
     swarm: +(args.swarm || 1), gazeR: +(args.gaze ?? 0.25), cast: !!args.cast, castThr: +(args['cast-thr'] || 0.1), approach: +(args.approach || 0), drop: !!args.drop, track: !!args.track,
-    aversive: !!args.aversive, map: !!args.map, arrive: !!args.arrive, weather: args.weather || 'clear', trainWeather: args['train-weather'] || 'clear', normalize: !!args.normalize, edges: !!args.edges, burst: +(args.burst || 0), tilt: +(args.tilt || 0), tiltEst: +(args['tilt-est'] || 0), tiltComp: !!args['tilt-comp'], tiltTrain: !!args['tilt-train'], yawWalk: +(args['yaw-walk'] || 0), yawCompass: +(args['yaw-compass'] || 0), flowOdo: !!args['flow-odo'], mapSwarm: !!args['map-swarm'], scales: args.scales ? args.scales.split(',').map(Number) : null, mapSharp: +(args['map-sharp'] || 12), calibrate: +(args.calibrate || 0), approachDecay: +(args.decay || 0.5), smooth: +(args.smooth || 0), odoBias: +(args['odo-bias'] || 0), odoNoise: +(args['odo-noise'] || 0), odoScale: +(args['odo-scale'] || 0), wind: +(args.wind || 0), climb: +(args.climb || 0), row: args.row ? (([side, mid]) => ({ side, mid }))(args.row.split(',').map(Number)) : null };
+    aversive: !!args.aversive, map: !!args.map, arrive: !!args.arrive, weather: args.weather || 'clear', trainWeather: args['train-weather'] || 'clear', normalize: !!args.normalize, edges: !!args.edges, burst: +(args.burst || 0), tilt: +(args.tilt || 0), tiltEst: +(args['tilt-est'] || 0), tiltComp: !!args['tilt-comp'], tiltTrain: !!args['tilt-train'], yawWalk: +(args['yaw-walk'] || 0), yawCompass: +(args['yaw-compass'] || 0), flowOdo: !!args['flow-odo'], mapSwarm: !!args['map-swarm'], regions: +(args.regions || 0), corridor: +(args.corridor || 0), scout: +(args.scout || 0), scales: args.scales ? args.scales.split(',').map(Number) : null, mapSharp: +(args['map-sharp'] || 12), calibrate: +(args.calibrate || 0), approachDecay: +(args.decay || 0.5), smooth: +(args.smooth || 0), odoBias: +(args['odo-bias'] || 0), odoNoise: +(args['odo-noise'] || 0), odoScale: +(args['odo-scale'] || 0), wind: +(args.wind || 0), climb: +(args.climb || 0), row: args.row ? (([side, mid]) => ({ side, mid }))(args.row.split(',').map(Number)) : null };
   const jobs = [];
   const w0 = +(args.w0 || 1); // the first maze number (to test one particular maze)
   for (const setup of setups) for (let w = w0; w < w0 + worlds; w++) for (let s = 1; s <= seeds; s++) jobs.push({ ...common, setup, seed: s, worldOpts: { ...worldBase, seed: w } });

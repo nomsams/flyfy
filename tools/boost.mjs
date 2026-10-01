@@ -6,7 +6,7 @@
 // chase them). In the end every fly votes with equal, scaled margins, as in tools/swarm.mjs.
 //
 // Usage: node tools/boost.mjs [--rounds 5] [--per 5] [--alpha 1] [--cap 4] [--circle 10]
-//        [--dists 0.9,1,1.1] [--with a,b] [--episodes 150] [--seedbase 0] [--jobs N]
+//        [--mix] (mixed abilities: full / no edge-direction cells / no colour)  [--dists 0.9,1,1.1] [--with a,b] [--episodes 150] [--seedbase 0] [--jobs N]
 // --alpha 0 is the same swarm without boosting (same seeds, same gaze positions), for comparison.
 import os from 'node:os';
 import fs from 'node:fs';
@@ -60,6 +60,8 @@ const rounds = +(args.rounds || 5), per = +(args.per || 5), K = rounds * per;
 const alpha = +(args.alpha ?? 1), cap = +(args.cap || 4), R = +(args.circle ?? 10);
 const abil = args.with ? Object.fromEntries(args.with.split(',').map((k) => [k, true])) : { ...DEFAULT_ABILITIES, fovea: true };
 const base = mergeConfig(setupConfig('faces', abil));
+// --mix: the flies do not all have the same abilities (full / without edge-direction cells / without colour), so their mistakes may differ more
+const bases = args.mix ? [base, mergeConfig(setupConfig('faces', { ...abil, orient: false })), mergeConfig(setupConfig('faces', { ...abil, colour: false }))] : [base];
 const jobsMax = +(args.jobs || Math.max(1, os.cpus().length - 1));
 const { train, test } = taskSets('faces');
 const nTr = train.labels.length, nTe = test.labels.length;
@@ -83,7 +85,7 @@ const bal = (labels, score) => { const ok = [0, 0], t = [0, 0]; labels.forEach((
 const t0 = Date.now();
 console.log(`boosting swarm: ${rounds} rounds x ${per} flies, alpha ${alpha}, weight cap ${cap}x, gaze circle ${R} deg`);
 for (let r = 0; r < rounds; r++) {
-  const jobs = Array.from({ length: per }, (_, j) => ({ seed: 1 + r * per + j + (+args.seedbase || 0), episodes: +(args.episodes || 150), cfg: mergeConfig(spot(r, j), base), weightsFile }));
+  const jobs = Array.from({ length: per }, (_, j) => ({ seed: 1 + r * per + j + (+args.seedbase || 0), episodes: +(args.episodes || 150), cfg: mergeConfig(spot(r, j), bases[(j * rounds + r) % bases.length]), weightsFile }));
   const out = new Array(per);
   let next = 0;
   await Promise.all(Array.from({ length: Math.min(jobsMax, per) }, async () => { while (next < per) { const j = next++; out[j] = await runOne(jobs[j]); } }));

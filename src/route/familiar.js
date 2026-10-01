@@ -60,9 +60,9 @@ export class FamiliarSwarm {
   // brain: a Brain with the memory centre on; flight: a RouteFlight to render views with
   // onRoute: the share of a view's firing cells that may be unfamiliar for the route to count as found
   constructor(brain, flight, { swarm = 1, gazeR = 0.25, alts = [1], banks = false, castThr = 0.1, onRoute = 0.12, approachDecay = 0.5, track = false, trackGain = 0.6,
-    aversive = false, aversiveGain = 0.5, layout = null, mapTrack = false, mapGain = 1, arrive = false, mapSwarm = false, mapSharp = 12, scales = null } = {}) {
+    aversive = false, aversiveGain = 0.5, layout = null, mapTrack = false, mapGain = 1, arrive = false, mapSwarm = false, mapSharp = 12, scales = null, regionCells = 0, corridor = 0, scout = 0 } = {}) {
     if (!brain.nKC) throw new Error('familiarity needs the memory centre');
-    Object.assign(this, { brain, F: flight, alts, banks, castThr, onRoute, approachDecay, hasApproach: false, track, trackGain, aversive, aversiveGain, mapTrack, mapGain, arrive, mapSwarm, mapSharp });
+    Object.assign(this, { brain, F: flight, alts, banks, castThr, onRoute, approachDecay, hasApproach: false, track, trackGain, aversive, aversiveGain, mapTrack, mapGain, arrive, mapSwarm, mapSharp, regionCells, corridor, scout });
     this.mapSnaps = []; this.routePts = []; // (mapTrack) north-up views of the map, and where the route lies
     const K = layout ? layout.length : Math.max(1, swarm), nb = banks ? alts.length : 1;
     const spot = (k) => (layout ? layout[k] : K > 1 ? [gazeR * Math.cos((2 * Math.PI * k) / K), gazeR * Math.sin((2 * Math.PI * k) / K)] : [0, 0]);
@@ -95,10 +95,12 @@ export class FamiliarSwarm {
   finishAverage() { for (const m of this.members) m.rmean = Float32Array.from(m.sum, (v) => v / Math.max(1, m.n)); }
   // learning, step 2: this view on the route (at training height h) becomes familiar
   learn(p, h = p.alt) {
-    const s = this.track ? this.F.nearest(p).s : 0;
+    const s = this.track || this.regionCells ? this.F.nearest(p).s : 0;
     for (const m of this.members) {
       const code = this.see(m, p), mem = m.memory[this.bankOf(h)], on = [];
-      for (let j = 0; j < code.length; j++) if (code[j]) { mem[j] = 0; on.push(j); }
+      // regionCells: the route is cut into stretches of that many maze cells and each stretch has its own memory (so a long route does not fill one memory up)
+      const reg = this.regionCells ? ((m.regional ||= {})[Math.floor(s / (this.regionCells * this.F.w.cell))] ||= new Uint8Array(this.brain.nKC).fill(1)) : null;
+      for (let j = 0; j < code.length; j++) if (code[j]) { mem[j] = 0; if (reg) reg[j] = 0; on.push(j); }
       if (this.track) m.snaps[this.bankOf(h)].push({ on: Int32Array.from(on), s, th: p.th });
       if (this.mapTrack && m === this.members[0]) this.routePts.push([p.x, p.y]);
       if (this.aversive) for (const turn of [-Math.PI / 2, Math.PI / 2]) { // the wrong ways from here
@@ -170,7 +172,9 @@ export class FamiliarSwarm {
     const R = world.route, cell = world.cell, sp = spacing * cell, speed = cell / 8, maxTurn = (20 * Math.PI) / 180;
     for (let gy = sp / 2; gy < world.H; gy += sp) for (let gx = sp / 2; gx < world.W; gx += sp) {
       const q = { x: gx + (rng() - 0.5) * sp * 0.5, y: gy + (rng() - 0.5) * sp * 0.5, th: 0, alt: h };
-      if (this.F.nearest(q, true).d < 0.5 * cell) continue;
+      const dRoute = this.F.nearest(q, true).d;
+      if (dRoute < 0.5 * cell) continue;
+      if (this.corridor && dRoute > this.corridor * cell) continue; // corridor: practise only within this many maze cells of the route (fewer views, a less crowded memory)
       for (let t = 0; t < maxSteps; t++) {
         const nr = this.F.nearest(q, true), j = Math.min(R.x.length - 1, nr.i + Math.round(cell / 2)); // aim half a cell further along
         const want = Math.atan2(R.y[j] - q.y, R.x[j] - q.x);
@@ -194,8 +198,9 @@ export class FamiliarSwarm {
     let on = 0, off = 0;
     for (let k = 0; k < N; k++) {
       const i = Math.floor(n * (0.05 + 0.9 * rng())), th0 = tan(i), o = (rng() * 2 - 1) * 0.35 * w.cell;
-      on += best9({ x: R.x[i] - Math.sin(th0) * o, y: R.y[i] + Math.cos(th0) * o, th: wrap(th0 + (rng() * 2 - 1) * 0.6), alt });
-      for (;;) { const q = { x: rng() * w.W, y: rng() * w.H, th: (rng() * 2 - 1) * Math.PI, alt }; if (this.F.nearest(q, true).d > 1.5 * w.cell) { off += best9(q); break; } }
+      const regOf = (s) => (this.regionCells ? Math.floor(s / (this.regionCells * w.cell)) : null);
+      on += best9({ x: R.x[i] - Math.sin(th0) * o, y: R.y[i] + Math.cos(th0) * o, th: wrap(th0 + (rng() * 2 - 1) * 0.6), alt, region: regOf(R.s[i]) });
+      for (;;) { const q = { x: rng() * w.W, y: rng() * w.H, th: (rng() * 2 - 1) * Math.PI, alt, region: regOf(R.s[Math.floor(rng() * n)]) }; if (this.F.nearest(q, true).d > 1.5 * w.cell) { off += best9(q); break; } }
     }
     this.onRoute = on / N + frac * (off / N - on / N);
     return { on: on / N, off: off / N, level: this.onRoute };
@@ -208,7 +213,9 @@ export class FamiliarSwarm {
       let r = 0, a = 0, w = 0;
       for (const m of this.members) {
         const code = this.see(m, { ...q, th: q.th + d }), mem = m.memory[bank], am = m.approach[bank], wm = m.wrong[bank];
-        for (let j = 0; j < code.length; j++) if (code[j]) { r += mem[j]; a += am[j]; w += wm[j]; }
+        const regs = this.regionCells && q.region != null && m.regional ? [q.region - 1, q.region, q.region + 1].map((k) => m.regional[k]).filter(Boolean) : null;
+        if (regs && regs.length) { for (let j = 0; j < code.length; j++) if (code[j]) { let v = 1; for (const g of regs) if (g[j] < v) v = g[j]; r += v; a += am[j]; w += wm[j]; } }
+        else for (let j = 0; j < code.length; j++) if (code[j]) { r += mem[j]; a += am[j]; w += wm[j]; }
       }
       route[i] = r; approach[i] = a; wrong[i] = w;
     });
@@ -284,25 +291,30 @@ export class FamiliarSwarm {
     const needVotes = (mapBased) => (mapBased ? 8 : 5); // steps in a row (8 steps = one maze cell)
     let endBy = 'route';
     const mapTracker = this.mapTrack && this.mapSnaps.length ? this._mapTracker() : null;
+    let unsure = 0, curRegion = null; const regPx = this.regionCells * this.F.w.cell;
     const LOST_AFTER = 12; // steps (1.5 cells) out of sight before it gives up on where it thought it was
     // climbing when unsure, back down to cruising height when sure
     const height = (q, sure) => (climb ? Math.max(-climb.rate, Math.min(climb.rate, (sure ? climb.cruise : climb.top) - q.alt)) : 0);
     return (q) => {
+      q.region = this.regionCells && curRegion != null ? curRegion : null;
       const { route, approach, wrong } = this.rate(q);
       // with a wrong-way memory, a direction that looks like "not this way" is penalised
       const avoid = (i) => (this.aversive ? this.aversiveGain * (1 - wrong[i] / per) : 0);
       let cr = best(this.aversive ? Float32Array.from(route, (v, i) => v / per + avoid(i)) : route), where = null;
       const inSight = !this.hasApproach || route[best(route)] <= onLimit; // judged by the route memory alone
       out = inSight ? 0 : out + 1;
-      if (out > LOST_AFTER) { tracker = null; lastWhere = null; } // lost for a while: forget where on the route it thought it was
+      if (out > LOST_AFTER) { tracker = null; lastWhere = null; curRegion = null; } // lost for a while: forget where on the route it thought it was
       // not in sight, and no confident idea of where the route is: head for it with the approach memory
       if (!inSight && !(tracker && lastWhere && lastWhere.conf > 0.5)) {
         let ca = best(approach), onMap = null;
         if (mapTracker) { // from where it thinks it is on the map, straight toward the route - as firmly as it is sure
           onMap = mapTracker(q);
+          if (this.regionCells && onMap.conf > 0.5) curRegion = Math.floor(this.F.nearest({ x: onMap.x, y: onMap.y }, true).s / regPx);
           const score = (i) => approach[i] / per + this.mapGain * onMap.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - onMap.want))) / 2;
           for (let i = 0; i < SCAN.length; i++) if (score(i) < score(ca)) ca = i;
         }
+        unsure = this.scout && (!onMap || onMap.conf < 0.3) ? unsure + 1 : 0;
+        if (this.scout && unsure > this.scout) ca = SCAN.indexOf(0); // scout: unsure for `scout` steps in a row: fly straight on
         endBy = 'map'; vote(!!onMap && onMap.conf > 0.8 && Math.hypot(onMap.x - goal[0], onMap.y - goal[1]) < 0.7 * CELL);
         const arrived = this.arrive && endVotes >= needVotes(true);
         return { turn: SCAN[ca], ratings: approach, choice: ca, mode: 'approach', casting: false, where, onMap, arrived, climb: height(q, false) };
@@ -312,6 +324,7 @@ export class FamiliarSwarm {
         // the view in the most familiar direction, for every member, to match against the stored patterns
         const codes = this.members.map((m) => Uint8Array.from(this.see(m, { ...q, th: q.th + SCAN[cr] })));
         where = lastWhere = tracker(q, codes);
+        if (this.regionCells && where.conf > 0.4) curRegion = Math.floor(where.best / regPx);
         endBy = 'route'; vote(inSight && where.conf > 0.6 && where.best >= LEN - 0.5 * CELL);
         // prefer directions near the route's direction at the best guess, as much as the fly is sure of it
         const score = (i) => route[i] / per + avoid(i) + this.trackGain * where.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - where.want))) / 2;

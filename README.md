@@ -480,14 +480,42 @@ maze 6 10% / 10%.) Two fixes:
    new the best direction looks on the route and far from it, and puts "on the route" a quarter of the way
    between. Three passes: 54% -> 83%.
 
-| maze size (within 0.8 cells) | 3 passes | 1 pass | 1 pass + calibrated |
-|---|---|---|---|
-| 6 x 6 (6 mazes) | 54% | 99% | 94% |
-| 8 x 8 | 19% | 67% | 92% |
-| 10 x 10 | 47% | 38% | **90%** |
-| 12 x 12 | 6% | 8% | **92%** |
-| 14 x 14 | 13% | 6% | 75% |
-| 18 x 18 (2 mazes) | - | - | 67% |
+| maze size (within 0.8 cells) | 3 passes | 1 pass | 1 pass + calibrated | calibrated, fresh run |
+|---|---|---|---|---|
+| 6 x 6 (6 mazes) | 54% | 99% | 94% | |
+| 8 x 8 | 19% | 67% | 92% | |
+| 10 x 10 | 47% | 38% | **90%** | 92% |
+| 12 x 12 | 6% | 8% | **92%** | 92% |
+| 14 x 14 | 13% | 6% | 75% | **94%** |
+| 18 x 18 (2 mazes) | - | - | 67% | 75% |
+| 24 x 24 (2 mazes) | - | - | - | 46% |
+
+A correction: the first 14 x 14 and 18 x 18 figures (75% and 67%) were taken while the lab's code was being
+edited between runs. Fresh runs from one frozen version (`--worlds 3`/`2`, 2 flies, 6 drops, one pass,
+calibrated) gave the "fresh" column in the table above; with only two to four mazes per row, differences of
+about 15 points are still luck of the maze.
+
+Two more ideas for bigger mazes, measured on the same mazes (`--regions N` cuts the route into stretches of N maze
+cells with their own route memory, picked by where the fly believes it is; neighbouring stretches count too):
+
+| idea | 14 x 14 (3 mazes) | 18 x 18 (2 mazes) |
+|---|---|---|
+| plain fly (fresh run) | 94% | 75% |
+| `--regions 4` | 61% | |
+| `--regions 8` | 50% | |
+| `--regions 6` | | 96% |
+
+Regional memories hurt at 14 x 14 (a wrong belief about the stretch loads the wrong memory, and the fly then
+sees the whole route as unfamiliar) and helped at 18 x 18, so the verdict is "maze-dependent, not yet trusted".
+Two more tried on top (24 x 24 baseline 46%, 18 x 18 baseline 75%): **corridor-only learning flights**
+(`--corridor 6`: practise only within 6 maze cells of the route, so fewer views crowd the memory) gave 38% at 24 x 24
+(no gain, slightly worse), and **scouting** (`--scout 10`: when the map belief has been unsure for 10 steps, fly
+straight on) gave exactly the baseline at both sizes (46% and 75%), meaning it practically never triggers. At
+24 x 24 the failures are mostly whole mazes (flies per maze: 0, 0, 100, 83%; the teacher alone reaches the goal in
+only 58% of drops), so the limit is the maze, not these tweaks.
+Mixing abilities in a face swarm (`tools/boost.mjs --mix`: flies cycle full / no edge-direction cells / no colour,
+25 flies, 300 sessions, circle 10 degrees) gave 69.9% with boosting and 68.7% with equal votes, +0.7 points
+over an ordinary swarm: no clear gain.
 
 Six mazes, one pass, fixed level: fog + filter 97%, night + filter + 16 frames 92%, wind 40% 79%, odometer 17
 degrees off 97%. The maze app now flies the route once and calibrates by default. The guide has a widget

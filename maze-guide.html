@@ -1047,6 +1047,10 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
       <tr><td>Climb when unsure</td><td>Rise to see beyond the hedges</td><td class="n">63% → 55%</td><td><span class="pill bad">worse</span></td></tr>
       <tr><td>Cast when lost</td><td>Sweep side to side like a moth that lost a scent</td><td class="n">50% → 29%</td><td><span class="pill bad">worse, off</span></td></tr>
       <tr><td>Edge boost</td><td>The face-guide trick</td><td class="n">no help in weather</td><td><span class="pill bad">off</span></td></tr>
+      <tr><td>Separate route memory for each stretch of route</td><td>Chapter 14's "region" idea: 4 or 8 cells of route per memory, chosen by where the fly thinks it is</td><td class="n">14 × 14: 94% → 61% (4 cells), 50% (8 cells); 18 × 18: 75% → 96% (6 cells)</td><td><span class="pill meh">mixed: hurt in one maze size, helped in another</span></td></tr>
+      <tr><td>A face swarm whose flies have different abilities</td><td>Flies cycle: all senses / no edge cells / no colour</td><td class="n">+0.7 points over an ordinary swarm</td><td><span class="pill meh">no clear gain</span></td></tr>
+      <tr><td>Learning flights only in a corridor around the route</td><td>Fewer views, a less crowded memory (6 cells either side)</td><td class="n">24 × 24: 46% → 38%</td><td><span class="pill bad">no gain</span></td></tr>
+      <tr><td>Scouting when the map belief is unsure</td><td>Fly straight on after 10 unsure steps</td><td class="n">24 × 24: 46% → 46%; 18 × 18: 75% → 75%</td><td><span class="pill meh">never triggers</span></td></tr>
       <tr><td>An arrival belief</td><td>Stop when it believes it is at the goal</td><td class="n">no gain, 2% false stops</td><td><span class="pill meh">option, off</span></td></tr>
     </tbody>
   </table></div>
@@ -1083,20 +1087,21 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     </tbody>
   </table></div>
   <h3>Measured, not estimated</h3>
-  <p>Chapters 3–8 used 6 × 6 mazes. We also ran the full fly (learning flights, tracking, map) on bigger mazes, 20,000 memory cells, dropped anywhere. The last two columns use the fixes from chapter 9 (fly the route once, and let the fly measure its own "on the route" level). Without them the fly is good only in small mazes; with them it still works at 12 × 12.</p>
+  <p>Chapters 3–8 used 6 × 6 mazes. We also ran the full fly (learning flights, tracking, map) on bigger mazes, 20,000 memory cells, dropped anywhere. The last two columns use the fixes from chapter 9 (fly the route once, and let the fly measure its own "on the route" level). Without them the fly is good only in small mazes; with them it still works up to about 14 × 14 and then thins out. A correction: our first 14 × 14 and 18 × 18 numbers (75% and 67%) were measured while we were still editing the lab's code between runs. The fresh runs in this table, started from the same code, replace them. With only 2–4 mazes per row, and about 2 mazes at the large sizes, differences of 15 points or so are still within the luck of the maze.</p>
   <div class="tbl"><table>
     <thead><tr><th>Maze size</th><th>Three route passes</th><th>One route pass</th><th>One pass + calibrated level</th><th>Notes</th></tr></thead>
     <tbody>
       <tr><td>6 × 6</td><td class="n">54%</td><td class="n">99%</td><td class="n"><b>94%</b></td><td>6 mazes × 2 flies × 6 drops</td></tr>
       <tr><td>8 × 8</td><td class="n">19%</td><td class="n">67%</td><td class="n"><b>92%</b></td><td>3–4 mazes</td></tr>
-      <tr><td>10 × 10</td><td class="n">47%</td><td class="n">38%</td><td class="n"><b>90%</b></td><td>4 mazes</td></tr>
-      <tr><td>12 × 12</td><td class="n">6%</td><td class="n">8%</td><td class="n"><b>92%</b></td><td>3 mazes</td></tr>
-      <tr><td>14 × 14</td><td class="n">13%</td><td class="n">6%</td><td class="n"><b>75%</b></td><td>3 mazes (three passes: one maze)</td></tr>
-      <tr><td>18 × 18</td><td class="n">–</td><td class="n">–</td><td class="n"><b>67%</b></td><td>2 mazes</td></tr>
+      <tr><td>10 × 10</td><td class="n">47%</td><td class="n">38%</td><td class="n"><b>92%</b></td><td>4 mazes (fresh run)</td></tr>
+      <tr><td>12 × 12</td><td class="n">6%</td><td class="n">8%</td><td class="n"><b>92%</b></td><td>3 mazes (fresh run)</td></tr>
+      <tr><td>14 × 14</td><td class="n">13%</td><td class="n">6%</td><td class="n"><b>94%</b></td><td>3 mazes (fresh run; an earlier run gave 75%, see below)</td></tr>
+      <tr><td>18 × 18</td><td class="n">–</td><td class="n">–</td><td class="n"><b>75%</b></td><td>2 mazes (fresh run)</td></tr>
+      <tr><td>24 × 24</td><td class="n">–</td><td class="n">–</td><td class="n"><b>46%</b></td><td>2 mazes (fresh run)</td></tr>
     </tbody>
   </table></div>
   <div class="side remember"><b class="t">Keep in mind</b>
-    With the two fixes the lab's fly is solid up to about 12 × 12 cells (600 m square at 50 m height) and degrades after that. Bigger maps need four changes: build the landscape in <b>tiles</b> around the helicopter; search only <b>near the believed position</b>; keep a <b>separate memory for each region</b> (the route memory already fills half its cells by 6 × 6); and learn in a <b>corridor</b> around the route instead of the whole map. 1,000 × 1,000 is not possible as built.</div>
+    With the two fixes the lab's fly is solid up to about 14 × 14 cells (600 m square at 50 m height) and degrades after that. Bigger maps need four changes: build the landscape in <b>tiles</b> around the helicopter; search only <b>near the believed position</b>; keep a <b>separate memory for each region</b> (the route memory already fills half its cells by 6 × 6); and learn in a <b>corridor</b> around the route instead of the whole map. 1,000 × 1,000 is not possible as built.</div>
   <div class="leaves"><span class="n">95%</span><b>Where this leaves us</b><div>The recipe scales to about a kilometre in principle, at hours of computing and a few hours of real flying with a survey. Beyond that, the memory needs splitting.</div></div>
 </section>
 
