@@ -30,6 +30,11 @@
 //        [--scales 1,0.7,1.4] (swarm members look at the ground zoomed by different amounts: a normal, a close and a wide view)
 //        [--regions 4] (the route is cut into stretches of 4 maze cells, each with its own route memory, picked by where the fly believes it is on the route)
 //        [--corridor 6] (learning flights only within 6 maze cells of the route)  [--scout 10] (unsure of the map for 10 steps in a row: fly straight on)
+//        [--launch 0] (released at the start A, facing roughly along the route, and must reach the goal B: with --wind/--odo-* drift; --launch 3 = anywhere within 3 cells of A)
+//        [--prior] (the map belief starts inside the launch zone and runs from the launch) [--cone 0.4] (and may not stray further than the zone + 0.4 x the distance flown from where odometry says)
+//        [--field] (map likelihood spread over nearby cells) [--seq 8] (matched over the last 8 looks, shifted by odometry) [--coarse 6] (only the 6 most likely 64-px blocks are matched)
+//        [--idf] (rare Kenyon cells count more) [--anchors 1] (distinctive views count more) [--particles 1500 --part-drift 0.3] (a particle filter instead of the grid belief)
+//        [--corridor 2 --funnel 0.3 --end-zone 3] (learning flights only in a band around the route 2 cells wide that widens by 0.3 cells per cell flown, and within 3 cells of the goal)
 //        [--map-swarm] (every swarm member also votes in the map localisation) [--map-sharp 20] (a sharper map belief)
 //        [--decay 0.9] (how much each learning-flight view dims the cells it uses; default 0.5)
 //        [--wind 0.3] (a steady wind of 0.3 x the flying speed, in a random direction, that the fly does not know about)
@@ -115,6 +120,12 @@ function releasePose(world, r, alt, spanEnd = 0.7) {
 }
 
 // dropped anywhere on the map, at least 0.6 cells from the route, facing anywhere
+// launched from region A: within `R` cells of the start, facing roughly along the route
+function launchPose(world, r, alt, R) {
+  const th0 = tangent(world, 0), a = r() * 2 * Math.PI, d = R * world.cell * Math.sqrt(r()) + (r() * 2 - 1) * 0.25 * world.cell;
+  return { x: world.start[0] + d * Math.cos(a), y: world.start[1] + d * Math.sin(a), th: wrap(th0 + (r() * 2 - 1) * 0.5), alt: Math.exp((r() * 2 - 1) * alt) };
+}
+
 function releaseAnywhere(world, F, r, alt) {
   let p;
   do { p = { x: r() * world.W, y: r() * world.H, th: r() * 2 * Math.PI - Math.PI, alt: Math.exp((r() * 2 - 1) * alt) }; } while (F.nearest(p, true).d < 0.6 * world.cell);
@@ -130,7 +141,7 @@ function releaseAnywhere(world, F, r, alt) {
 // itself, only what the world looked like while it was on it.
 export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt = 0, policy = 'steer', kc = 0, sparsity = 0, testVariant = 0,
   trainAlts = null, altBanks = false, testAlt = 0, swarm = 1, gazeR = 0.25, cast = false, castThr = 0.1, approach = 0, drop = false, track = false,
-  aversive = false, climb = 0, row = null, map = false, arrive = false, weather = 'clear', trainWeather = 'clear', normalize = false, edges = false, burst = 0, smooth = 0, approachDecay = 0.5, calibrate = 0, odoBias = 0, odoNoise = 0, odoScale = 0, wind = 0, tilt = 0, tiltEst = 0, tiltComp = false, tiltTrain = false, yawWalk = 0, yawCompass = 0, flowOdo = false, mapSwarm = false, mapSharp = 12, scales = null, regions = 0, corridor = 0, scout = 0 }) {
+  aversive = false, climb = 0, row = null, map = false, arrive = false, weather = 'clear', trainWeather = 'clear', normalize = false, edges = false, burst = 0, smooth = 0, approachDecay = 0.5, calibrate = 0, odoBias = 0, odoNoise = 0, odoScale = 0, wind = 0, tilt = 0, tiltEst = 0, tiltComp = false, tiltTrain = false, yawWalk = 0, yawCompass = 0, flowOdo = false, mapSwarm = false, mapSharp = 12, scales = null, regions = 0, corridor = 0, scout = 0, launch = -1, prior = false, cone = 0, field = false, seq = 0, coarse = 0, idf = false, anchors = 0, particles = 0, partDrift = 0.3, funnel = 0, endZone = 0 }) {
   const world = makeWonderland(worldOpts);
   const over = { eye: { activeVision: 0, normalize: normalize ? 1 : 0, lateralInhib: edges ? 1.5 : 0, ...(burst ? { burst } : {}), ...(smooth ? { smooth: 1 } : {}) }, learn: { anneal: 0 } };
   if (kc) over.mb = { cells: kc, ...(sparsity ? { sparsity } : {}) };
@@ -152,7 +163,7 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
   if (policy === 'familiar') {
     // familiarity navigation (src/route/familiar.js, the same code the web app runs)
     const alts = trainAlts && trainAlts.length ? trainAlts : [1];
-    fam = new FamiliarSwarm(brain, F, { swarm, gazeR, alts, banks: altBanks, castThr, track, aversive, layout: row ? rowOfCircles(row) : null, mapTrack: map, arrive, approachDecay, mapSwarm, mapSharp, scales, regionCells: regions, corridor, scout });
+    fam = new FamiliarSwarm(brain, F, { swarm, gazeR, alts, banks: altBanks, castThr, track, aversive, layout: row ? rowOfCircles(row) : null, mapTrack: map, arrive, approachDecay, mapSwarm, mapSharp, scales, regionCells: regions, corridor, scout, cone, field, seq, coarse, idf, anchors, particles, partDrift, funnel, endZone });
     const trainAtt = () => (tilt && tiltTrain ? mkAtt(r) : null); // (practise the route in rough air, too)
     // each member's "average view": one teacher flight along the route at every training height
     for (const h of alts) fly(world, F, { x: world.start[0], y: world.start[1], th: tangent(world, 0), alt: h }, (q) => { fam.addToAverage(q); return teacherTurn(q); }, { maxSteps: 2000, att: trainAtt() });
@@ -191,10 +202,11 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
   F.setWeather(weather); // the weather while it is tested
   const rt = mulberry32(900001 + seed), out = { reached: 0, progress: 0, dev: 0, tracks: [], teacher: 0, blind: 0, found: 0, near: 0, falseStop: 0 };
   for (let k = 0; k < releases; k++) {
-    const p0 = drop ? releaseAnywhere(world, F, rt, alt) : releasePose(world, rt, alt);
+    const p0 = drop ? releaseAnywhere(world, F, rt, alt) : launch >= 0 ? launchPose(world, rt, alt, launch) : releasePose(world, rt, alt);
+    if (fam && launch >= 0 && (prior || cone)) fam.prior = { x: world.start[0], y: world.start[1], r: (launch + 0.5) * world.cell };
     if (testAlt) p0.alt = testAlt;
-    const maxSteps = Math.ceil((world.route.length / (world.cell / 8)) * (drop ? 3.5 : 2.5));
-    const how = drop ? { maxSteps, lostAt: Infinity, global: true } : { maxSteps };
+    const glob = drop || launch >= 0, maxSteps = Math.ceil((world.route.length / (world.cell / 8)) * (glob ? 3.5 : 2.5));
+    const how = glob ? { maxSteps, lostAt: Infinity, global: true } : { maxSteps };
     const windDir = rt() * 2 * Math.PI; // (always drawn, so runs with and without wind release the fly at the same places)
     const drift = odoBias || odoNoise || odoScale || wind || yawWalk || yawCompass || flowOdo ? { bias: odoBias, noise: odoNoise, scale: odoScale, wind, windDir, rng: rt, walk: yawWalk, compass: yawCompass, flow: flowOdo } : null;
     const att = tilt ? mkAtt(rt) : null;
@@ -203,9 +215,10 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
     out.reached += res.reached / releases; out.progress += res.progress / releases; out.dev += res.dev / releases;
     if (k < 8) out.tracks.push(res.track);
     // references on the same release: the teacher itself, and a blind fly that flies straight
-    out.teacher += fly(world, F, { ...p0 }, (q) => Math.max(-TURN, Math.min(TURN, F.teacher(q).err)), how)[drop ? 'reached' : 'progress'] / releases;
-    out.blind += fly(world, F, { ...p0 }, () => 0, how)[drop ? 'reached' : 'progress'] / releases;
+    out.teacher += fly(world, F, { ...p0 }, (q) => Math.max(-TURN, Math.min(TURN, F.teacher(q).err)), how)[glob ? 'reached' : 'progress'] / releases;
+    out.blind += fly(world, F, { ...p0 }, () => 0, how)[glob ? 'reached' : 'progress'] / releases;
   }
+  out.views = fam ? fam.mapSnaps.length : 0;
   return { out, world };
 }
 
@@ -227,7 +240,7 @@ if (isMain && !args.one) {
   const common = { flights: +(args.flights || 40), releases: +(args.releases || 30), alt: +(args.alt || 0), policy: args.policy || 'steer', kc: +(args.kc || 0), sparsity: +(args.sparsity || 0), testVariant: +(args['test-variant'] || 0),
     trainAlts: args['train-alts'] ? args['train-alts'].split(',').map(Number) : null, altBanks: !!args.banks, testAlt: +(args['test-alt'] || 0),
     swarm: +(args.swarm || 1), gazeR: +(args.gaze ?? 0.25), cast: !!args.cast, castThr: +(args['cast-thr'] || 0.1), approach: +(args.approach || 0), drop: !!args.drop, track: !!args.track,
-    aversive: !!args.aversive, map: !!args.map, arrive: !!args.arrive, weather: args.weather || 'clear', trainWeather: args['train-weather'] || 'clear', normalize: !!args.normalize, edges: !!args.edges, burst: +(args.burst || 0), tilt: +(args.tilt || 0), tiltEst: +(args['tilt-est'] || 0), tiltComp: !!args['tilt-comp'], tiltTrain: !!args['tilt-train'], yawWalk: +(args['yaw-walk'] || 0), yawCompass: +(args['yaw-compass'] || 0), flowOdo: !!args['flow-odo'], mapSwarm: !!args['map-swarm'], regions: +(args.regions || 0), corridor: +(args.corridor || 0), scout: +(args.scout || 0), scales: args.scales ? args.scales.split(',').map(Number) : null, mapSharp: +(args['map-sharp'] || 12), calibrate: +(args.calibrate || 0), approachDecay: +(args.decay || 0.5), smooth: +(args.smooth || 0), odoBias: +(args['odo-bias'] || 0), odoNoise: +(args['odo-noise'] || 0), odoScale: +(args['odo-scale'] || 0), wind: +(args.wind || 0), climb: +(args.climb || 0), row: args.row ? (([side, mid]) => ({ side, mid }))(args.row.split(',').map(Number)) : null };
+    aversive: !!args.aversive, map: !!args.map, arrive: !!args.arrive, weather: args.weather || 'clear', trainWeather: args['train-weather'] || 'clear', normalize: !!args.normalize, edges: !!args.edges, burst: +(args.burst || 0), tilt: +(args.tilt || 0), tiltEst: +(args['tilt-est'] || 0), tiltComp: !!args['tilt-comp'], tiltTrain: !!args['tilt-train'], yawWalk: +(args['yaw-walk'] || 0), yawCompass: +(args['yaw-compass'] || 0), flowOdo: !!args['flow-odo'], mapSwarm: !!args['map-swarm'], regions: +(args.regions || 0), corridor: +(args.corridor || 0), launch: args.launch !== undefined ? +args.launch : -1, prior: !!args.prior, cone: +(args.cone || 0), field: !!args.field, seq: +(args.seq || 0), coarse: +(args.coarse || 0), idf: !!args.idf, anchors: +(args.anchors || 0), particles: +(args.particles || 0), partDrift: +(args['part-drift'] ?? 0.3), funnel: +(args.funnel || 0), endZone: +(args['end-zone'] || 0), scout: +(args.scout || 0), scales: args.scales ? args.scales.split(',').map(Number) : null, mapSharp: +(args['map-sharp'] || 12), calibrate: +(args.calibrate || 0), approachDecay: +(args.decay || 0.5), smooth: +(args.smooth || 0), odoBias: +(args['odo-bias'] || 0), odoNoise: +(args['odo-noise'] || 0), odoScale: +(args['odo-scale'] || 0), wind: +(args.wind || 0), climb: +(args.climb || 0), row: args.row ? (([side, mid]) => ({ side, mid }))(args.row.split(',').map(Number)) : null };
   const jobs = [];
   const w0 = +(args.w0 || 1); // the first maze number (to test one particular maze)
   for (const setup of setups) for (let w = w0; w < w0 + worlds; w++) for (let s = 1; s <= seeds; s++) jobs.push({ ...common, setup, seed: s, worldOpts: { ...worldBase, seed: w } });
@@ -240,12 +253,12 @@ if (isMain && !args.one) {
   let next = 0;
   await Promise.all(Array.from({ length: Math.min(jobsMax, jobs.length) }, async () => { while (next < jobs.length) { const j = next++; res.push(await runOne(jobs[j])); } }));
   const pct = (x) => (x * 100).toFixed(0) + '%';
-  console.log(`route following (${common.policy}${common.kc ? ', ' + common.kc + ' Kenyon cells' : ''}): ${worldBase.cells}x${worldBase.cells} maze, wobble ${worldBase.wobble}, variety ${worldBase.variety}, height jitter ${common.alt}${common.testVariant ? ', tested on variant ' + common.testVariant : ''}${common.trainAlts ? ', trained at heights ' + common.trainAlts.join('/') + (common.altBanks ? ' (a memory per height)' : '') : ''}${common.testAlt ? ', tested at height ' + common.testAlt : ''}${common.swarm > 1 ? ', swarm of ' + common.swarm + ' (gaze circle ' + common.gazeR + ')' : ''}${common.cast ? ', casting' : ''}${common.approach ? ', learning flights every ' + common.approach + ' cells' : ''}${common.drop ? ', DROPPED ANYWHERE' : ''}${common.track ? ', keeping track' : ''}${common.aversive ? ', wrong-way memory' : ''}${common.map ? ', knows where it is on the map' : ''}${common.weather !== 'clear' || common.trainWeather !== 'clear' ? ', weather: trained ' + common.trainWeather + ', tested ' + common.weather : ''}${common.normalize ? ', contrast filter' : ''}${common.edges ? ', edge boost' : ''}${common.climb ? ', climbs to ' + common.climb + ' when unsure' : ''}${common.row ? ', three circles in a row (' + common.row.side + '+' + common.row.mid + '+' + common.row.side + ')' : ''}; ${worlds} worlds x ${seeds} flies per setup, ${common.flights} training flights, ${common.releases} releases each (${((Date.now() - t0) / 1000).toFixed(0)}s)`);
-  console.log('setup'.padEnd(10) + 'reached goal'.padStart(14) + 'route flown'.padStart(13) + 'off-route'.padStart(12) + (common.drop ? '   (teacher / blind: reached goal) found route' : '   (teacher / blind: route flown)'));
+  console.log(`route following (${common.policy}${common.kc ? ', ' + common.kc + ' Kenyon cells' : ''}): ${worldBase.cells}x${worldBase.cells} maze, wobble ${worldBase.wobble}, variety ${worldBase.variety}, height jitter ${common.alt}${common.testVariant ? ', tested on variant ' + common.testVariant : ''}${common.trainAlts ? ', trained at heights ' + common.trainAlts.join('/') + (common.altBanks ? ' (a memory per height)' : '') : ''}${common.testAlt ? ', tested at height ' + common.testAlt : ''}${common.swarm > 1 ? ', swarm of ' + common.swarm + ' (gaze circle ' + common.gazeR + ')' : ''}${common.cast ? ', casting' : ''}${common.approach ? ', learning flights every ' + common.approach + ' cells' : ''}${common.drop ? ', DROPPED ANYWHERE' : ''}${common.launch >= 0 ? ', LAUNCHED within ' + common.launch + ' cells of the start' : ''}${common.track ? ', keeping track' : ''}${common.aversive ? ', wrong-way memory' : ''}${common.map ? ', knows where it is on the map' : ''}${common.weather !== 'clear' || common.trainWeather !== 'clear' ? ', weather: trained ' + common.trainWeather + ', tested ' + common.weather : ''}${common.normalize ? ', contrast filter' : ''}${common.edges ? ', edge boost' : ''}${common.climb ? ', climbs to ' + common.climb + ' when unsure' : ''}${common.row ? ', three circles in a row (' + common.row.side + '+' + common.row.mid + '+' + common.row.side + ')' : ''}; ${worlds} worlds x ${seeds} flies per setup, ${common.flights} training flights, ${common.releases} releases each (${((Date.now() - t0) / 1000).toFixed(0)}s)`);
+  console.log('setup'.padEnd(10) + 'reached goal'.padStart(14) + 'route flown'.padStart(13) + 'off-route'.padStart(12) + (common.drop || common.launch >= 0 ? '   (teacher / blind: reached goal) found route' : '   (teacher / blind: route flown)'));
   for (const setup of setups) {
     const rs = res.filter((x) => x.job.setup === setup).map((x) => x.out), m = (k) => rs.reduce((a, o) => a + o[k], 0) / rs.length;
     const per = rs.map((o) => Math.round(o.reached * 100)).join(' ');
-    console.log(setup.padEnd(10) + pct(m('reached')).padStart(14) + pct(m('progress')).padStart(13) + (m('dev').toFixed(2) + ' cells').padStart(12) + `   (${pct(m('teacher'))} / ${pct(m('blind'))})` + (common.drop ? `   found route ${pct(m('found'))}, got within 0.8 cells of the goal ${pct(m('near'))}, stopped somewhere else believing it was there ${pct(m('falseStop'))}` : `   got within 0.8 cells of the goal ${pct(m('near'))}, false stops ${pct(m('falseStop'))}`) + `   flies: ${per}`);
+    console.log(setup.padEnd(10) + pct(m('reached')).padStart(14) + pct(m('progress')).padStart(13) + (m('dev').toFixed(2) + ' cells').padStart(12) + `   (${pct(m('teacher'))} / ${pct(m('blind'))})` + (common.drop || common.launch >= 0 ? `   found route ${pct(m('found'))}, got within 0.8 cells of the goal ${pct(m('near'))}, stopped somewhere else believing it was there ${pct(m('falseStop'))}` : `   got within 0.8 cells of the goal ${pct(m('near'))}, false stops ${pct(m('falseStop'))}`) + `   learning views ${Math.round(m('views'))}   flies: ${per}`);
   }
   if (args.png) { // a picture of one fly's test flights
     const { out, world } = trial({ ...common, setup: setups[setups.length - 1], seed: 1, worldOpts: { ...worldBase, seed: w0 } });

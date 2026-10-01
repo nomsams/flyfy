@@ -517,6 +517,36 @@ Mixing abilities in a face swarm (`tools/boost.mjs --mix`: flies cycle full / no
 25 flies, 300 sessions, circle 10 degrees) gave 69.9% with boosting and 68.7% with equal votes, +0.7 points
 over an ordinary swarm: no clear gain.
 
+**Longer voyages: launched from A, a cone of drift.** The realistic job is not "dropped anywhere" but "launched near A, fly to B",
+with wind and a drifting odometer pushing the fly into a cone around the route. `--launch 1` releases the fly within 1 maze
+cell of the start, `--wind 0.3 --odo-noise 0.05` push it off (the odometer does not see the wind), and the map belief
+can use what the fly knows about the launch: `--prior` (it starts inside the launch zone and runs from take-off) and `--cone 0.4`
+(it may not be further from where its odometer says than the zone plus 0.4 x the distance flown). Training can use the same idea:
+`--corridor 2 --funnel 0.3 --end-zone 3` makes learning flights only in a band 2 cells wide that widens by 0.3 cells per cell
+flown, plus 3 cells around the goal. Also built, all optional: `--idf` (rare Kenyon cells count more, as tf-idf in bag-of-words place
+recognition), `--anchors 1` (views no far-away place resembles count more), `--seq 8` (sequence matching: the match is averaged over the last
+8 looks, shifted by the odometer), `--coarse 6` (only the 6 most likely 64-px blocks are matched), `--particles 1500` (a particle filter instead
+of the grid belief). Results, goal reached within 0.8 cells, 2 mazes x 2 flies x 6 launches (24 flights, so about +-10 points):
+
+| training | map belief | 18 x 18 | learning views | 24 x 24 | learning views |
+|---|---|---|---|---|---|
+| whole map | as before | 50% | 20,121 | 38% | 20,964 |
+| whole map | cone | 58% | 20,121 | 29% | 20,964 |
+| funnel band | as before | 46% | 7,479 | 42% | 15,367 |
+| funnel band | cone | 62% | 7,479 | 21% | 15,367 |
+| funnel band | cone + idf | **71%** | 7,479 | | |
+| funnel band | cone + anchors | 67% | 7,479 | | |
+| funnel band | cone + sequence matching | 58% | 7,479 | | |
+| funnel band | cone + coarse-to-fine | 50% | 7,479 | | |
+| funnel band | cone + particle filter (1,500) | 25% | 7,479 | | |
+
+What it says, honestly: training only in a funnel costs nothing measurable (46% against 50% at 18 x 18, 42% against 38% at 24 x 24) and
+stores 2.7 times fewer views at 18 x 18 (1.4 times at 24 x 24, where the band covers more of the map). The cone helped at 18 x 18 (+8 to +16 points) but not at 24 x 24 (29% and 21%), where
+two of the four flies fail in every setting: that maze is the limit, not the localiser. Of the extras, tf-idf weighting was the best (+9 on the cone),
+anchors a little, sequence matching and coarse-to-fine nothing, the particle filter worse (with 1,500 particles it loses the position under wind; it would need more particles or a smarter motion model).
+Wind that the odometer cannot see is the main enemy (on 6 x 6 mazes wind of 40% of the flying speed took 94% down to 69%, and only the optic-flow odometer gave much back), which is why the optic-flow odometer matters more than any of these. A quick run only; not repeated, not a proof.
+Not done: the same techniques with the fly dropped anywhere (the batch was dropped as beside the point), and the 24 x 24 runs of the extras.
+
 Six mazes, one pass, fixed level: fog + filter 97%, night + filter + 16 frames 92%, wind 40% 79%, odometer 17
 degrees off 97%. The maze app now flies the route once and calibrates by default. The guide has a widget
 that flies the same fly in four different mazes.
