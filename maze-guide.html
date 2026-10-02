@@ -1080,6 +1080,10 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
       <tr><td>The consolidated fly (funnel + cone + tf-idf + sky compass + optic flow) over hills / countryside / a lake</td><td>10 × 10, wind 0.3, noisy odometer; plain fly 67% / 58% / 38%</td><td class="n">hills 100%, countryside 79%, lake 42%</td><td><span class="pill good">hills and fields: yes; lake: no</span></td></tr>
       <tr><td>Wind memory and a wind triangle (estimate the wind from optic flow over land, keep it over water, steer into it)</td><td>How birds and bees cross water</td><td class="n">lake 42% → 87%; countryside 79% → 92%; hills 100% → 100%</td><td><span class="pill good">the biggest gain since the sky compass</span></td></tr>
       <tr><td>Climb to see the far shore; cast at the shore</td><td>Tried over the lake with the wind memory</td><td class="n">87% → 0% (climb, no practice at height); 87% → 54% (cast)</td><td><span class="pill bad">worse</span></td></tr>
+      <tr><td>Place fingerprints from fields (magnetic, radio) instead of one row of the picture</td><td>A stable landmark over water</td><td class="n">lake 75% → 100%; with no wind knowledge 54% → 88%</td><td><span class="pill good">fixes the lake (best case)</span></td></tr>
+      <tr><td>A wind sense that follows gusts over water</td><td>Bellamy-style, with noise</td><td class="n">58–71% against 79% for the frozen memory</td><td><span class="pill meh">no clear gain</span></td></tr>
+      <tr><td>Blur, vibration, dirt, cloud shadows, autumn, steeper hills</td><td>The wild</td><td class="n">92–100%; rain after training 75%</td><td><span class="pill good">robust</span></td></tr>
+      <tr><td>An aeroplane’s speed (3 ×)</td><td>Wider turning circle, more blur</td><td class="n">100% → 33%; blur is not the cause</td><td><span class="pill bad">the real problem</span></td></tr>
       <tr><td>An arrival belief</td><td>Stop when it believes it is at the goal</td><td class="n">no gain, 2% false stops</td><td><span class="pill meh">option, off</span></td></tr>
     </tbody>
   </table></div>
@@ -1237,9 +1241,291 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
       <dt>Rerun</dt><dd><code>… --landscape hills --relief 1.0 --blur 0.4   --smudge 0.2   --weather rain|cloudy|autumn|wild   --setups memory</code></dd>
     </dl>
   </details>
+  <details class="exp">
+    <summary><span class="num">15</span><span class="tt"><b>Place fingerprints from fields: a magnetometer, radio, a radar altimeter</b><small>Lake 75% → 96–100% with magnetic or radio fields. Without any wind knowledge: 54% → 88%.</small></span><span class="pill good">worked</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>10 × 10, launched from A in wind 0.3 with a noisy odometer, the best fly. <b>One row of the 14 rows of sensors is given over to fields</b> instead of looking at the ground: four fields read at five points each (at the fly and 0.4 view lengths ahead, behind, left and right), with a little noise (0.02 on a 0 to 1 scale), straight into the same Kenyon-cell memory as the picture. <b>mag</b>: smooth random fields with correlation lengths 1.2, 2, 3.5 and 1.6 cells, like the crust's magnetic anomalies (they do not care what the ground looks like). <b>radio</b>: the strength of four transmitters, one near each corner. <b>both</b>: two of each. <b>terrain</b>: the ground height, its two slopes and its ring average (a radar altimeter). <b>none</b>: the same row held at 0.5, the control (the sensors are lost and nothing is gained).</dd>
+      <dt>We expected</dt><dd>Over the lake the camera sees fresh ripples every frame, but a smooth static field is the same on every flight, so the fields should repair the lake. By the rule "error = noise ÷ slope" the magnetic fields change by roughly 0.1 per cell against 0.02 noise, and the radio ones by about 0.05 per cell, so we expected a position good to a fraction of a cell. On hills the terrain row should add little (the camera already sees the hills).</dd>
+      <dt>We got</dt><dd><div class="tbl"><table><thead><tr><th>setup (lake)</th><th>wind memory</th><th>no wind knowledge</th></tr></thead><tbody><tr><td>control: the row blanked</td><td class="n">75%</td><td class="n">54%</td></tr><tr><td>magnetic fields</td><td class="n">96%</td><td class="n"></td></tr><tr><td>radio fields</td><td class="n">96%</td><td class="n"></td></tr><tr><td>magnetic + radio</td><td class="n"><b>100%</b></td><td class="n"><b>88%</b></td></tr></tbody></table></div><div class="tbl"><table><thead><tr><th>hills 1.0</th><th>clear</th><th>wild weather</th></tr></thead><tbody><tr><td>control</td><td class="n">100%</td><td class="n">100%</td></tr><tr><td>terrain fields</td><td class="n">100%</td><td class="n">92%</td></tr></tbody></table></div></dd>
+      <dt>Why, as far as we can tell</dt><dd>The lake worked as expected: a field that does not change with the ripples gives the Kenyon cells something stable to remember, and the same familiarity steering that failed over water now works. Two fields of different kinds did better than one, and the fields even made up for having no wind knowledge at all (54% to 88%): once the fly can tell where it is across the water, it corrects the drift itself. The hills did not need the help: the camera already sees them, so a terrain row added nothing (100% against 100%), and in the wild its 92% against 100% is inside the noise. One caution: blanking one row of the picture was itself not free (the control is 75%, against 87% in section 10 with the full picture), so these rows compare with the control, not with section 10. Another: the fields here are smooth and perfectly static; a real magnetic map has noise, aircraft interference and diurnal change, and real radio fields have multipath.</dd>
+      <dt>Rerun</dt><dd><code>… --landscape lake --fields mag|radio|both|none   (and --fields terrain on hills)</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">16</span><span class="tt"><b>A wind sense that works over water</b><small>No clear gain over the frozen wind memory.</small></span><span class="pill meh">mixed or small</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>The lake in gusty wind (gust 0.3), with a wind sense that gives the true current wind plus noise (0.05 or 0.15) <i>everywhere, over water too</i>, as the old pilots’ pressure-pattern method (Bellamy drift: wind from the difference between the radar and pressure altimeters) would. Compared with the frozen wind memory of section 12.</dd>
+      <dt>We expected</dt><dd>A wind sense that follows the gusts over the water should beat a memory frozen at the shore, and the less noisy one should be better.</dd>
+      <dt>We got</dt><dd><div class="tbl"><table><thead><tr><th>gusts 0.3</th><th>goal reached</th></tr></thead><tbody><tr><td>no wind knowledge (section 12)</td><td class="n">63%</td></tr><tr><td>frozen wind memory, fast (section 12)</td><td class="n">79%</td></tr><tr><td>wind sense, noise 0.05</td><td class="n">58%</td></tr><tr><td>wind sense, noise 0.15</td><td class="n">71%</td></tr></tbody></table></div></dd>
+      <dt>Why, as far as we can tell</dt><dd>It did not beat the frozen memory, and the quieter sense was not better than the noisier one: all four rows are inside each other’s noise (about ±10), and the rows compare a fly with a blanked sensor row against ones with the full picture. We cannot say the continuous wind sense helps. A steering that reacts to every gust also turns the aircraft more, which may cost what it gains; we did not test that.</dd>
+      <dt>Rerun</dt><dd><code>… --gust 0.3 --wind-sense 0.05   or 0.15</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">17</span><span class="tt"><b>An aeroplane’s speed: is it the blur, or the speed itself?</b><small>Speed 1×: 100%. 2×: 58%. 3×: 33%. Blur and smoothing made no difference.</small></span><span class="pill bad">did not work</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>The best fly on hills 1.0 high, launched from A in wind 0.3, flying at 1, 2 or 3 times the helicopter’s speed (it trained at the same speed). At higher speed each step covers more ground, and the blur grows with it. The most the aircraft can turn in a step stays 10 degrees. We also tried blur 0.3 of a view length and the smoothing option.</dd>
+      <dt>We expected</dt><dd>Motion blur would be the main problem, since the picture smears along the flight direction; smoothing would help.</dd>
+      <dt>We got</dt><dd><div class="tbl"><table><thead><tr><th>flying speed</th><th>goal reached</th><th>route flown</th></tr></thead><tbody><tr><td>1× (helicopter)</td><td class="n">100%</td><td class="n">99%</td></tr><tr><td>2×</td><td class="n">58%</td><td class="n">96%</td></tr><tr><td>3×</td><td class="n">33%</td><td class="n">100%</td></tr><tr><td>3× with blur 0.3</td><td class="n">46%</td><td class="n">96%</td></tr><tr><td>3× with blur 0.3 and smoothing</td><td class="n">42%</td><td class="n">100%</td></tr></tbody></table></div></dd>
+      <dt>Why, as far as we can tell</dt><dd>It is the speed, not the blur: adding blur at 3× changed nothing (46% against 33%, inside the noise) and neither did smoothing. The fly still flies the whole route (the route-flown column stays near 100%) and misses the final landing. The likeliest cause is manoeuvrability: with the turn per step fixed at 10 degrees, a faster aircraft has a wider minimum turning circle (about 0.7 cells at 1×, 1.3 at 2×, 2.1 at 3×), and the route of a hedge maze has corners tighter than that, so a fast aircraft overshoots them and arrives off the line. A second cause could be fewer pictures per cell flown. We did not run the test that would separate them (a route with gentle curves, or a faster turn rate). The lesson for a real aeroplane: its route should be planned with its turning circle in mind, and learning flights over the whole map, which an aeroplane cannot fly, are the part of the method to drop first (the funnel training already is).</dd>
+      <dt>Rerun</dt><dd><code>… --landscape hills --relief 1.0 --speed 3   (and --blur 0.3, --smooth 1)</code></dd>
+    </dl>
+  </details>
   <div class="leaves"><span class="n">95%</span><b>Where this leaves us</b><div>What worked: a sky compass (a heading that does not drift), a wind estimate that is kept over water, training in a funnel, and rare-cell weighting. What did not: more memory, regional memories (in general), sequence matching, particle filters, climbing and casting. The honest caveat for all of it: small samples, one simulated world, a perfectly steady wind.</div></div>
 </section>
 <!--/NB-->
+
+<!--RS-->
+<section class="ch" id="research" data-score="95" data-what="Everything the world offers for finding the way without GPS, organised by physics, with what each would mean for this fly.">
+  <div class="kicker">Chapter 15</div>
+  <h2>Flying with no GPS: everything the world offers</h2>
+  <p class="question">If the fly were flying an aeroplane with none of the modern sensors, what could it navigate by? Not just what pilots did, but what the sky, the sea, the ground, the air, the Earth's fields and animals offer.</p>
+  <p>This chapter is a map of the whole idea space. Each cue is sorted by what it gives the pilot, how fine and how far it works, and what takes it away. Figures are as reported by the sources (summaries from web searches, not a full literature review); things we reasoned out ourselves are marked <b>our idea</b>. The last section says which we built and tested.</p>
+
+  <h3>Five questions to ask of any cue</h3>
+  <div class="cards">
+    <div class="card"><b>1. What does it give?</b><p>A <i>heading</i> (compass), a <i>speed or distance</i> (odometer), the <i>wind</i> (drift), a <i>place</i> (map), or the <i>height and tilt</i>. Navigation needs one from at least the first, second and fourth groups.</p></div>
+    <div class="card"><b>2. How fine, how far?</b><p>Its resolution against the size of the voyage. A sextant good to 0.1° places you to about 11 km (our arithmetic): fine across an ocean, useless for finding a field.</p></div>
+    <div class="card"><b>3. Does it drift?</b><p>Dead reckoning (compass plus odometer) is smooth but its error grows with time. An absolute fix is noisy but never grows. The art is pairing them.</p></div>
+    <div class="card"><b>4. What takes it away?</b><p>Night, cloud, fog, flat ground, water, a jammer, a thunderstorm. A good navigator has a second cue that fails differently.</p></div>
+    <div class="card"><b>5. What does it cost?</b><p>A photodiode, a camera, a quantum magnetometer, a star tracker. For an insect-sized brain, weight and power matter more than anything.</p></div>
+  </div>
+
+  <h3>Two principles that organise everything</h3>
+  <div class="side remember"><b class="t">A ladder of scales</b>
+    No single cue is both global and fine. Celestial fixes are coarse and global; a stored picture of the field is fine and local. So real navigation is a <i>ladder</i>: a drift-free heading from the sky, a distance from the odometer, the wind from a wind triangle, a coarse area from a field or a map, and a precise place from stored views, each rung good enough to put the fly inside the next rung's range. That is exactly what the lab's fly turned into: sky compass, optic-flow odometer, wind memory, drift cone, familiarity. <i>Our framing.</i></div>
+  <div class="side remember"><b class="t">Position error = noise ÷ slope</b>
+    A field (magnetic, radio, terrain, anything) tells you where you are only as well as it <i>changes with position</i>, compared with how noisy the reading is. A reading with noise 0.02 in a field that changes by 0.1 per maze cell places you to about 0.2 cell; a flat field places you nowhere. This is why the lake kills cameras (the ripples change every frame while nothing changes with place) and why a smooth, static field should not care. <i>Our reasoning, with numbers in the notebook.</i></div>
+
+    <h3>Try it: a compass made of sky</h3>
+  <p>Sunlight scattered in the sky is partly polarised, and the direction of the polarisation draws a pattern that is fixed to the sun. Seen from below, the white dashes show it: the longer and brighter, the more polarised. Straight overhead the dashes always lie at a right angle to the sun's direction, so a fly that senses the angle of that overhead light knows where the sun is, and from the sun (plus the time) which way it is facing. Cloud washes the pattern out, but does not erase it.</p>
+  <div class="widget" id="w-sky">
+    <div class="wh"><h4>The sky overhead, and a heading from it</h4><span>north is up; the red line is the helicopter's nose</span></div>
+    <div class="rowc">
+      <div class="mapbox"><canvas class="w3" id="sk-c" aria-label="The sky seen from below, with dashes showing the direction and strength of polarisation"></canvas></div>
+      <div class="side-panel">
+        <div class="controls" style="grid-template-columns:minmax(0,1fr)">
+          <label for="sk-az">Sun's compass direction <output id="sk-az-o"></output><input type="range" id="sk-az" min="0" max="359" value="120"></label>
+          <label for="sk-el">Sun's height above the horizon <output id="sk-el-o"></output><input type="range" id="sk-el" min="3" max="85" value="35"></label>
+          <label for="sk-cl">Cloud <output id="sk-cl-o"></output><input type="range" id="sk-cl" min="0" max="100" value="0"></label>
+          <label for="sk-hd">Helicopter heading <output id="sk-hd-o"></output><input type="range" id="sk-hd" min="0" max="359" value="40"></label>
+        </div>
+        <button class="btn" id="sk-read">Take 20 readings of the heading</button>
+        <div class="status" id="sk-out"></div>
+      </div>
+    </div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>Drag the sun's height down toward the horizon: the overhead light gets more polarised, so the compass gets <i>better</i> at dawn and dusk.</li>
+    <li>Raise the sun to 85°: straight overhead, the polarisation disappears (there is no angle left to read).</li>
+    <li>Push the cloud to 100% and take readings: the pattern is faint and the readings get noisy, but the dashes still line up.</li></ol></div>
+
+  <h3>Try it: where am I, from fields that are not pictures?</h3>
+  <p>Here the fly has no camera for a moment. It reads a few numbers: how strong the local magnetic field is, how loud a radio transmitter is, how high the ground is. Each reading rules out every place where the field has a different value. Click to put the fly somewhere; the white patches are the places still possible. A field that hardly changes with position (turn the strength down) rules out almost nothing; a noisy reading smears the patch; two or three fields together usually pin it down.</p>
+  <div class="widget" id="w-fields">
+    <div class="wh"><h4>Place fingerprints</h4><span>click the map to move the fly (red); colours show the field you pick</span></div>
+    <div class="rowc">
+      <div class="mapbox"><canvas class="map" id="fd-c" aria-label="A field map with the places consistent with the fly's readings in white"></canvas></div>
+      <div class="side-panel">
+        <div class="f">Show<div class="seg" id="fd-show" role="group" aria-label="Which field to colour"><button aria-pressed="true" data-v="mag1">Magnetic A</button><button aria-pressed="false" data-v="mag2">Magnetic B</button><button aria-pressed="false" data-v="mag3">Magnetic C</button><button aria-pressed="false" data-v="radio">Radio</button><button aria-pressed="false" data-v="terr">Terrain</button></div></div>
+        <div class="f">The fly reads<label class="switch-row"><input type="checkbox" id="fd-mag1"> magnetic A (fine)</label><label class="switch-row"><input type="checkbox" id="fd-mag2"> magnetic B (medium)</label><label class="switch-row"><input type="checkbox" id="fd-mag3"> magnetic C (coarse)</label><label class="switch-row"><input type="checkbox" id="fd-radio"> a radio transmitter at the top-left corner</label><label class="switch-row"><input type="checkbox" id="fd-terr"> the ground height</label></div>
+        <div class="controls" style="grid-template-columns:minmax(0,1fr)">
+          <label for="fd-nz">Noise of each reading <output id="fd-nz-o"></output><input type="range" id="fd-nz" min="2" max="150" value="20"></label>
+          <label for="fd-st">How much the fields vary from place to place <output id="fd-st-o"></output><input type="range" id="fd-st" min="10" max="200" value="100"></label>
+        </div>
+        <button class="btn" id="fd-new">New noise</button>
+        <div class="status" id="fd-out"></div>
+      </div>
+    </div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>Only magnetic C (the coarse one) on: a huge white blob. Add magnetic A: it shrinks to a few patches.</li>
+    <li>Turn the strength down to 0.2×: the patches swell, because the same noise now hides a smaller change. This is the rule <i>error = noise ÷ slope</i>.</li>
+    <li>Add the radio transmitter: its readings fall off steadily across the map, so it picks out one patch from the look-alike ones.</li></ol></div>
+
+  <h3>Try it: the ladder of scales</h3>
+  <div class="widget" id="w-ladder">
+    <div class="wh"><h4>How far, and how fine</h4><span>approximate; figures as reported by the sources above</span></div>
+    <canvas class="w3" id="ld2-c" aria-label="Chart of range against position accuracy for different navigation methods"></canvas>
+    <div class="status" id="ld2-out"></div>
+  </div>
+
+
+  <h3>The catalogue</h3>
+  <details class="exp" open>
+    <summary><span class="num">A</span><span class="tt"><b>The sky</b><small>Absolute heading that never drifts, by day and night</small></span></summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Cue</th><th>Gives, and how well</th><th>Fails when</th><th>For the fly</th></tr></thead>
+      <tbody>
+        <tr><td><b>The sun, with a clock</b></td><td>Heading. The sun moves about 15° an hour (a degree in a few minutes), so a bee-style time-compensated compass is a straight-line correction. Its height also gives latitude, but only to tens of km.</td><td>Cloud, night, flying toward the sun's own azimuth near noon in the tropics</td><td>The sky compass of chapter 14</td></tr>
+        <tr><td><b>Polarised sky light</b></td><td>Heading. Insects read the pattern; the robots Sahabot and AntBot copied them, with errors around 0.7–1.7° (<a href="https://science.howstuffworks.com/antbot-uses-celestial-navigation-instead-gps.htm">HowStuffWorks</a>). Measured under fog and overcast, 5–10% of light near the horizon is still polarised, which is why the Vikings' "sunstone" could have worked (<a href="https://www.livescience.com/history/070302_viking_navigation.html">LiveScience</a>).</td><td>Night, deep canopy, a few kinds of cloud</td><td>The best bet for a fly: a few photodiodes behind polarising filters, no camera</td></tr>
+        <tr><td><b>The stars</b></td><td>Heading and position. The SR-71's NAS-14V2 star tracker sighted six of 52 stars, by day as well as night, to correct its inertial unit: about 90 m, and under half a mile after flying half way round the world (<a href="https://timeandnavigation.si.edu/multimedia-asset/nortronics-nas-14v2-astroinertial-navigation-system">Smithsonian</a>, <a href="https://www.secretprojects.co.uk/threads/a-12-sr-71-astro-inertial-navigation-system.42150/post-627538">Secret Projects</a>)</td><td>Cloud, motion blur, weight</td><td>Heavy; a dim-light upward camera and a small star-pattern lookup would be the fly's version</td></tr>
+        <tr><td><b>The moon and the Milky Way</b></td><td>Heading at night (dung beetles use the Milky Way; general knowledge, not searched)</td><td>New moon, cloud</td><td>The night rung of the sky compass</td></tr>
+        <tr><td><b>The helicopter's own shadow</b></td><td><i>Our idea:</i> the shadow on the ground points directly away from the sun, so a downward camera that sees its own shadow has a sundial, no sky sensor needed</td><td>Sun high overhead, overcast, a flat shadow on dark ground</td><td>Free with the camera we already have</td></tr>
+        <tr><td><b>Cloud shadows</b></td><td><i>Our idea:</i> shadow patterns drift over the ground at the wind's speed (at the cloud's height), so the motion of a shadow relative to the ground is a wind meter</td><td>Clear sky, fast-changing clouds</td><td>A second wind sense, over land</td></tr>
+      </tbody>
+    </table></div>
+  </details>
+  <details class="exp">
+    <summary><span class="num">B</span><span class="tt"><b>The ground</b><small>Looking, profiling, and following</small></span></summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Cue</th><th>Gives, and how well</th><th>Fails when</th><th>For the fly</th></tr></thead>
+      <tbody>
+        <tr><td><b>Pilotage: railways, roads, rivers</b></td><td>Place and heading. "The iron compass." The US Post Office built a chain of beacons, a 70-foot concrete arrow every ten miles with a rotating light and coded course lights, up to about 18,000 miles, dropped in the 1940s when radio arrived (<a href="https://www.atlasobscura.com/articles/before-radios-pilots-navigated-by-giant-concrete-arrows">Atlas Obscura</a>, <a href="https://expeditionportal.com/transcontinental-airway-beacons/">Expedition Portal</a>)</td><td>Night (unless lit), weather, trackless country</td><td>This is the route memory. "A beacon every N cells" is the same idea made deliberate.</td></tr>
+        <tr><td><b>Scene matching (DSMAC)</b></td><td>Place. A stored image compared with the live camera: about 10 m (<a href="https://www.Wikipedia.org/wiki/DSMAC">Wikipedia</a>)</td><td>Seasons, light, vegetation change, a lake. Feature matchers are intolerant of big changes in perspective, light and season (<a href="https://www.gpsworld.com/uav-navigation-enhances-vns01-for-precision-drone-navigation-in-gnss-denied-environments/">GPS World</a>).</td><td>The fly's whole map belief. Its weak spots are the "in the wild" effects of the next chapter.</td></tr>
+        <tr><td><b>Terrain contour matching (TERCOM)</b></td><td>Place. A downward radar altimeter gives the clearance; the pattern of rises and falls is matched against a stored elevation map (<a href="https://migflug.com/afterburner/de/?p=22698991">migflug</a>)</td><td>Flat ground, water</td><td>A "radar altimeter" field on the hills (tested)</td></tr>
+        <tr><td><b>Height-map gradient matching</b></td><td>Place. Matching the <i>gradients</i> of a local height map to a stored one, fused with odometry in a particle filter, won a GPS-denied drone challenge over kilometre-scale mountain terrain (<a href="https://arxiv.org/pdf/2510.01348">arXiv 2510.01348</a>)</td><td>Flat ground</td><td>The modern TERCOM; gradients are more robust than heights</td></tr>
+        <tr><td><b>Thermal infrared</b></td><td>Place at night: land, water and buildings differ in temperature regardless of light. Thermal-inertial odometry and thermal-to-map matching work in the dark (<a href="https://arxiv.org/pdf/2604.26201">arXiv 2604.26201</a>)</td><td>Thermal crossover at dawn and dusk, rain</td><td>The night camera; also separates land from water at a glance</td></tr>
+        <tr><td><b>The horizon skyline</b></td><td>Place and heading from the shape of ridges against the sky (general knowledge, not searched)</td><td>Flat country, cloud on the ridges</td><td>Needs a sideways-looking camera: a new sense</td></tr>
+      </tbody>
+    </table></div>
+  </details>
+  <details class="exp">
+    <summary><span class="num">C</span><span class="tt"><b>The Earth's fields and the air</b><small>Maps nobody drew, and winds nobody sees</small></span></summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Cue</th><th>Gives, and how well</th><th>Fails when</th><th>For the fly</th></tr></thead>
+      <tbody>
+        <tr><td><b>Magnetic anomalies</b></td><td>Place. The crust's tiny magnetic variations matched to a map; it cannot be jammed or spoofed, and needs nothing to look at. A 4 h 23 min flight over the Pacific with no GPS cut position error by 89% against the usual backup (<a href="https://leehamnews.com/2026/09/09/honeywell-tests-magnetic-navigation-in-gps-free-flight/">Leeham</a>); under 74 m in an hour (<a href="https://quantumcomputingreport.com/sandboxaq-and-acubed-announce-results-from-magnetic-navigation-testing-for-aviation/">QCR</a>)</td><td>Magnetic storms, interference from the aircraft itself</td><td>The best fit for the lake (tested)</td></tr>
+        <tr><td><b>Magnetic inclination and intensity</b></td><td>A global map. Sea turtles read two numbers, the field's dip angle and strength, which together mark every place on Earth, and nest on beaches whose magnetic signatures they imprinted on as hatchlings (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2614721/">Lohmann et al.</a>)</td><td>Local anomalies, solar storms</td><td>Coarse global fix: the "which part of the world" rung</td></tr>
+        <tr><td><b>Gravity gradient</b></td><td>Place, better than 100 m after matching to a map (<a href="https://scholar.afit.edu/facpub/3397">AFIT</a>)</td><td>Needs a very expensive, heavy gradiometer</td><td>Out of reach for a fly</td></tr>
+        <tr><td><b>Pressure patterns and Bellamy drift</b></td><td>Wind drift without seeing the ground. Pilots compared the radar altimeter (height above the sea) with the pressure altimeter: how the difference changes gives the drift across the flight (<a href="https://glossary.ametsoc.org/wiki/pressure-pattern-flight/">AMS glossary</a>, <a href="https://www.cambridge.org/core/journals/journal-of-navigation/article/iithe-navigational-value-of-pressure-pattern-techniques/A06462D6587EBBFA45C2AD180FAC7670">J. Navigation</a>)</td><td>Over land (radar sees terrain, not sea), near the equator</td><td>A wind sense that works <i>over water</i>: tested as "wind sense"</td></tr>
+        <tr><td><b>Weather itself</b></td><td>Cumulus clouds pile up over warm land and islands; clouds are lit green from beneath over a lagoon (Polynesian navigators, below). <i>Our idea:</i> rows of "cloud streets" line up with the wind, a wind compass.</td><td>Clear sky, layered cloud</td><td>Needs an upward camera</td></tr>
+      </tbody>
+    </table></div>
+  </details>
+  <details class="exp">
+    <summary><span class="num">D</span><span class="tt"><b>The sea, wind-sculpted ground, and animals</b><small>What traditional navigators read</small></span></summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Cue</th><th>Gives, and how well</th><th>Fails when</th><th>For the fly</th></tr></thead>
+      <tbody>
+        <tr><td><b>Swell and its refraction</b></td><td>Heading from the steady swell; land direction from how it bends round islands and reflects. Marshall Islanders taught this with stick charts that map swell, not islands (<a href="https://en.wikipedia.org/wiki/Marshall_Islands_stick_chart">Wikipedia</a>, <a href="https://dhyg.de/index.php/en/hydrographic-news/professional-articles/16-hn-100/69-new-perspectives-on-indigenous-navigation-tradition">Hydrographic News</a>)</td><td>Calm, storms, crossing swells</td><td>A heading and an island-finder over the lake; a downward camera sees the pattern (a new sense for the lab)</td></tr>
+        <tr><td><b>Sky reflections and birds</b></td><td>Land beyond the horizon: the loom above an island, the colour under a cloud (green means a lagoon, pink a reef), and terns that feed at sea by day and return to land at dusk (<a href="https://archive.hokulea.com/navigate/land.html">Hokule'a</a>)</td><td>Overcast, no birds</td><td>The "far shore" cue the lake lacked</td></tr>
+        <tr><td><b>Sastrugi and dunes</b></td><td>Prevailing wind direction, and so a heading: snow ridges point into the wind. Inuit had a rich vocabulary for them (<a href="https://en.wikipedia.org/wiki/Inuit_navigation">Wikipedia</a>)</td><td>After a storm that changes the wind</td><td>A downward camera can see ridge direction: a free heading over snow or sand</td></tr>
+        <tr><td><b>A bird's map and compass</b></td><td>A compass (sun, stars, magnetic) plus a "map" from smell, magnetic cues and perhaps infrasound from far coasts; the map sense is still debated (<a href="https://cob.silverchair.com/jeb/article/203/7/1103/8430/Infrasound-and-the-avian-navigational-map">JEB</a>)</td><td></td><td>The same split as ours: a heading reference plus a place sense</td></tr>
+      </tbody>
+    </table></div>
+  </details>
+  <details class="exp">
+    <summary><span class="num">E</span><span class="tt"><b>Radio, satellites and pulsars</b><small>Beacons that someone else built</small></span></summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Cue</th><th>Gives, and how well</th><th>Fails when</th><th>For the fly</th></tr></thead>
+      <tbody>
+        <tr><td><b>A radio direction finder on a known transmitter</b></td><td>Bearing, with no GPS: homing on an AM station. Two stations give a fix (general knowledge)</td><td>Thunderstorms, mountains, transmitters off the air</td><td>Radio fields (tested)</td></tr>
+        <tr><td><b>Signals of opportunity ("radio SLAM")</b></td><td>Place from cell towers and low-orbit satellites; 7 m over a 43 km flight, in tests on a Beechcraft C-12 (<a href="https://www.revolution.aero/deep_dive/signals-of-opportunity-could-provide-alternative-to-gps">Revolution.aero</a>, <a href="https://car.osu.edu/news/2025/02/study-asks-can-cell-phone-and-leo-satellite-signals-help-fly-plane">Ohio State</a>)</td><td>Open ocean, deserts, jamming</td><td>Radio fields again, with a map learned in flight</td></tr>
+        <tr><td><b>Pulsars (XNAV)</b></td><td>Absolute position anywhere in the solar system. NASA's SEXTANT demonstration aimed for 10 km, with 1 km as a stretch goal (<a href="https://ntrs.nasa.gov/api/citations/20150000812/downloads/20150000812.pdf">NASA</a>)</td><td>Needs an X-ray telescope in space</td><td>Irrelevant at the scale of a maze, which is the point of the ladder</td></tr>
+      </tbody>
+    </table></div>
+  </details>
+  <details class="exp">
+    <summary><span class="num">F</span><span class="tt"><b>The real fly's own navigation brain</b><small>What the animal actually does</small></span></summary>
+    <p>The model of Stone and colleagues (2017, bees; <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5328262">PMC</a>) puts path integration in the insect central complex: a ring of neurons in the protocerebral bridge holds the current heading relative to the sky compass; another set (CPU4) accumulates a speed signal from optic flow, steered by that heading, so the home vector is stored as its projection along eight axes. Polarised-light compass neurons and optic-flow speed neurons converge there. In other words, <b>the animal's own navigation is exactly the pair the lab arrived at by experiment: a sky compass and an optic-flow odometer, summed</b>, with the mushroom body (our Kenyon cells) as the place memory beside it. The lab has no ring attractor; its heading is simply handed to it, with an error we choose.</p>
+  </details>
+
+  <h3>Ideas of our own, beyond the sources</h3>
+  <ol>
+    <li><b>Any sensor can feed the place memory.</b> A mushroom body takes smell as well as sight, so familiarity needs no camera. Give the fly a vector of slowly varying fields (magnetic, radio, terrain) and the same Kenyon-cell memory should work over the lake. <i>Built and tested.</i></li>
+    <li><b>A wind sense that works over water</b> (Bellamy's idea, now as a sensor with noise) in place of a frozen memory of the wind. <i>Built and tested.</i></li>
+    <li><b>The helicopter's shadow as a sundial</b> and <b>cloud shadows as an anemometer</b>: two free cues from a camera we already have. <i>Not built.</i></li>
+    <li><b>The scale ladder as a design rule:</b> each sense must be fine enough to hand over to the next, and every ladder should have two rungs that fail differently (sky and magnetic; camera and radio). <i>A design principle.</i></li>
+    <li><b>Dead reckoning by clock</b> (fly a heading for a time, as pilots did with a stopwatch): the sky compass plus the wind triangle, no odometer at all.</li>
+    <li><b>Power lines and light pollution as rails and beacons</b> for a flier with a magnetometer or a night camera. Speculative, not searched.</li>
+  </ol>
+  <div class="leaves"><span class="n">95%</span><b>Where this leaves us</b><div>The fly already has the two things every one of these methods has: a heading reference and a place sense. What changes between them is only which sense feeds which. Chapter 14's last entries test the fields, the wind sense and the "in the wild" effects.</div></div>
+</section>
+<!--/RS-->
+
+<!--WD-->
+<section class="ch" id="wild" data-score="95" data-what="Out of the lab: hills, height, blur, dirt on the lens, rain, shadows, autumn, an aeroplane's speed, and wind over water.">
+  <div class="kicker">Chapter 16</div>
+  <h2>In the wild: topology, height and a dirty lens</h2>
+  <p class="question">What changes when the helicopter (or an aeroplane) flies over real country: hills, wind over open water, a smeared and shaking picture?</p>
+  <p>Until now the ground was flat and the picture clean. Out of doors, five things change. The <b>ground has relief</b>, so the distance to it keeps changing. The <b>camera moves</b> while its shutter is open, and shakes. The <b>lens gets dirty</b>. The <b>light changes</b>: cloud shadows sweep across, the season turns the greens to brown. And the <b>wind</b> pushes the aircraft over places where there is nothing to look at.</p>
+
+  <h3>Fly over the topology</h3>
+  <p>Drag the picture to turn it, scroll to zoom. The helicopter flies a route over hills that you can raise. The orange box is where the camera looks. If it holds its height above <i>sea level</i> (as a plane or a lazy helicopter would), it gets closer to the ground over a hill, so the view shrinks; in a valley it grows. If it follows the terrain with a radar altimeter, the view keeps its size and only the shading changes. The little picture is what the 20 × 14 sensors actually receive. The map beside it has contour lines.</p>
+  <div class="widget" id="w-t3">
+    <div class="wh"><h4>A route over hills, in 3D</h4><span>drag to rotate, scroll to zoom</span></div>
+    <div class="rowc">
+      <div class="mapbox" style="max-width:560px"><canvas class="w3" id="t3-c" aria-label="A 3D terrain with a route and a helicopter whose camera footprint is shown"></canvas></div>
+      <div class="side-panel">
+        <div class="controls" style="grid-template-columns:minmax(0,1fr)">
+          <label for="t3-rel">Height of the hills <output id="t3-rel-o"></output><input type="range" id="t3-rel" min="0" max="200" value="100"></label>
+          <label for="t3-pos">Position along the route <output id="t3-pos-o"></output><input type="range" id="t3-pos" min="0" max="100" value="40"></label>
+          <label for="t3-sun">Sun's compass direction <output id="t3-sun-o"></output><input type="range" id="t3-sun" min="0" max="359" value="300"></label>
+        </div>
+        <div class="f">Height control<div class="seg" id="t3-mode" role="group" aria-label="Height control"><button aria-pressed="true" data-v="hold">Hold height above sea level</button><button aria-pressed="false" data-v="follow">Follow the terrain</button></div></div>
+        <label class="switch-row"><input type="checkbox" id="t3-lake"> A lake across the middle</label>
+        <div class="two"><div><canvas class="mini" id="t3-cam" width="140" height="98" aria-label="What the camera sees"></canvas><p class="cap">What the camera sees</p></div><div><canvas class="map" id="t3-top" style="max-width:210px" aria-label="Contour map from above"></canvas><p class="cap">From above, with contours</p></div></div>
+        <div class="status" id="t3-out"></div>
+      </div>
+    </div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>Hills at 1.0 or above, holding height: slide along the route and watch the orange box shrink as it crosses a ridge.</li>
+    <li>Switch to "follow the terrain": the box keeps its size, but the picture from the camera is still very different from a flat field's.</li>
+    <li>Turn the lake on and push the sun around: over water nothing in the camera's picture is a landmark. Hills are easy to recognise and a lake is not.</li></ol></div>
+  <div class="idea"><small>The idea</small>Relief helps the fly (more things to remember) and hurts it (the picture changes scale). The fly copes because it compares nine directions through the same camera, so a change of scale affects all of them alike.</div>
+
+  <h3>A smeared, shaking, dirty camera</h3>
+  <p>An aeroplane crosses a view length in a fraction of the time a helicopter does, so its picture is smeared along the direction of flight (<b>motion blur</b>); engine vibration shakes the camera (<b>jitter</b>); rain and dust leave blobs on the lens that sit in the same place in every picture (<b>smudges</b>); clouds drop moving <b>shadows</b>; and in autumn the greens turn yellow-brown (<b>season</b>). The fly learned the route in clear, steady conditions. Pick a condition below: the left picture is what it learned, the right is what it sees now, and the bar says whether it would still call the place familiar. Click the map to move along the route.</p>
+  <div class="widget" id="w-wild">
+    <div class="wh"><h4>What the camera sees in the wild</h4><span>left: learned; right: now</span></div>
+    <div class="rowc">
+      <div class="mapbox"><canvas class="map" id="wl-map" aria-label="The maze with the fly's position"></canvas></div>
+      <div class="side-panel">
+        <div class="f">Preset<div class="seg" id="wl-pre" role="group" aria-label="Preset"><button aria-pressed="true" data-v="clear">Clear</button><button aria-pressed="false" data-v="plane">Aeroplane</button><button aria-pressed="false" data-v="rain">Rain</button><button aria-pressed="false" data-v="cloudy">Cloud shadows</button><button aria-pressed="false" data-v="autumn">Autumn</button><button aria-pressed="false" data-v="wild">All of it</button></div></div>
+        <div class="controls" style="grid-template-columns:minmax(0,1fr)">
+          <label for="wl-blur">Motion blur (view lengths) <output id="wl-blur-o"></output><input type="range" id="wl-blur" min="0" max="100" value="0"></label>
+          <label for="wl-jit">Vibration <output id="wl-jit-o"></output><input type="range" id="wl-jit" min="0" max="100" value="0"></label>
+          <label for="wl-sm">Dirt on the lens <output id="wl-sm-o"></output><input type="range" id="wl-sm" min="0" max="50" value="0"></label>
+          <label for="wl-sh">Cloud shadows <output id="wl-sh-o"></output><input type="range" id="wl-sh" min="0" max="70" value="0"></label>
+          <label for="wl-au">Autumn <output id="wl-au-o"></output><input type="range" id="wl-au" min="0" max="100" value="0"></label>
+        </div>
+        <label class="switch-row"><input type="checkbox" id="wl-norm"> Contrast filter (every view stretched to the same spread)</label>
+        <label class="switch-row"><input type="checkbox" id="wl-smooth"> Smooth the picture (every sensor averaged with its neighbours)</label>
+        <div class="two"><div><canvas class="mini" id="wl-a" width="140" height="98" aria-label="The picture it learned"></canvas><p class="cap">Learned</p></div><div><canvas class="mini" id="wl-b" width="140" height="98" aria-label="The picture now"></canvas><p class="cap">Now</p></div></div>
+        <div class="prog" style="height:10px"><i id="wl-bar" style="width:100%"></i></div>
+        <div class="status" id="wl-out"></div>
+      </div>
+    </div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>"Aeroplane": the picture smears, fine detail goes, but the large shapes survive. Add the smoothing option: it removes the part the blur had already destroyed.</li>
+    <li>"Cloud shadows": whole patches of the picture go dark. The contrast filter helps only when a shadow covers the whole view.</li>
+    <li>"Autumn": the colours move but the shapes do not, which is why brightness-only vision can survive a change of season better than colour vision. The tables below say whether the simulated fly found it so.</li></ol></div>
+
+  <h3>The wind triangle over water</h3>
+  <p>Over land the fly can see the ground move, and so knows the wind. Over a lake the waves move, and the ground is gone. If it just points at the far shore it is blown sideways the whole way. With a <b>wind memory</b> it keeps the wind it measured on the near shore and steers a little into it (the <b>crab angle</b>), so its track over the water points where it wants. Gusts make the memory go stale.</p>
+  <div class="widget" id="w-wt">
+    <div class="wh"><h4>Crossing a lake in the wind</h4><span>grey: points at the far shore; green: wind memory plus crab angle</span></div>
+    <canvas class="w3" id="wt-c" aria-label="Two flight paths across a lake in a crosswind"></canvas>
+    <div class="controls">
+      <label for="wt-w">Wind speed <output id="wt-w-o"></output><input type="range" id="wt-w" min="0" max="60" value="30"></label>
+      <label for="wt-d">Wind blows toward <output id="wt-d-o"></output><input type="range" id="wt-d" min="0" max="359" value="90"></label>
+      <label for="wt-g">Gusts <output id="wt-g-o"></output><input type="range" id="wt-g" min="0" max="100" value="0"></label>
+    </div>
+    <button class="btn" id="wt-go">Fly it</button>
+    <div class="status" id="wt-out"></div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>Wind 0.30, blowing toward 90° (down the page): the grey path ends several cells off; the green one lands on the goal.</li>
+    <li>Point the wind along the flight (0° or 180°): there is no sideways drift, so the crab angle has nothing to do.</li>
+    <li>Add gusts: the green path starts to miss too, because its memory of the wind is out of date. The notebook says how much it cost in the simulation.</li></ol></div>
+  <h3>What the simulated fly did</h3>
+  <p>The same best fly of chapter 14 (sky compass, optic flow, wind memory, funnel training), trained in clear conditions and flown in the conditions below. 10 × 10 mazes, 24 flights per row, so about ±10 points. The notebook entries 14 to 17 give the setups and our explanations.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Condition</th><th>Goal reached</th><th>What we think it means</th></tr></thead>
+    <tbody>
+      <tr><td>Hills 1.0 and 1.6 cells high</td><td class="n">100%</td><td>Relief helps as much as it hurts; the fly compares nine directions through one camera.</td></tr>
+      <tr><td>Motion blur, vibration, dirt that is always on the lens</td><td class="n">100%</td><td>Learned together with the route, so the memory already contains them.</td></tr>
+      <tr><td>Cloud shadows; autumn; all weather together</td><td class="n">96%</td><td>The code is a ranking of inputs, so gain and colour shifts matter little.</td></tr>
+      <tr><td>Rain that arrives after training</td><td class="n"><b>75%</b></td><td>New smudges, haze and noise at once: the one thing it had never seen.</td></tr>
+      <tr><td>Lake, magnetic + radio fields instead of one row of the picture</td><td class="n"><b>100%</b></td><td>A static field is a landmark that ripples cannot hide.</td></tr>
+      <tr><td>An aeroplane at 3 × the speed</td><td class="n"><b>33%</b></td><td>Not the blur: the turning circle is too wide for the corners of the route.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+<!--/WD-->
 
 <section class="ch" id="big" data-score="95" data-what="Measured to 18 × 18 with the two fixes; 12 × 12 is solid.">
   <div class="kicker">Chapter 17</div>
