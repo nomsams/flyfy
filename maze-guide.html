@@ -200,6 +200,7 @@ details.exp dt{font:800 11.5px/1.2 var(--display);letter-spacing:.1em;text-trans
 details.exp dd{margin:0;font-size:15px;line-height:1.55}
 details.exp dd code{font:12.5px/1.5 var(--mono);word-break:break-word}
 details.exp .tbl{margin:6px 0}
+.pkrow{display:grid;grid-template-columns:130px 1fr 44px;gap:10px;align-items:center;font:600 13px var(--display)}
 canvas.w3{width:100%;max-width:640px;height:auto;display:block;border-radius:10px;background:var(--bg);touch-action:none}
 canvas.map{width:100%;max-width:470px;height:auto;aspect-ratio:1;border-radius:10px;background:var(--bg);touch-action:none;cursor:crosshair;display:block}
 canvas.mini{width:100%;max-width:210px;height:auto;aspect-ratio:10/7;image-rendering:pixelated;border-radius:6px;background:var(--bg);display:block}
@@ -1344,11 +1345,141 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     <li>Add the radio transmitter: its readings fall off steadily across the map, so it picks out one patch from the look-alike ones.</li></ol></div>
 
   <h3>Try it: the ladder of scales</h3>
-  <div class="widget" id="w-ladder">
+  <div class="widget" id="w-scale">
     <div class="wh"><h4>How far, and how fine</h4><span>approximate; figures as reported by the sources above</span></div>
     <canvas class="w3" id="ld2-c" aria-label="Chart of range against position accuracy for different navigation methods"></canvas>
     <div class="status" id="ld2-out"></div>
   </div>
+
+  <h3>Strange but true</h3>
+  <div class="cards">
+    <div class="card"><b>A concrete arrow every ten miles</b><p>Before radio, the US Post Office lit the way across the continent: a 70-foot yellow arrow on the ground every ten miles, with a 51-foot tower in the middle carrying a million-candlepower rotating beacon (<a href="https://www.atlasobscura.com/articles/before-radios-pilots-navigated-by-giant-concrete-arrows">Atlas Obscura</a>).</p></div>
+    <div class="card"><b>Stars at noon</b><p>The SR-71's star tracker found stars by day as well as night, and after flying more than half way round the world it was out by less than half a mile (<a href="https://www.secretprojects.co.uk/threads/a-12-sr-71-astro-inertial-navigation-system.42150/post-627538">Secret Projects</a>).</p></div>
+    <div class="card"><b>A turtle's magnetic address</b><p>Sea turtles seem to remember the magnetic field of the beach they hatched on. Turtles that nest on beaches with similar magnetic signatures are more alike genetically than turtles that nest on beaches that are simply close together (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2614721/">Lohmann et al.</a>).</p></div>
+    <div class="card"><b>A stone that sees through fog</b><p>Legend says the Vikings found the sun on cloudy days with a "sunstone". Measurements in the Arctic show that even in fog and total overcast the sky's polarisation pattern is still there, though weaker: just enough for a polarising crystal to find the sun (<a href="https://www.livescience.com/history/070302_viking_navigation.html">LiveScience</a>).</p></div>
+    <div class="card"><b>Green under the cloud</b><p>Polynesian navigators read the underside of a cloud: sunlight bounced up from a lagoon tints it green, from a reef pink (<a href="https://archive.hokulea.com/navigate/land.html">Hokule'a</a>). Land announces itself on the sky.</p></div>
+    <div class="card"><b>An ant robot with a sky compass</b><p>The six-legged AntBot counts its steps and reads polarised light. It can wander up to 14 metres from home and come back to within about a centimetre (<a href="https://science.howstuffworks.com/antbot-uses-celestial-navigation-instead-gps.htm">HowStuffWorks</a>).</p></div>
+    <div class="card"><b>Pigeons that hear the sea</b><p>Homing pigeons hear infrasound down to 0.05 Hz, and one proposal is that they use the deep rumble from steep coasts and ocean waves as an acoustic map (<a href="https://cob.silverchair.com/jeb/article/203/7/1103/8430/Infrasound-and-the-avian-navigational-map">JEB</a>).</p></div>
+    <div class="card"><b>Lighthouses of the galaxy</b><p>Millisecond pulsars spin so regularly that they rival atomic clocks. NASA used four of them to navigate an instrument on the International Space Station, aiming for a position good to 10 km (<a href="https://ntrs.nasa.gov/api/citations/20150000812/downloads/20150000812.pdf">NASA</a>).</p></div>
+  </div>
+
+  <h3>Be the ant: path integration</h3>
+  <p>A desert ant walks out hundreds of steps in a wiggly search for food, and then walks back <i>in a straight line</i>. It has no map and sees no landmarks near the nest. It does it with two things: a compass (the sky) and a step counter. At every step it adds a little arrow, the way it just moved, to a running total: the <b>home vector</b>. The insect brain stores that total as eight numbers, one for each of eight compass directions (the little bars in the corner). The black square is home, the grey line is the real walk, the green dashed line is where the ant <i>thinks</i> it walked, and the red arrow is the walk home.</p>
+  <div class="widget" id="w-ant">
+    <div class="wh"><h4>Out and back, with a faulty compass</h4><span>grey: the real path; green: the path the ant believes; red: its way home</span></div>
+    <div class="rowc">
+      <div class="mapbox"><canvas class="w3" id="an-c" aria-label="An ant's outbound path, its believed path and its return"></canvas></div>
+      <div class="side-panel">
+        <div class="f">Where the heading comes from<div class="seg" id="an-mode" role="group" aria-label="Heading source"><button aria-pressed="true" data-v="gyro">A gyro (error piles up)</button><button aria-pressed="false" data-v="sky">The sky (error never piles up)</button><button aria-pressed="false" data-v="perfect">Perfect</button></div></div>
+        <div class="controls" style="grid-template-columns:minmax(0,1fr)">
+          <label for="an-sd">Heading error <output id="an-sd-o"></output><input type="range" id="an-sd" min="0" max="60" value="20"></label>
+          <label for="an-sc">Step-counter error <output id="an-sc-o"></output><input type="range" id="an-sc" min="0" max="30" value="0"></label>
+        </div>
+        <button class="btn" id="an-new">A different walk</button>
+        <div class="status" id="an-out"></div>
+      </div>
+    </div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>With the gyro and 2° of error per step, the believed path curls away from the real one and the ant ends up lost. Switch to the sky and give it <i>three times</i> as much error per step: it gets home. This is the whole case for a sky compass.</li>
+    <li>Set the heading to perfect and put 10% on the step counter: the ant still goes the right way but stops at the wrong place. Distance errors cost far less than direction errors.</li>
+    <li>Press "A different walk" a few times. Long, wandering outbound paths are the hardest on a gyro.</li></ol></div>
+  <div class="idea"><small>The idea</small>Path integration is cheap and always available, but it carries its mistakes with it: a small heading error each step turns into a large miss. Every other sense in this chapter exists to wipe those mistakes out.</div>
+
+  <h3>Pick your sensors</h3>
+  <p>Back to the ladder of scales: a flight needs a <b>heading</b>, a <b>speed or distance</b>, the <b>wind</b> and a <b>place</b>, and each of the four needs a sensor that works <i>today</i>. Choose a day, then switch sensors on and off. A bar turns green when something you carry works for that job in those conditions. The numbers are our own rough scores from this chapter's catalogue, not measurements.</p>
+  <div class="widget" id="w-pick">
+    <div class="wh"><h4>Which rungs of the ladder have you got?</h4><span>our scores, from the catalogue above</span></div>
+    <div class="f">Today's flight<div class="seg" id="pk-scen" role="group" aria-label="Scenario"></div></div>
+    <div class="rowc">
+      <div class="side-panel"><div class="f">What you carry<div id="pk-sens" style="display:grid;gap:6px"></div></div></div>
+      <div class="side-panel"><div id="pk-bars" style="display:grid;gap:10px"></div><div class="status" id="pk-out"></div></div>
+    </div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>"Night over the sea": the sky compass and the camera both go dark. Add the star compass for a heading, and a magnetometer for a place.</li>
+    <li>"Over a city, GPS jammed": switch GPS on. It scores zero. The magnetometer and the camera are what is left.</li>
+    <li>"Over a lake, in rain": the camera and the optic-flow odometer fall to near nothing. Which sensor did the lab add to fix it?</li></ol></div>
+
+  <h3>Terrain matching: a fingerprint along the track</h3>
+  <p>A cruise missile has no camera for most of its flight. It has a radar altimeter that measures its height above the ground as it goes, and a stored map of heights. A single reading says almost nothing, but a <i>stretch</i> of readings is a fingerprint: the rises and falls of the last few kilometres can only fit a few places along the track. The top plot is the stored terrain. The amber band is the stretch just flown. The red line is what the altimeter measured (with noise); the grey dashed line is the stored terrain where it fits best; the green curve at the bottom is how well each place fits.</p>
+  <div class="widget" id="w-ter">
+    <div class="wh"><h4>Where along the track does this profile fit?</h4><span>amber line: the true position</span></div>
+    <canvas class="w3" id="tm-c" aria-label="Stored terrain, the measured profile and the fit along the track"></canvas>
+    <div class="controls">
+      <label for="tm-rel">How hilly <output id="tm-rel-o"></output><input type="range" id="tm-rel" min="0" max="100" value="60"></label>
+      <label for="tm-nz">Altimeter noise <output id="tm-nz-o"></output><input type="range" id="tm-nz" min="0" max="40" value="8"></label>
+      <label for="tm-len">Length of the stretch <output id="tm-len-o"></output><input type="range" id="tm-len" min="6" max="40" value="20"></label>
+      <label for="tm-pos">Where the aircraft really is <output id="tm-pos-o"></output><input type="range" id="tm-pos" min="45" max="195" value="120"></label>
+    </div>
+    <div class="status" id="tm-out"></div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>Take "how hilly" to zero: the green curve goes flat. That is a lake, or a calm sea, to a radar altimeter.</li>
+    <li>Raise the noise and shorten the stretch: more places fit nearly as well, and the best one can be the wrong one.</li>
+    <li>A long stretch is a better fingerprint but older: the aircraft has moved on since the start of it, and a real system has to account for the drift.</li></ol></div>
+
+  <h3>The turtle's magnetic map (drag the globe)</h3>
+  <p>The Earth's field leans into the ground at an angle (the <b>dip angle</b>: flat at the equator, straight down at the poles) and is stronger toward the poles. Those two numbers together are a fingerprint of latitude. Real fields are lumpy, because rocks in the crust add their own magnetism, and the lumps are what can tell two places on the same latitude apart. Drag to turn the globe; click to put the turtle somewhere; then send it home to the star (its natal beach). It steers only by making its two numbers match the beach's. Slide the lumpiness to zero and see what it cannot do.</p>
+  <div class="widget" id="w-globe">
+    <div class="wh"><h4>Homing on two numbers</h4><span>colour: field strength (blue weak, red strong); white line: the turtle's track</span></div>
+    <div class="rowc">
+      <div class="mapbox"><canvas class="w3" id="gb-c" aria-label="A globe coloured by magnetic field strength with a turtle and a natal beach"></canvas></div>
+      <div class="side-panel">
+        <div class="controls" style="grid-template-columns:minmax(0,1fr)"><label for="gb-an">How lumpy the field is (crustal anomalies) <output id="gb-an-o"></output><input type="range" id="gb-an" min="0" max="100" value="30"></label></div>
+        <button class="btn primary" id="gb-go">Swim home</button> <button class="btn" id="gb-reset">Put the turtle back</button>
+        <div class="status" id="gb-out"></div>
+      </div>
+    </div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>Lumpiness 0: the turtle reaches the beach's <i>latitude</i> and stops somewhere along it. Dip and strength both depend only on latitude in a smooth dipole.</li>
+    <li>Lumpiness 30 to 60: after finding the latitude it swims along it reading the lumps, and sometimes lands on the beach. Often it lands on a place that happens to look the same in these two numbers. That is an honest limit: two numbers are not always a unique address.</li>
+    <li>Click to put the turtle near the beach, or on the other side of the world, and try again.</li></ol></div>
+  <div class="idea"><small>The idea</small>A "map" does not have to be a picture. Any two numbers that change across the world, if you can read them and remember where you read them, make an address. A smooth world gives a coarse address; a lumpy world can give a fine one, if the lumps are distinctive enough.</div>
+
+  <h3>The night sky as a compass</h3>
+  <p>At night the stars turn around the pole at 15 degrees an hour. In a long exposure they draw arcs, and all the arcs are centred on one point: the pole, due north, as many degrees above the horizon as your latitude. Aim the camera north and tilt it up, take a long exposure, and the centre of the arcs <i>is</i> a compass and a latitude gauge. Take a very short exposure and the stars are points, but you cannot see so many. The number under the picture says how much a star smears in the exposure, which is the same problem as motion blur in the sensor chapter.</p>
+  <div class="widget" id="w-star">
+    <div class="wh"><h4>Star trails</h4><span>a camera looking at the night sky; the pole is the centre of the arcs</span></div>
+    <canvas class="w3" id="st-c" aria-label="Star trails around the celestial pole"></canvas>
+    <div class="controls">
+      <label for="st-lat">Latitude <output id="st-lat-o"></output><input type="range" id="st-lat" min="0" max="85" value="45"></label>
+      <label for="st-az">Camera points toward (compass) <output id="st-az-o"></output><input type="range" id="st-az" min="0" max="359" value="0"></label>
+      <label for="st-el">Camera tilted up by <output id="st-el-o"></output><input type="range" id="st-el" min="5" max="85" value="45"></label>
+      <label for="st-ex">Exposure (minutes) <output id="st-ex-o"></output><input type="range" id="st-ex" min="0" max="60" step="0.5" value="20"></label>
+    </div>
+    <label class="switch-row"><input type="checkbox" id="st-pole" checked> Mark the pole</label>
+    <div class="status" id="st-out"></div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>Latitude 45°, camera north, tilted 45°: the arcs circle the red mark right in the middle. Tilt to 20° and the mark drops toward the horizon.</li>
+    <li>Turn the camera east or south: the arcs become gentle curves, and the centre is out of view. You can still read north from which way they bend.</li>
+    <li>Go to latitude 0 (the equator): the pole sits on the horizon. At 85° it is nearly overhead.</li></ol></div>
+
+  <h3>The wind triangle</h3>
+  <p>The pilot's oldest sum. An aeroplane moves through the air at one speed in the direction its nose points. The air itself moves over the ground. The motion over the ground is the sum of the two: draw the nose vector, draw the wind from its tip, and the ground vector closes the triangle. To fly a <i>track</i> over the ground you must point the nose a little into the wind (the <b>crab angle</b>). That is exactly what the fly's wind memory does over the lake.</p>
+  <div class="widget" id="w-tri">
+    <div class="wh"><h4>The wind triangle</h4><span>green: through the air; orange: the wind; red: over the ground</span></div>
+    <div class="rowc">
+      <div class="mapbox"><canvas class="w3" id="tr-c" aria-label="The wind triangle"></canvas></div>
+      <div class="side-panel">
+        <div class="f">What do you want to find out?<div class="seg" id="tr-mode" role="group" aria-label="Mode"><button aria-pressed="true" data-v="track">The heading for my track</button><button aria-pressed="false" data-v="heading">Where this heading takes me</button></div></div>
+        <div class="controls" style="grid-template-columns:minmax(0,1fr)">
+          <label for="tr-as">Air speed <output id="tr-as-o"></output><input type="range" id="tr-as" min="50" max="200" value="100"></label>
+          <label for="tr-w">Wind speed <output id="tr-w-o"></output><input type="range" id="tr-w" min="0" max="80" value="30"></label>
+          <label for="tr-wd">Wind blows toward (compass) <output id="tr-wd-o"></output><input type="range" id="tr-wd" min="0" max="359" value="90"></label>
+          <label for="tr-t">The track I want (compass) <output id="tr-t-o"></output><input type="range" id="tr-t" min="0" max="359" value="0"></label>
+          <label for="tr-h">The heading I fly (compass) <output id="tr-h-o"></output><input type="range" id="tr-h" min="0" max="359" value="0"></label>
+        </div>
+        <div class="status" id="tr-out"></div>
+      </div>
+    </div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>Wind 30 from the west (blowing toward 90°) and a track of 0°: the nose must point several degrees to the left of north, and the ground speed is a little lower than the air speed.</li>
+    <li>Turn the wind to blow along the track (0° or 180°): no crab angle at all, but the ground speed changes by the full wind speed. Headwinds cost time; crosswinds cost heading.</li>
+    <li>Make the wind as strong as the air speed and see what happens to a track against it.</li></ol></div>
 
 
   <h3>The catalogue</h3>
@@ -1493,6 +1624,25 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     <ol><li>"Aeroplane": the picture smears, fine detail goes, but the large shapes survive. Add the smoothing option: it removes the part the blur had already destroyed.</li>
     <li>"Cloud shadows": whole patches of the picture go dark. The contrast filter helps only when a shadow covers the whole view.</li>
     <li>"Autumn": the colours move but the shapes do not, which is why brightness-only vision can survive a change of season better than colour vision. The tables below say whether the simulated fly found it so.</li></ol></div>
+
+  <h3>The cone of doubt</h3>
+  <p>A navigator who cannot see the ground is never sure where the aircraft is, only <i>how unsure</i>. A heading that is wrong by a few degrees, or a wind that nobody measured, pushes the aircraft sideways in proportion to how far it has flown, so the area where it could be widens into a <b>cone</b> (amber). The fly can only recognise its goal when the cone has narrowed to inside what its camera sees (the red bar at B). Every cheap trick of this chapter works on the cone: the sky compass squeezes the heading error, the wind memory squeezes the wind, and every landmark it recognises on the way resets the cone to almost nothing.</p>
+  <div class="widget" id="w-cone">
+    <div class="wh"><h4>Will the goal be inside the cone?</h4><span>route A to B, 10 maze cells; amber: where the aircraft might be</span></div>
+    <canvas class="w3" id="cn-c" aria-label="A cone of uncertainty widening along a route"></canvas>
+    <div class="controls">
+      <label for="cn-eps">Heading error <output id="cn-eps-o"></output><input type="range" id="cn-eps" min="0" max="20" value="6"></label>
+      <label for="cn-w">Wind nobody has measured <output id="cn-w-o"></output><input type="range" id="cn-w" min="0" max="60" value="30"></label>
+      <label for="cn-lm">Landmarks it recognises <output id="cn-lm-o"></output><input type="range" id="cn-lm" min="0" max="10" value="0"></label>
+    </div>
+    <label class="switch-row"><input type="checkbox" id="cn-sky"> A sky compass (heading error at most 1°)</label>
+    <label class="switch-row"><input type="checkbox" id="cn-wm"> A wind memory (the unmeasured wind falls to 15% of its size)</label>
+    <div class="status" id="cn-out"></div>
+  </div>
+  <div class="side tip"><b class="t">Try this</b>
+    <ol><li>Heading error 6° and wind 0.3: the cone at B is several cells wide, far more than the camera sees. Turn on both tricks: it shrinks to about a cell.</li>
+    <li>Leave both off and add a landmark every 3 cells: the cone becomes a row of saw-teeth and B is inside the last tooth. Recognising places is cheaper than flying perfectly.</li>
+    <li>This is why the lab's fly goes from 42% to 87% over the lake with the wind memory, and why it fell to 33% when the wind was not measured at all.</li></ol></div>
 
   <h3>The wind triangle over water</h3>
   <p>Over land the fly can see the ground move, and so knows the wind. Over a lake the waves move, and the ground is gone. If it just points at the far shore it is blown sideways the whole way. With a <b>wind memory</b> it keeps the wind it measured on the near shore and steers a little into it (the <b>crab angle</b>), so its track over the water points where it wants. Gusts make the memory go stale.</p>
@@ -3071,6 +3221,189 @@ function drawWt(upto) {
 ['wt-w', 'wt-d', 'wt-g'].forEach((id) => $(id).addEventListener('input', () => drawWt(null)));
 $('wt-go').addEventListener('click', () => { let k = 0; clearInterval(WT.run); WT.run = setInterval(() => { k += 8; drawWt(k); if (k > 900) { clearInterval(WT.run); drawWt(null); } }, 16); });
 redraws.push(() => drawWt(null));
+
+// ---------------------------------------------------------------- more widgets: the ant, the drift cone, pick your sensors, terrain matching, the magnetic globe, star trails, the wind triangle
+const arrow = (c, x0, y0, x1, y1, col, wd) => { const a = Math.atan2(y1 - y0, x1 - x0), L = Math.hypot(x1 - x0, y1 - y0), hh = Math.min(11, L * 0.4); c.strokeStyle = col; c.fillStyle = col; c.lineWidth = wd || 2.5; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); c.beginPath(); c.moveTo(x1, y1); c.lineTo(x1 - hh * Math.cos(a - 0.4), y1 - hh * Math.sin(a - 0.4)); c.lineTo(x1 - hh * Math.cos(a + 0.4), y1 - hh * Math.sin(a + 0.4)); c.closePath(); c.fill(); };
+const bearingVec = (b) => [Math.sin(b * DEG), Math.cos(b * DEG)]; // compass bearing -> east, north
+
+// ---------------------------------------------------------------- be the ant: path integration
+const ANT = { seed: 11 };
+function antPath() { let s = ANT.seed; const rg = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; let x = 0, y = 0, h = rg() * 6.28; const p = [{ x, y, h }]; for (let i = 1; i <= 240; i++) { h += 0.5 * (rg() - 0.5) + (i % 45 === 0 ? 1.6 * (rg() - 0.5) : 0); x += Math.cos(h); y += Math.sin(h); p.push({ x, y, h }); } return p; }
+const antSd = ctl('an-sd', (v) => (v / 10).toFixed(1) + '° per step'), antSc = ctl('an-sc', (v) => v + '%');
+function antMode() { const b = $('an-mode').querySelector('[aria-pressed=true]'); return b ? b.dataset.v : 'gyro'; }
+function drawAnt() {
+  const { c, w, h } = fit($('an-c'), 0.78), P = antPath(), mode = antMode(), sd = (antSd() / 10) * DEG, sc = antSc() / 100; nseed = 31 + ANT.seed;
+  let ex = 0, ey = 0, err = 0; const bel = [[0, 0]];
+  for (let i = 1; i < P.length; i++) { const g = ngauss(); err = mode === 'gyro' ? err + sd * g : mode === 'sky' ? 3 * sd * g : 0; const d = 1 + sc; ex += d * Math.cos(P[i].h + err); ey += d * Math.sin(P[i].h + err); bel.push([ex, ey]); }
+  const end = P[P.length - 1], thB = Math.atan2(-ey, -ex), dist = Math.hypot(ex, ey), thT = mode === 'gyro' ? thB - err : thB, land = [end.x + dist * Math.cos(thT), end.y + dist * Math.sin(thT)], miss = Math.hypot(land[0], land[1]);
+  const xs = [...P.map((q) => q.x), ...bel.map((q) => q[0]), land[0], 0], ys = [...P.map((q) => q.y), ...bel.map((q) => q[1]), land[1], 0], x0 = Math.min(...xs) - 5, x1 = Math.max(...xs) + 5, y0 = Math.min(...ys) - 5, y1 = Math.max(...ys) + 5, k = Math.min((w - 20) / (x1 - x0), (h - 20) / (y1 - y0)), ox = (w - k * (x1 - x0)) / 2 - k * x0, oy = (h - k * (y1 - y0)) / 2 - k * y0, X = (v) => ox + k * v, Y = (v) => oy + k * v;
+  c.clearRect(0, 0, w, h); c.lineWidth = 2; c.strokeStyle = css('--muted'); c.beginPath(); P.forEach((q, i) => (i ? c.lineTo(X(q.x), Y(q.y)) : c.moveTo(X(q.x), Y(q.y)))); c.stroke();
+  c.strokeStyle = css('--teal'); c.setLineDash([5, 4]); c.beginPath(); bel.forEach((q, i) => (i ? c.lineTo(X(q[0]), Y(q[1])) : c.moveTo(X(q[0]), Y(q[1])))); c.stroke(); c.setLineDash([]);
+  arrow(c, X(end.x), Y(end.y), X(land[0]), Y(land[1]), css('--red'), 3);
+  c.fillStyle = css('--ink'); c.fillRect(X(0) - 6, Y(0) - 6, 12, 12); c.fillStyle = css('--bg'); c.fillRect(X(0) - 3, Y(0) - 3, 6, 6);
+  c.fillStyle = css('--red'); c.beginPath(); c.arc(X(land[0]), Y(land[1]), 6, 0, 7); c.fill(); c.fillStyle = css('--muted'); c.font = '11px system-ui,sans-serif'; c.fillText('home', X(0) + 9, Y(0) - 8);
+  // the eight "home vector" bars of the insect brain (CPU4 cells): the home vector projected on eight compass axes
+  const bx = w - 78, by = 62; c.strokeStyle = css('--line'); c.lineWidth = 1; c.beginPath(); c.arc(bx, by, 48, 0, 7); c.stroke();
+  for (let a = 0; a < 8; a++) { const th = a * Math.PI / 4, pr = Math.max(0, (-ex * Math.cos(th) - ey * Math.sin(th)) / Math.max(1, dist)); c.strokeStyle = css('--teal'); c.lineWidth = 5; c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + 46 * pr * Math.cos(th), by + 46 * pr * Math.sin(th)); c.stroke(); }
+  c.fillStyle = css('--muted'); c.fillText('home-vector cells', bx - 44, by + 64);
+  $('an-out').innerHTML = `Walked <b>${P.length - 1}</b> steps out. It believes home is <b>${dist.toFixed(0)}</b> steps away; it walks back and ends <b style="color:${css('--red')}">${miss.toFixed(1)} steps</b> from home (red dot) - ` + (miss < 3 ? 'close enough to see the nest.' : miss < 12 ? 'it would start searching here.' : 'lost, without a landmark to rescue it.') + ` ` + (mode === 'gyro' ? `Its heading error at the end is <b>${(err / DEG).toFixed(0)}°</b>, and it keeps it on the way home.` : 'Its heading error is fresh at every step, so on the way home it averages out.');
+}
+['an-sd', 'an-sc'].forEach((id) => $(id).addEventListener('input', drawAnt)); segHook($('an-mode'), drawAnt); $('an-new').addEventListener('click', () => { ANT.seed = (ANT.seed * 7 + 13) % 997; drawAnt(); });
+redraws.push(drawAnt);
+
+// ---------------------------------------------------------------- the drift cone
+const cnEps = ctl('cn-eps', (v) => v + '°'), cnWind = ctl('cn-w', (v) => v + '%'), cnLm = ctl('cn-lm', (v) => (v ? 'every ' + v + ' cells' : 'none'));
+function drawCone() {
+  const { c, w, h } = fit($('cn-c'), 0.46), L = 10, X = (s) => 30 + (s / L) * (w - 60), kk = (h / 2 - 14) / 5, Y = (d) => h / 2 + d * kk;
+  let eps = cnEps() * DEG, wu = cnWind() / 100; if ($('cn-sky').checked) eps = Math.min(eps, 1 * DEG); if ($('cn-wm').checked) wu *= 0.15;
+  const lm = cnLm(), hw = (s) => { const q = lm ? s % lm : s; return 0.25 + q * (Math.tan(eps) + wu); };
+  c.clearRect(0, 0, w, h); c.strokeStyle = css('--line'); c.lineWidth = 1; for (let d = -4; d <= 4; d += 2) { c.beginPath(); c.moveTo(X(0), Y(d)); c.lineTo(X(L), Y(d)); c.stroke(); }
+  c.fillStyle = 'rgba(232,162,26,.22)'; c.strokeStyle = SUN_COL; c.lineWidth = 2; c.beginPath(); const N = 120; const up = [], dn = [];
+  for (let i = 0; i <= N; i++) { const s = (i / N) * L, a = Math.min(hw(s), 5); up.push([X(s), Y(-a)]); dn.push([X(s), Y(a)]); }
+  c.beginPath(); up.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]))); dn.reverse().forEach((p) => c.lineTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = css('--ink'); c.lineWidth = 2; c.setLineDash([6, 4]); c.beginPath(); c.moveTo(X(0), Y(0)); c.lineTo(X(L), Y(0)); c.stroke(); c.setLineDash([]);
+  if (lm) for (let s = lm; s < L - 0.01; s += lm) { c.fillStyle = css('--teal'); c.beginPath(); c.moveTo(X(s), Y(-0.55)); c.lineTo(X(s) + 6, Y(0)); c.lineTo(X(s), Y(0.55)); c.lineTo(X(s) - 6, Y(0)); c.closePath(); c.fill(); }
+  const view = 0.8; c.fillStyle = css('--red'); c.fillRect(X(L) - 3, Y(-view), 6, 2 * view * kk); c.fillStyle = css('--ink'); c.beginPath(); c.arc(X(0), Y(0), 6, 0, 7); c.fill(); c.fillStyle = css('--muted'); c.font = '11px system-ui,sans-serif'; c.fillText('A', X(0) - 4, Y(0) - 12); c.fillText('B (the camera sees ±0.8 cells)', X(L) - 160, Y(-view) - 8);
+  const end = hw(L - 1e-6); $('cn-out').innerHTML = `At B the cone is <b>±${end.toFixed(1)} cells</b> wide. ` + (end <= view ? '<b style="color:' + css('--teal') + '">B is inside the camera\'s view</b>: it will see it and finish by familiarity.' : '<b style="color:' + css('--red') + '">B is outside the camera\'s view</b>: it must search, or use something else to shrink the cone.');
+}
+['cn-eps', 'cn-w', 'cn-lm'].forEach((id) => $(id).addEventListener('input', drawCone)); ['cn-sky', 'cn-wm'].forEach((id) => $(id).addEventListener('change', drawCone));
+redraws.push(drawCone);
+
+// ---------------------------------------------------------------- pick your sensors
+const SCEN = {
+  clear: { name: 'Clear day, countryside', day: 1, cloud: 0, water: 0, flat: 0, relief: 0, fog: 0, jam: 0 },
+  night: { name: 'Night over the sea', day: 0, cloud: 0, water: 1, flat: 1, relief: 0, fog: 0, jam: 0 },
+  mount: { name: 'Cloudy day, mountains', day: 1, cloud: 1, water: 0, flat: 0, relief: 1, fog: 0, jam: 0 },
+  desert: { name: 'Fog over a flat desert', day: 1, cloud: 0, water: 0, flat: 1, relief: 0, fog: 1, jam: 0 },
+  city: { name: 'Over a city, GPS jammed', day: 1, cloud: 0, water: 0, flat: 0, relief: 0, fog: 0, jam: 1 },
+  lake: { name: 'Over a lake, in rain', day: 1, cloud: 1, water: 1, flat: 1, relief: 0, fog: 0, jam: 0 },
+};
+const SENS = [
+  { id: 'sky', n: 'Sky compass (polarised light)', role: 'head', q: (s) => (s.day ? (s.cloud ? 0.6 : 0.9) : 0) },
+  { id: 'star', n: 'Star compass (dim-light camera)', role: 'head', q: (s) => (s.day ? (s.cloud ? 0.1 : 0.4) : s.cloud ? 0.15 : 0.85) },
+  { id: 'mcomp', n: 'Magnetic compass', role: 'head', q: (s) => (s.jam ? 0.5 : 0.65) },
+  { id: 'gyro', n: 'Gyro (drifts)', role: 'head', q: () => 0.45 },
+  { id: 'flow', n: 'Optic-flow odometer', role: 'speed', q: (s) => (s.water ? 0.15 : s.fog ? 0.45 : !s.day ? 0.4 : s.flat ? 0.5 : 0.9) },
+  { id: 'air', n: 'Air-speed sensor + wind memory', role: 'wind', q: (s) => (s.water ? 0.6 : 0.8) },
+  { id: 'cam', n: 'Downward camera (familiarity)', role: 'place', q: (s) => (s.water ? 0.1 : !s.day ? 0.15 : s.fog ? 0.3 : s.flat ? 0.3 : (s.cloud ? 0.7 : 0.9) + (s.relief ? 0.05 : 0)) },
+  { id: 'therm', n: 'Thermal camera', role: 'place', q: (s) => (s.water ? 0.35 : s.fog ? 0.55 : s.flat ? 0.4 : 0.65) },
+  { id: 'mag', n: 'Magnetometer + anomaly map', role: 'place', q: (s) => (s.jam ? 0.6 : 0.8) },
+  { id: 'radio', n: 'Radio receiver on known transmitters', role: 'place', q: (s) => (s.jam ? 0.15 : 0.75) },
+  { id: 'radar', n: 'Radar altimeter (terrain profile)', role: 'place', q: (s) => (s.relief ? 0.8 : s.water || s.flat ? 0.05 : 0.35) },
+  { id: 'gps', n: 'GPS (what we are doing without)', role: 'place', q: (s) => (s.jam ? 0 : 1) },
+];
+const PK = { scen: 'clear', on: { sky: true, flow: true, air: true, cam: true } };
+const ROLES = [['head', 'Heading'], ['speed', 'Speed / distance'], ['wind', 'Wind'], ['place', 'Place']];
+function drawPick() {
+  const s = SCEN[PK.scen], best = {}; ROLES.forEach(([r]) => (best[r] = 0));
+  SENS.forEach((x) => { if (PK.on[x.id]) best[x.role] = Math.max(best[x.role], x.q(s)); });
+  $('pk-bars').innerHTML = ROLES.map(([r, n]) => { const v = best[r], col = v >= 0.6 ? css('--teal') : v >= 0.3 ? SUN_COL : css('--red'); return `<div class="pkrow"><span>${n}</span><div class="prog" style="height:12px"><i style="width:${(v * 100).toFixed(0)}%;background:${col}"></i></div><b>${(v * 100).toFixed(0)}%</b></div>`; }).join('');
+  const weak = ROLES.filter(([r]) => best[r] < 0.5).map(([, n]) => n.toLowerCase());
+  $('pk-out').innerHTML = weak.length ? `<b style="color:${css('--red')}">The ladder has a missing rung:</b> ${weak.join(', ')}. ` + (best.place < 0.5 ? 'Without a place sense the fly can only dead-reckon, and its error grows with every step. ' : '') + (best.head < 0.5 ? 'Without a trustworthy heading even a good odometer is useless. ' : '') + 'Switch on a sensor that works in this weather.' : `<b style="color:${css('--teal')}">Every rung of the ladder is there.</b> Heading, distance, wind and place each have a sensor that works here.` + (SENS.filter((x) => PK.on[x.id]).length <= 4 ? ' (And with only four sensors: that is cheap, too.)' : '');
+}
+{ const box = $('pk-sens'); SENS.forEach((x) => { const l = document.createElement('label'); l.className = 'switch-row'; const i = document.createElement('input'); i.type = 'checkbox'; i.checked = !!PK.on[x.id]; i.addEventListener('change', () => { PK.on[x.id] = i.checked; drawPick(); }); l.append(i, ' ' + x.n); box.appendChild(l); });
+  segFill($('pk-scen'), Object.entries(SCEN).map(([k, v]) => [k, v.name]), PK.scen, (v) => { PK.scen = v; drawPick(); }); }
+redraws.push(drawPick);
+
+// ---------------------------------------------------------------- terrain profile matching
+const tmH = (x, rl) => rl * VN(x / 7 + 3, 0.5, 3);
+const tmRel = ctl('tm-rel', (v) => v + '%'), tmNz = ctl('tm-nz', (v) => (v / 100).toFixed(2)), tmLen = ctl('tm-len', (v) => v + ' units'), tmPos = ctl('tm-pos', (v) => v);
+function drawTm() {
+  const { c, w, h } = fit($('tm-c'), 0.86), rl = tmRel() / 25, nz = tmNz() / 100, Lw = tmLen(), pos = tmPos(), N = 200;
+  c.clearRect(0, 0, w, h); const pad = 36, X = (u) => pad + (u / N) * (w - pad - 10);
+  const prof = []; for (let i = 0; i <= N; i++) prof.push(tmH(i, rl)); const lo = Math.min(...prof), hi = Math.max(...prof, lo + 0.2);
+  const panel = (y0, y1, label) => { c.fillStyle = css('--muted'); c.font = '11px system-ui,sans-serif'; c.textAlign = 'left'; c.fillText(label, pad, y0 - 4); c.strokeStyle = css('--line'); c.strokeRect(pad, y0, w - pad - 10, y1 - y0); };
+  const p1 = [18, h * 0.3], p2 = [h * 0.38, h * 0.62], p3 = [h * 0.7, h - 14];
+  panel(p1[0], p1[1], 'the stored terrain along the track'); panel(p2[0], p2[1], 'what the radar altimeter measured on the last stretch (red), against the stored terrain where it fits best (grey)'); panel(p3[0], p3[1], 'how well each place along the track fits');
+  const Yh = (v, p) => p[1] - 4 - ((v - lo) / (hi - lo)) * (p[1] - p[0] - 8);
+  c.strokeStyle = css('--muted'); c.lineWidth = 2; c.beginPath(); prof.forEach((v, i) => (i ? c.lineTo(X(i), Yh(v, p1)) : c.moveTo(X(i), Yh(v, p1)))); c.stroke();
+  c.fillStyle = 'rgba(232,162,26,.25)'; c.fillRect(X(pos - Lw), p1[0], X(pos) - X(pos - Lw), p1[1] - p1[0]);
+  nseed = 77; const K = Math.max(6, Math.round(Lw / 2)), meas = []; for (let k = 0; k <= K; k++) meas.push(tmH(pos - Lw + (k / K) * Lw, rl) + nz * ngauss());
+  const score = []; let bestC = Lw, bestS = Infinity; for (let cc = Lw; cc <= N; cc++) { let s = 0; for (let k = 0; k <= K; k++) s += (meas[k] - tmH(cc - Lw + (k / K) * Lw, rl)) ** 2; s /= K + 1; score.push([cc, s]); if (s < bestS) { bestS = s; bestC = cc; } }
+  const sig2 = Math.max(nz * nz, 1e-4), like = score.map(([cc, s]) => [cc, Math.exp(-(s - bestS) / (2 * sig2) * (K + 1) / 4)]);
+  c.strokeStyle = css('--red'); c.lineWidth = 2.5; c.beginPath(); meas.forEach((v, k) => { const u = (k / K) * Lw; k ? c.lineTo(X(u + 0) + 0, Yh(v, p2)) : c.moveTo(X(u), Yh(v, p2)); }); c.stroke();
+  c.strokeStyle = css('--muted'); c.lineWidth = 2; c.setLineDash([4, 4]); c.beginPath(); for (let k = 0; k <= K; k++) { const u = (k / K) * Lw, v = tmH(bestC - Lw + u, rl); k ? c.lineTo(X(u), Yh(v, p2)) : c.moveTo(X(u), Yh(v, p2)); } c.stroke(); c.setLineDash([]);
+  c.fillStyle = css('--teal'); c.strokeStyle = css('--teal'); c.lineWidth = 2; c.beginPath(); like.forEach(([cc, l], i) => { const y = p3[1] - 4 - l * (p3[1] - p3[0] - 10); i ? c.lineTo(X(cc), y) : c.moveTo(X(cc), y); }); c.stroke();
+  c.strokeStyle = SUN_COL; c.lineWidth = 2; c.beginPath(); c.moveTo(X(pos), p3[0]); c.lineTo(X(pos), p3[1]); c.stroke(); c.fillStyle = css('--red'); c.beginPath(); c.arc(X(bestC), p3[0] + 6, 5, 0, 7); c.fill();
+  const amb = like.filter(([cc, l]) => l > 0.5 && Math.abs(cc - bestC) > 6).length;
+  $('tm-out').innerHTML = `True position <b>${pos}</b>, best match <b>${bestC}</b> (error ${Math.abs(bestC - pos)} units). ` + (rl < 0.15 ? '<b style="color:' + css('--red') + '">The ground is flat:</b> every position fits equally well; this is why terrain matching is useless over water.' : amb > 4 ? `<b style="color:${css('--red')}">Ambiguous:</b> ${amb} other places fit nearly as well.` : '<b style="color:' + css('--teal') + '">One clear peak.</b> The orange line (true position) sits under it.');
+}
+['tm-rel', 'tm-nz', 'tm-len', 'tm-pos'].forEach((id) => $(id).addEventListener('input', drawTm)); redraws.push(drawTm);
+
+// ---------------------------------------------------------------- the magnetic globe (and a turtle)
+const GB = { lon0: -25, lat0: 10, turtle: [-10, 30], beach: [25, -80], trail: [], drag: null, moved: false };
+const gbAmp = ctl('gb-an', (v) => (v / 100).toFixed(2));
+const magAt = (lat, lon) => { const a = gbAmp() / 100, ph = lat * DEG, I = Math.atan(2 * Math.tan(ph)) / DEG, B = 31 * Math.sqrt(1 + 3 * Math.sin(ph) ** 2); return [I + a * 12 * (VN(lon / 22 + 5, lat / 22 + 9, 2) - 0.5) * 2, B + a * 14 * (VN(lon / 25 + 30, lat / 25 + 2, 2) - 0.5) * 2]; };
+const sph = (lat, lon) => { const p = lat * DEG, l = lon * DEG; return [Math.cos(p) * Math.cos(l), Math.cos(p) * Math.sin(l), Math.sin(p)]; };
+function gbProj(lat, lon, R, cx, cy) { const v = sph(lat, lon), l0 = GB.lon0 * DEG, p0 = GB.lat0 * DEG, x1 = v[0] * Math.cos(l0) + v[1] * Math.sin(l0), y1 = -v[0] * Math.sin(l0) + v[1] * Math.cos(l0), z1 = v[2], x2 = x1 * Math.cos(p0) + z1 * Math.sin(p0), z2 = -x1 * Math.sin(p0) + z1 * Math.cos(p0); return [cx + R * y1, cy - R * z2, x2]; }
+function gbInv(sx, sy, R, cx, cy) { const y1 = (sx - cx) / R, z2 = -(sy - cy) / R, d2 = 1 - y1 * y1 - z2 * z2; if (d2 < 0) return null; const x2 = Math.sqrt(d2), p0 = GB.lat0 * DEG, l0 = GB.lon0 * DEG, x1 = x2 * Math.cos(p0) - z2 * Math.sin(p0), z1 = x2 * Math.sin(p0) + z2 * Math.cos(p0), vx = x1 * Math.cos(l0) - y1 * Math.sin(l0), vy = x1 * Math.sin(l0) + y1 * Math.cos(l0); return [Math.asin(clamp(z1, -1, 1)) / DEG, Math.atan2(vy, vx) / DEG]; }
+const gbDist = (a, b) => Math.acos(clamp(sph(...a).reduce((s, v, i) => s + v * sph(...b)[i], 0), -1, 1)) / DEG;
+function drawGlobe() {
+  const { c, w, h } = fit($('gb-c'), 0.92), R = Math.min(w, h) * 0.45, cx = w / 2, cy = h / 2; c.clearRect(0, 0, w, h);
+  const cells = []; for (let la = -85; la < 90; la += 5) for (let lo = -180; lo < 180; lo += 5) { const pts = [[la, lo], [la, lo + 5], [la + 5, lo + 5], [la + 5, lo]].map(([a, b]) => gbProj(a, b, R, cx, cy)); if (pts.every((p) => p[2] > 0)) cells.push([la + 2.5, lo + 2.5, pts]); }
+  for (const [la, lo, pts] of cells) { const [, B] = magAt(la, lo), t = clamp((B - 22) / 44, 0, 1); c.fillStyle = `rgb(${Math.round(40 + 200 * t)},${Math.round(80 + 90 * (1 - Math.abs(2 * t - 1)))},${Math.round(210 - 170 * t)})`; c.strokeStyle = c.fillStyle; c.lineWidth = 0.6; c.beginPath(); pts.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]))); c.closePath(); c.fill(); c.stroke(); }
+  c.strokeStyle = 'rgba(255,255,255,.4)'; c.lineWidth = 1; for (let la = -60; la <= 60; la += 30) { c.beginPath(); let on = false; for (let lo = -180; lo <= 180; lo += 4) { const p = gbProj(la, lo, R, cx, cy); if (p[2] > 0) { on ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); on = true; } else on = false; } c.stroke(); }
+  for (let lo = -180; lo < 180; lo += 30) { c.beginPath(); let on = false; for (let la = -88; la <= 88; la += 4) { const p = gbProj(la, lo, R, cx, cy); if (p[2] > 0) { on ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); on = true; } else on = false; } c.stroke(); }
+  if (GB.trail.length > 1) { c.strokeStyle = '#fff'; c.lineWidth = 2.5; c.beginPath(); let on = false; GB.trail.forEach(([a, b]) => { const p = gbProj(a, b, R, cx, cy); if (p[2] > 0) { on ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); on = true; } else on = false; }); c.stroke(); }
+  const bp = gbProj(GB.beach[0], GB.beach[1], R, cx, cy), tp = gbProj(GB.turtle[0], GB.turtle[1], R, cx, cy);
+  if (bp[2] > 0) { c.fillStyle = SUN_COL; c.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 5 : 11, a = (i * Math.PI) / 5 - Math.PI / 2; c.lineTo(bp[0] + r * Math.cos(a), bp[1] + r * Math.sin(a)); } c.closePath(); c.fill(); }
+  if (tp[2] > 0) { c.fillStyle = css('--red'); c.beginPath(); c.arc(tp[0], tp[1], 7, 0, 7); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke(); }
+  c.strokeStyle = css('--line'); c.lineWidth = 1.5; c.beginPath(); c.arc(cx, cy, R, 0, 7); c.stroke();
+  const [I, B] = magAt(GB.turtle[0], GB.turtle[1]), [I0, B0] = magAt(GB.beach[0], GB.beach[1]), dd = gbDist(GB.turtle, GB.beach);
+  $('gb-out').innerHTML = `Turtle (red): dip angle <b>${I.toFixed(0)}°</b>, strength <b>${B.toFixed(0)} µT</b>. Natal beach (star): <b>${I0.toFixed(0)}°</b>, <b>${B0.toFixed(0)} µT</b>. Distance to the beach: <b>${dd.toFixed(0)}°</b> of arc.` + (GB.msg ? '<br>' + GB.msg : '');
+}
+function gbHome() {
+  let cur = GB.turtle.slice(); GB.trail = [cur.slice()]; const [Is, Bs] = magAt(...GB.beach), cost = (p) => { const [I, B] = magAt(...p); return ((I - Is) / 3) ** 2 + ((B - Bs) / 2) ** 2; };
+  const descend = () => { let best = cost(cur), n = 0; for (; n < 600; n++) { let bp = null, bc = best; for (let k = 0; k < 16; k++) { const a = (k * Math.PI) / 8, p = [clamp(cur[0] + 1.5 * Math.cos(a), -85, 85), cur[1] + (1.5 * Math.sin(a)) / Math.max(0.2, Math.cos(cur[0] * DEG))], cc = cost(p); if (cc < bc) { bc = cc; bp = p; } } if (!bp) break; cur = bp; best = bc; GB.trail.push(cur.slice()); } return n; };
+  let steps = descend(); // 1. downhill in the two numbers: the dip and strength mostly mark latitude, so this reaches the beach's latitude
+  let bl = cur[1], bc2 = cost(cur); for (let d = -180; d < 180; d++) { const cc = cost([cur[0], cur[1] + d]); if (cc < bc2) { bc2 = cc; bl = cur[1] + d; } } // 2. swim along that latitude reading the field, to the place that matches best
+  const dl = ((bl - cur[1] + 540) % 360) - 180; for (let q = 1; q <= 40; q++) GB.trail.push([cur[0], cur[1] + (dl * q) / 40]); cur = [cur[0], cur[1] + dl]; steps += Math.abs(Math.round(dl));
+  steps += descend(); // 3. fine adjustment
+  GB.turtle = cur; const e = gbDist(cur, GB.beach), a = gbAmp() / 100;
+  GB.msg = e < 4 ? `<b style="color:${css('--teal')}">Home:</b> ${e.toFixed(1)}° from the beach.` : a < 0.05 ? `<b style="color:${css('--red')}">Stopped ${e.toFixed(0)}° from the beach</b>: with a smooth field the two numbers only mark latitude, so it is on the right latitude and can be anywhere along it.` : `<b style="color:${css('--red')}">Stopped ${e.toFixed(0)}° from the beach</b>, at a place with almost the same dip and strength. Two numbers are not always unique on a lumpy planet: try other starting points, or another amount of lumpiness.`;
+  drawGlobe();
+}
+$('gb-an').addEventListener('input', () => { GB.msg = ''; drawGlobe(); }); $('gb-go').addEventListener('click', gbHome); $('gb-reset').addEventListener('click', () => { GB.turtle = [-10, 30]; GB.trail = []; GB.msg = ''; drawGlobe(); });
+{ const cv = $('gb-c'); cv.style.touchAction = 'none';
+  cv.addEventListener('pointerdown', (e) => { GB.drag = [e.clientX, e.clientY]; GB.moved = false; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', (e) => { if (!GB.drag) return; const dx = e.clientX - GB.drag[0], dy = e.clientY - GB.drag[1]; if (Math.abs(dx) + Math.abs(dy) > 3) GB.moved = true; if (GB.moved) { GB.lon0 -= dx * 0.4; GB.lat0 = clamp(GB.lat0 + dy * 0.3, -80, 80); GB.drag = [e.clientX, e.clientY]; drawGlobe(); } });
+  cv.addEventListener('pointerup', (e) => { if (GB.drag && !GB.moved) { const r = cv.getBoundingClientRect(), W = r.width, H = r.height, R = Math.min(W, H * 1) * 0.45 * 1, p = gbInv(e.clientX - r.left, e.clientY - r.top, Math.min(W, W * 0.92) * 0.45, W / 2, (W * 0.92) / 2); if (p) { GB.turtle = p; GB.trail = []; GB.msg = ''; drawGlobe(); } } GB.drag = null; }); }
+redraws.push(drawGlobe);
+
+// ---------------------------------------------------------------- star trails: the night sky as a compass
+const ST = { stars: null };
+function stStars() { if (ST.stars) return ST.stars; let s = 909; const rg = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; const a = []; for (let i = 0; i < 700; i++) a.push({ d: Math.asin(2 * rg() - 1), r: rg() * 6.283, m: 0.3 + 0.7 * rg() * rg() }); a.push({ d: 89.2 * DEG, r: 1, m: 1, pole: true }); ST.stars = a; return a; }
+const stLat = ctl('st-lat', (v) => v + '°'), stAz = ctl('st-az', (v) => v + '°'), stEl = ctl('st-el', (v) => v + '°'), stExp = ctl('st-ex', (v) => (v < 1 ? v * 60 + ' s' : v + ' min'));
+function drawStars() {
+  const { c, w, h } = fit($('st-c'), 0.7), phi = stLat() * DEG, az0 = stAz() * DEG, el0 = stEl() * DEG, T = stExp(), f = w / 2 / Math.tan(30 * DEG);
+  c.fillStyle = '#05080f'; c.fillRect(0, 0, w, h);
+  const cvec = [Math.cos(el0) * Math.sin(az0), Math.cos(el0) * Math.cos(az0), Math.sin(el0)], rv = [Math.cos(az0), -Math.sin(az0), 0], uv = [-Math.sin(el0) * Math.sin(az0), -Math.sin(el0) * Math.cos(az0), Math.cos(el0)];
+  const place = (d, H0, tmin) => { const Hh = H0 + tmin * 0.2507 * DEG, E = -Math.cos(d) * Math.sin(Hh), N = Math.sin(d) * Math.cos(phi) - Math.cos(d) * Math.cos(Hh) * Math.sin(phi), U = Math.sin(d) * Math.sin(phi) + Math.cos(d) * Math.cos(Hh) * Math.cos(phi); const dep = E * cvec[0] + N * cvec[1] + U * cvec[2]; if (dep < 0.15 || U < -0.02) return null; return [w / 2 + f * (E * rv[0] + N * rv[1]) / dep, h / 2 - f * (E * uv[0] + N * uv[1] + U * uv[2]) / dep]; };
+  for (const s of stStars()) { const K = Math.max(1, Math.min(60, Math.ceil(T / 2))); c.strokeStyle = s.pole ? '#ffd27a' : `rgba(255,255,255,${0.25 + 0.7 * s.m})`; c.lineWidth = s.pole ? 2 : 1 + s.m; c.beginPath(); let on = false, last = null; for (let k = 0; k <= K; k++) { const p = place(s.d, s.r, (k / K) * T); if (p && p[0] > -20 && p[0] < w + 20 && p[1] > -20 && p[1] < h + 20) { on ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); on = true; last = p; } else on = false; } c.stroke(); if (last) { c.fillStyle = c.strokeStyle; c.beginPath(); c.arc(last[0], last[1], 1 + 1.4 * s.m, 0, 7); c.fill(); } }
+  const pp = place(90 * DEG, 0, 0); if ($('st-pole').checked && pp) { c.strokeStyle = css('--red'); c.lineWidth = 2; c.beginPath(); c.arc(pp[0], pp[1], 12, 0, 7); c.stroke(); c.fillStyle = css('--red'); c.font = '600 12px system-ui,sans-serif'; c.fillText('the pole: due north, ' + stLat() + '° up', pp[0] + 16, pp[1] + 4); }
+  const rot = T * 0.2507, blur = f * rot * DEG * 0.785;
+  $('st-out').innerHTML = `Every star moves around the pole at 15° an hour. In this exposure the sky turns <b>${rot.toFixed(2)}°</b>, so a star at the middle of the picture smears over <b>${blur < 0.5 ? 'less than a pixel' : blur.toFixed(1) + ' pixels'}</b> (for a 640-pixel camera 60° wide). ` + (pp ? 'The arcs circle the red mark: <b>that point is north, and its height above the horizon is the latitude.</b>' : 'The pole is not in view: turn the camera toward the north (0°) and tilt it up to the latitude.');
+}
+['st-lat', 'st-az', 'st-el', 'st-ex'].forEach((id) => $(id).addEventListener('input', drawStars)); $('st-pole').addEventListener('change', drawStars); redraws.push(drawStars);
+
+// ---------------------------------------------------------------- the wind triangle
+const trAs = ctl('tr-as', (v) => v), trW = ctl('tr-w', (v) => v), trWd = ctl('tr-wd', (v) => v + '°'), trT = ctl('tr-t', (v) => v + '°'), trH = ctl('tr-h', (v) => v + '°');
+function trMode() { const b = $('tr-mode').querySelector('[aria-pressed=true]'); return b ? b.dataset.v : 'track'; }
+function drawTri() {
+  const { c, w, h } = fit($('tr-c'), 0.72), V = trAs(), Wv = trW(), wd = bearingVec(trWd()), wv = [Wv * wd[0], Wv * wd[1]], mode = trMode();
+  let head, track, gs, crab; const tu = bearingVec(trT());
+  if (mode === 'track') { const right = [tu[1], -tu[0]], wc = wv[0] * right[0] + wv[1] * right[1], s = clamp(-wc / V, -0.99, 0.99); crab = Math.asin(s) / DEG; head = trT() + crab; const hv = bearingVec(head); gs = [V * hv[0] + wv[0], V * hv[1] + wv[1]]; track = trT(); }
+  else { head = trH(); const hv = bearingVec(head); gs = [V * hv[0] + wv[0], V * hv[1] + wv[1]]; track = ((Math.atan2(gs[0], gs[1]) / DEG) + 360) % 360; crab = ((track - head + 540) % 360) - 180; crab = -crab; }
+  const hv = bearingVec(head), air = [V * hv[0], V * hv[1]], k = (Math.min(w, h) * 0.38) / 160, ox = w * 0.32, oy = h * 0.62, P = (v) => [ox + k * v[0], oy - k * v[1]];
+  c.clearRect(0, 0, w, h); c.strokeStyle = css('--line'); c.lineWidth = 1; c.beginPath(); c.arc(ox, oy, 80 * k * 2, 0, 7); c.stroke(); c.fillStyle = css('--muted'); c.font = '11px system-ui,sans-serif'; c.fillText('N', ox - 4, oy - 160 * k - 6);
+  c.setLineDash([6, 5]); c.strokeStyle = css('--muted'); c.beginPath(); c.moveTo(ox, oy); c.lineTo(ox + 240 * k * tu[0], oy - 240 * k * tu[1]); c.stroke(); c.setLineDash([]); c.fillText('track you want', ox + 245 * k * tu[0], oy - 245 * k * tu[1]);
+  const a = P(air), g = P(gs), wTip = P([air[0] + wv[0], air[1] + wv[1]]);
+  arrow(c, ox, oy, a[0], a[1], css('--teal'), 3); arrow(c, a[0], a[1], wTip[0], wTip[1], SUN_COL, 3); arrow(c, ox, oy, g[0], g[1], css('--red'), 3);
+  c.fillStyle = css('--teal'); c.fillText('where the nose points (air)', a[0] + 6, a[1] - 6); c.fillStyle = SUN_COL; c.fillText('wind pushes', wTip[0] + 6, wTip[1] + 14); c.fillStyle = css('--red'); c.fillText('what the ground sees', g[0] + 6, g[1] + 14);
+  const gsp = Math.hypot(gs[0], gs[1]); $('tr-out').innerHTML = (mode === 'track' ? `To make good a track of <b>${trT()}°</b> point the nose at <b>${((head % 360) + 360) % 360 | 0}°</b> (the crab angle: <b>${Math.abs(crab).toFixed(1)}°</b> ${crab >= 0 ? 'right' : 'left'} of the track).` : `Pointing at <b>${trH()}°</b> the ground track is <b>${track.toFixed(0)}°</b>: the wind has pushed the aircraft <b>${Math.abs(crab).toFixed(1)}°</b> ${crab >= 0 ? 'left' : 'right'} of where the nose points.`) + ` Ground speed <b>${gsp.toFixed(0)}</b> (air speed ${V}): a 100-unit leg takes <b>${(100 / gsp * 60).toFixed(0)}</b> minutes if the speed is in units per hour.`;
+  $('tr-t').closest('label').style.display = mode === 'track' ? '' : 'none'; $('tr-h').closest('label').style.display = mode === 'track' ? 'none' : '';
+}
+['tr-as', 'tr-w', 'tr-wd', 'tr-t', 'tr-h'].forEach((id) => $(id).addEventListener('input', drawTri)); segHook($('tr-mode'), drawTri); redraws.push(drawTri);
 
 // 14. quiz
 const QUIZ = [
