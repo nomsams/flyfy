@@ -200,6 +200,7 @@ details.exp dt{font:800 11.5px/1.2 var(--display);letter-spacing:.1em;text-trans
 details.exp dd{margin:0;font-size:15px;line-height:1.55}
 details.exp dd code{font:12.5px/1.5 var(--mono);word-break:break-word}
 details.exp .tbl{margin:6px 0}
+canvas.w3{width:100%;max-width:640px;height:auto;display:block;border-radius:10px;background:var(--bg);touch-action:none}
 canvas.map{width:100%;max-width:470px;height:auto;aspect-ratio:1;border-radius:10px;background:var(--bg);touch-action:none;cursor:crosshair;display:block}
 canvas.mini{width:100%;max-width:210px;height:auto;aspect-ratio:10/7;image-rendering:pixelated;border-radius:6px;background:var(--bg);display:block}
 canvas.fan{width:100%;max-width:300px;height:auto;aspect-ratio:2/1;display:block}
@@ -269,12 +270,14 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     <a href="#swarms"><small>12</small>Bigger swarms, other ways</a>
     <a href="#tried"><small>13</small>Everything we tried</a>
     <a href="#notebook"><small>14</small>Lab notebook: expected, got, why</a>
-    <a href="#big"><small>15</small>How big, how long</a>
-    <a href="#uses"><small>16</small>Where else it could work</a>
-    <a href="#limits"><small>17</small>What this does not show</a>
-    <a href="#run"><small>18</small>Try it, run it</a>
-    <a href="#quiz"><small>19</small>Test yourself</a>
-    <a href="#words"><small>20</small>Words to know</a>
+    <a href="#research"><small>15</small>Flying with no GPS</a>
+    <a href="#wild"><small>16</small>In the wild: topology and a dirty lens</a>
+    <a href="#big"><small>17</small>How big, how long</a>
+    <a href="#uses"><small>18</small>Where else it could work</a>
+    <a href="#limits"><small>19</small>What this does not show</a>
+    <a href="#run"><small>20</small>Try it, run it</a>
+    <a href="#quiz"><small>21</small>Test yourself</a>
+    <a href="#words"><small>22</small>Words to know</a>
   </nav>
 </aside>
 
@@ -296,12 +299,14 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <a href="#swarms"><small>12</small>Bigger swarms, other ways</a>
   <a href="#tried"><small>13</small>Everything we tried</a>
     <a href="#notebook"><small>14</small>Lab notebook: expected, got, why</a>
-  <a href="#big"><small>15</small>How big, how long</a>
-  <a href="#uses"><small>16</small>Where else it could work</a>
-  <a href="#limits"><small>17</small>What this does not show</a>
-  <a href="#run"><small>18</small>Try it, run it</a>
-  <a href="#quiz"><small>19</small>Test yourself</a>
-  <a href="#words"><small>20</small>Words to know</a>
+    <a href="#research"><small>15</small>Flying with no GPS</a>
+    <a href="#wild"><small>16</small>In the wild: topology and a dirty lens</a>
+  <a href="#big"><small>17</small>How big, how long</a>
+  <a href="#uses"><small>18</small>Where else it could work</a>
+  <a href="#limits"><small>19</small>What this does not show</a>
+  <a href="#run"><small>20</small>Try it, run it</a>
+  <a href="#quiz"><small>21</small>Test yourself</a>
+  <a href="#words"><small>22</small>Words to know</a>
 </details>
 <div class="mbar" role="status"><div class="num" id="mb-num">–</div><div class="what" id="mb-what">Nothing flown yet. First, the world.</div><div class="meter"><i id="mb-bar" style="width:0%"></i></div></div>
 
@@ -317,7 +322,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <div class="paths">
     <a href="#route"><small>5 minutes</small><b>Just the story</b><span>Read the short version above, then the "Where this leaves us" box at the end of each chapter.</span></a>
     <a href="#camera"><small>20 minutes</small><b>Play along</b><span>Each chapter has a widget with a small fly you can run. Guess first where a "Predict first" box asks you to, then check.</span></a>
-    <a href="#run"><small>Deeper</small><b>Reproduce the numbers</b><span>Every table comes from runs of one command-line tool. Chapter 18 shows how to repeat them.</span></a>
+    <a href="#run"><small>Deeper</small><b>Reproduce the numbers</b><span>Every table comes from runs of one command-line tool. Chapter 20 shows how to repeat them.</span></a>
   </div>
   <h3>What the colours on the maps mean</h3>
   <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
@@ -1063,7 +1068,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
       <tr><td>Climb when unsure</td><td>Rise to see beyond the hedges</td><td class="n">63% → 55%</td><td><span class="pill bad">worse</span></td></tr>
       <tr><td>Cast when lost</td><td>Sweep side to side like a moth that lost a scent</td><td class="n">50% → 29%</td><td><span class="pill bad">worse, off</span></td></tr>
       <tr><td>Edge boost</td><td>The face-guide trick</td><td class="n">no help in weather</td><td><span class="pill bad">off</span></td></tr>
-      <tr><td>Separate route memory for each stretch of route</td><td>Chapter 15's "region" idea: 4 or 8 cells of route per memory, chosen by where the fly thinks it is</td><td class="n">14 × 14: 94% → 61% (4 cells), 50% (8 cells); 18 × 18: 75% → 96% (6 cells)</td><td><span class="pill meh">mixed: hurt in one maze size, helped in another</span></td></tr>
+      <tr><td>Separate route memory for each stretch of route</td><td>Chapter 17's "region" idea: 4 or 8 cells of route per memory, chosen by where the fly thinks it is</td><td class="n">14 × 14: 94% → 61% (4 cells), 50% (8 cells); 18 × 18: 75% → 96% (6 cells)</td><td><span class="pill meh">mixed: hurt in one maze size, helped in another</span></td></tr>
       <tr><td>A face swarm whose flies have different abilities</td><td>Flies cycle: all senses / no edge cells / no colour</td><td class="n">+0.7 points over an ordinary swarm</td><td><span class="pill meh">no clear gain</span></td></tr>
       <tr><td>Learning flights only in a corridor around the route</td><td>Fewer views, a less crowded memory (6 cells either side)</td><td class="n">24 × 24: 46% → 38%</td><td><span class="pill bad">no gain</span></td></tr>
       <tr><td>Scouting when the map belief is unsure</td><td>Fly straight on after 10 unsure steps</td><td class="n">24 × 24: 46% → 46%; 18 × 18: 75% → 75%</td><td><span class="pill meh">never triggers</span></td></tr>
@@ -1222,12 +1227,22 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
       <dt>Rerun</dt><dd><code>… --landscape lake --lake-width 0.55 --wind-mem   and   … --wind-mem --train-alts 1,2.5 --banks --climb 2.5</code></dd>
     </dl>
   </details>
+  <details class="exp">
+    <summary><span class="num">14</span><span class="tt"><b>The fly in the wild: steep hills, blur, vibration, dirt, rain, shadows, autumn</b><small>Almost nothing hurt (92–100%). Rain after training did (75%). An aeroplane’s speed did most (see section 17).</small></span><span class="pill good">worked</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>The best fly so far (funnel, cone, tf-idf, sky compass, optic flow, wind memory), 10 × 10, hills 1.0 cell high (and 1.6), launched from A in wind 0.3, <b>trained in clear weather</b>. Hardware effects are present in training and test: motion blur (the sensors average the ground along the flight direction), vibration, dirt on the lens (blobs fixed on the sensors). Weather effects appear only at test time: rain (smudges, haze, noise, a little darker), cloud shadows (patches of ground a third darker, about three cells across), autumn (greens turn yellow-brown), and all of them. 24 flights per row.</dd>
+      <dt>We expected</dt><dd>That steeper relief and a degraded picture would cost real points, that autumn would hurt colour vision most, and that brightness-only vision would do better when the season changes.</dd>
+      <dt>We got</dt><dd><div class="tbl"><table><thead><tr><th>condition</th><th>goal reached</th></tr></thead><tbody><tr><td>hills 1.0, clear</td><td class="n">100%</td></tr><tr><td>hills 1.6 (steeper)</td><td class="n">100%</td></tr><tr><td>motion blur 0.4 view lengths</td><td class="n">100%</td></tr><tr><td>dirt on the lens, 20% of sensors (always there)</td><td class="n">100%</td></tr><tr><td>cloud shadows (new at test)</td><td class="n">96%</td></tr><tr><td>autumn (new at test)</td><td class="n">96%</td></tr><tr><td>autumn, brightness-only vision</td><td class="n">100%</td></tr><tr><td>rain (new at test)</td><td class="n"><b>75%</b></td></tr><tr><td>cloud + autumn + rain-like dirt together</td><td class="n">96%</td></tr><tr><td>…and blur + vibration + dirt in the hardware</td><td class="n">92%</td></tr><tr><td>…the same, with the contrast filter and smoothing</td><td class="n">100%</td></tr></tbody></table></div></dd>
+      <dt>Why, as far as we can tell</dt><dd>The fly is robust here for three reasons we think are real but did not test one by one. (1) It compares nine directions through the <i>same</i> camera, so anything that changes the whole picture alike (a darker patch, a shifted colour, a smaller scale) changes all nine alike and the best direction stays the best. (2) Each Kenyon cell fires only if its inputs are among the strongest, so the code depends on the <i>ranking</i> of the inputs, not their absolute values: a gain or offset change barely moves it. (3) Dirt that is always on the lens is part of every view, learned and recognised alike: it only hurts when it is new. That is why <i>rain</i> (new smudges, plus haze and noise, all at once, after training) is the one effect that cost points, and why the same blobs as hardware cost nothing. Brightness-only vision was not better under autumn (100% against 96%: inside the noise), so we have no evidence that colour is a liability. Smoothing and the contrast filter recovered the combined row (92% to 100%), also inside the noise.</dd>
+      <dt>Rerun</dt><dd><code>… --landscape hills --relief 1.0 --blur 0.4   --smudge 0.2   --weather rain|cloudy|autumn|wild   --setups memory</code></dd>
+    </dl>
+  </details>
   <div class="leaves"><span class="n">95%</span><b>Where this leaves us</b><div>What worked: a sky compass (a heading that does not drift), a wind estimate that is kept over water, training in a funnel, and rare-cell weighting. What did not: more memory, regional memories (in general), sequence matching, particle filters, climbing and casting. The honest caveat for all of it: small samples, one simulated world, a perfectly steady wind.</div></div>
 </section>
 <!--/NB-->
 
 <section class="ch" id="big" data-score="95" data-what="Measured to 18 × 18 with the two fixes; 12 × 12 is solid.">
-  <div class="kicker">Chapter 15</div>
+  <div class="kicker">Chapter 17</div>
   <h2>How big a maze, and how long would it take?</h2>
   <p class="question">Could this fly a real area, like 100 × 100 maze cells, or 1,000 × 1,000?</p>
   <p>Training time is dominated by the learning flights, because they cover the whole map, so it grows with the <i>area</i>. Learning the route itself grows only with its length. Move the sliders to plan a real flight: one maze cell is taken to be about the flying height, since the camera sees a patch of ground roughly 1.5 times as long as it is high.</p>
@@ -1273,7 +1288,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="uses" data-score="95" data-what="Ideas for where the same trick could work; none has been tried outside the simulation.">
-  <div class="kicker">Chapter 16</div>
+  <div class="kicker">Chapter 18</div>
   <h2>Where else the same trick could work</h2>
   <p class="question">Who would want a tiny brain that repeats a route it was shown once?</p>
   <p>"Visual teach and repeat" is a real technique in robotics: show a robot a route once, and it repeats it using a camera. What is unusual here is how <i>small</i> it is: one yes-or-no flag per memory cell, 2.5 KB per route, no map, no GPS, and a brain that could run on a camera board costing a few dollars. Some ideas, none tried outside the simulation:</p>
@@ -1298,7 +1313,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="limits" data-score="95" data-what="Everything here is a simulation. Here is what it leaves out.">
-  <div class="kicker">Chapter 17</div>
+  <div class="kicker">Chapter 19</div>
   <h2>What this does not show</h2>
   <p class="question">How far can the results be trusted?</p>
   <ul>
@@ -1314,7 +1329,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="run" data-score="95" data-what="Try it, or reproduce every number.">
-  <div class="kicker">Chapter 18</div>
+  <div class="kicker">Chapter 20</div>
   <h2>Try it, run it</h2>
   <p class="question">How do I fly it myself?</p>
   <p><a class="btn primary" style="display:inline-block;text-decoration:none" href="https://nomsams.github.io/flyfy/maze/">Open the Maze app</a> Build a maze (size, wobble, variety), teach the fly the route at chosen heights, tap anywhere on the map to drop it, and watch what it sees and how unfamiliar each direction looks. Change its height mid-flight, switch on the swarm layouts, the wrong-way memory or climbing, pick the weather and the contrast filter, and fly over a changed version of the maze.</p>
@@ -1340,7 +1355,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="quiz" data-score="95" data-what="Everything here is a simulation. Test what stuck.">
-  <div class="kicker">Chapter 19</div>
+  <div class="kicker">Chapter 21</div>
   <h2>Test yourself</h2>
   <p class="question">Did the story stick? Ten quick questions.</p>
   <div class="widget">
@@ -1351,7 +1366,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="words" data-score="95" data-what="Everything here is a simulation. Test what stuck.">
-  <div class="kicker">Chapter 20</div>
+  <div class="kicker">Chapter 22</div>
   <h2>Words to know</h2>
   <dl class="glossary">
     <dt>Familiarity navigation</dt><dd>Following a route by turning toward whichever direction looks most familiar, the way ants and bees are thought to do it.</dd>
@@ -2540,6 +2555,236 @@ $('tc-go').addEventListener('click', async () => {
   b.disabled = false; pr.style.width = ok ? '100%' : '0%'; st.textContent = ok ? 'Taught. Green: where it flew the route and filed what it saw. Teal: where it practised flying to the route. Every other map in this guide shows the same squares when "Show what it has learned" is on.' : 'The fly could not start (this browser blocked the background worker).';
 });
 tvListeners.push(drawTeachW); $('tc-route').addEventListener('change', drawTeachW); redraws.push(drawTeachW);
+
+// ---------------------------------------------------------------- chapters 15 and 16: the sky dome, field fingerprints, the scale ladder, the 3D terrain, the camera in the wild, the wind triangle
+const fit = (cv, aspect) => { const dpr = Math.min(2, devicePixelRatio || 1), w = Math.max(200, Math.round(cv.clientWidth || 400)), h = Math.round(w * aspect); if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); } const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); return { c, w, h }; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const ctl = (id, fmt) => { const el = $(id), o = $(id + '-o'); const upd = () => { if (o) o.textContent = fmt ? fmt(+el.value) : el.value; }; upd(); el.addEventListener('input', upd); return () => +el.value; };
+let nseed = 7; const nrand = () => { nseed = (Math.imul(nseed, 1664525) + 1013904223) >>> 0; return nseed / 4294967296; };
+const ngauss = () => { let u = 0; for (let i = 0; i < 6; i++) u += nrand(); return (u - 3) * 1.4142; };
+// smooth value noise (a fixed table), fBm
+const VN = (() => { let s = 20240611; const rr = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; const P = 64, g = Float32Array.from({ length: P * P }, rr);
+  const at = (i, j) => g[((j & (P - 1)) * P) + (i & (P - 1))], sm = (t) => t * t * (3 - 2 * t);
+  const n1 = (x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = sm(x - i), fy = sm(y - j); return (at(i, j) + (at(i + 1, j) - at(i, j)) * fx) * (1 - fy) + (at(i, j + 1) + (at(i + 1, j + 1) - at(i, j + 1)) * fx) * fy; };
+  return (x, y, oct = 3) => { let v = 0, a = 1, t = 0, f = 1; for (let o = 0; o < oct; o++) { v += a * n1(x * f + o * 17.3, y * f - o * 9.1); t += a; a *= 0.5; f *= 2; } return v / t; }; })();
+const SUN_COL = '#e8a21a';
+
+// ---------------------------------------------------------------- the sky dome: polarised light and a compass
+const SKY = { reads: [] };
+function drawSky() {
+  const sa = skySunAz() * DEG, se = skySunEl() * DEG, cloud = skyCloud() / 100, hd = skyHead() * DEG, { c, w, h } = fit($('sk-c'), 0.78), R = Math.min(w * 0.46, h * 0.46), cx = w / 2, cy = h / 2;
+  c.clearRect(0, 0, w, h); c.fillStyle = css('--bg'); c.fillRect(0, 0, w, h);
+  const g = c.createRadialGradient(cx, cy, 0, cx, cy, R); g.addColorStop(0, 'rgba(70,130,210,.55)'); g.addColorStop(1, 'rgba(150,190,235,.55)'); c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R, 0, 7); c.fill();
+  if (cloud > 0) { c.fillStyle = `rgba(210,215,220,${0.55 * cloud})`; c.beginPath(); c.arc(cx, cy, R, 0, 7); c.fill(); }
+  c.strokeStyle = css('--line'); c.lineWidth = 1; for (const e of [30, 60]) { c.beginPath(); c.arc(cx, cy, R * (1 - e / 90), 0, 7); c.stroke(); }
+  c.fillStyle = css('--muted'); c.font = '600 11px system-ui,sans-serif'; c.textAlign = 'center'; c.fillText('N', cx, cy - R - 6); c.fillText('S', cx, cy + R + 14); c.fillText('E', cx + R + 10, cy + 4); c.fillText('W', cx - R - 10, cy + 4);
+  const u = [Math.cos(se) * Math.sin(sa), Math.cos(se) * Math.cos(sa), Math.sin(se)]; // east, north, up
+  const pol = (az, el) => { // returns [x, y, dop, ex, ey] on the screen
+    const s = [Math.cos(el) * Math.sin(az), Math.cos(el) * Math.cos(az), Math.sin(el)], cg = clamp(s[0] * u[0] + s[1] * u[1] + s[2] * u[2], -1, 1);
+    const dop = 0.75 * (1 - cg * cg) / (1 + cg * cg) * (1 - 0.8 * cloud), e = [s[1] * u[2] - s[2] * u[1], s[2] * u[0] - s[0] * u[2], s[0] * u[1] - s[1] * u[0]], m = Math.hypot(...e) || 1;
+    const P = (v) => { const el2 = Math.asin(clamp(v[2] / Math.hypot(...v), -1, 1)), az2 = Math.atan2(v[0], v[1]), r = R * (1 - el2 / (Math.PI / 2)); return [cx + r * Math.sin(az2), cy - r * Math.cos(az2)]; };
+    const p0 = P(s), p1 = P([s[0] + 0.02 * e[0] / m, s[1] + 0.02 * e[1] / m, s[2] + 0.02 * e[2] / m]), d = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) || 1;
+    return [p0[0], p0[1], dop, (p1[0] - p0[0]) / d, (p1[1] - p0[1]) / d];
+  };
+  for (let el = 12; el <= 84; el += 12) for (let az = 0; az < 360; az += (el > 70 ? 60 : 20)) {
+    const [x, y, dop, ex, ey] = pol(az * DEG, el * DEG), L = 14 * dop + 1.5; c.strokeStyle = `rgba(255,255,255,${0.35 + 0.65 * Math.min(1, dop * 1.4)})`; c.lineWidth = 2; c.beginPath(); c.moveTo(x - ex * L, y - ey * L); c.lineTo(x + ex * L, y + ey * L); c.stroke();
+  }
+  const sr = R * (1 - se / (Math.PI / 2)); c.fillStyle = SUN_COL; c.beginPath(); c.arc(cx + sr * Math.sin(sa), cy - sr * Math.cos(sa), 9, 0, 7); c.fill(); // the sun
+  // the helicopter's nose
+  c.strokeStyle = css('--red'); c.lineWidth = 3; c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + (R + 4) * Math.sin(hd) * 0.98, cy - (R + 4) * Math.cos(hd) * 0.98); c.stroke(); c.fillStyle = css('--red'); c.beginPath(); c.arc(cx, cy, 4, 0, 7); c.fill();
+  // what the sensor at the zenith reports
+  const zen = pol(0, Math.PI / 2 - 1e-4), dopZ = zen[2], ang = (Math.atan2(zen[3], -zen[4]) / DEG + 360) % 180; // world e-vector angle (from north)
+  const chi = (((ang - skyHead() % 180) % 180) + 180) % 180, sig = 1.5 / Math.max(0.05, dopZ / 0.75);
+  const rd = SKY.reads; const est = rd.length ? rd.reduce((a, b) => a + b, 0) / rd.length : null;
+  $('sk-out').innerHTML = `Polarisation at the zenith: <b>${(dopZ * 100).toFixed(0)}%</b> polarised, at <b>${ang.toFixed(0)}°</b> from north. The fly's sensor measures it <b>${chi.toFixed(0)}°</b> from its nose. Noise of one reading: about <b>±${sig.toFixed(1)}°</b>.` + (rd.length ? `<br>${rd.length} readings of the heading, averaged: error <b>${(est).toFixed(1)}°</b>, spread <b>${Math.sqrt(rd.reduce((a, b) => a + (b - est) ** 2, 0) / rd.length).toFixed(1)}°</b>.` : '');
+}
+const skySunAz = ctl('sk-az', (v) => v + '°'), skySunEl = ctl('sk-el', (v) => v + '°'), skyCloud = ctl('sk-cl', (v) => v + '%'), skyHead = ctl('sk-hd', (v) => v + '°');
+['sk-az', 'sk-el', 'sk-cl', 'sk-hd'].forEach((id) => $(id).addEventListener('input', () => { SKY.reads = []; drawSky(); }));
+$('sk-read').addEventListener('click', () => { const sa = skySunAz() * DEG, se = skySunEl() * DEG, cloud = skyCloud() / 100, cg = Math.sin(se), dop = 0.75 * (1 - cg * cg) / (1 + cg * cg) * (1 - 0.8 * cloud), sig = 1.5 / Math.max(0.05, dop / 0.75); SKY.reads = []; for (let i = 0; i < 20; i++) SKY.reads.push(sig * ngauss()); drawSky(); });
+redraws.push(drawSky);
+
+// ---------------------------------------------------------------- where am I? field fingerprints
+const FLD = { x: 0.5, y: 0.5, noise: [], on: { mag1: true, mag2: true, mag3: true, radio: true, terr: false }, N: 56, post: null };
+const FIELD_FN = {
+  mag1: (x, y, k) => clamp(0.5 + 1.6 * k * (VN(x / 1.2 + 3, y / 1.2 + 9, 2) - 0.5), 0, 1),
+  mag2: (x, y, k) => clamp(0.5 + 1.6 * k * (VN(x / 2 + 40, y / 2 + 17, 2) - 0.5), 0, 1),
+  mag3: (x, y, k) => clamp(0.5 + 1.6 * k * (VN(x / 3.5 + 90, y / 3.5 + 31, 2) - 0.5), 0, 1),
+  radio: (x, y, k) => 0.5 + k * (Math.max(0, 1 - Math.hypot(x, y) / 12.2) - 0.5), // a transmitter at the north-west corner
+  terr: (x, y, k) => clamp(0.5 + k * (terrH(x, y, 1) - 0.5), 0, 1),
+};
+const FLD_NAME = { mag1: 'magnetic A (fine)', mag2: 'magnetic B (medium)', mag3: 'magnetic C (coarse)', radio: 'a radio transmitter at the corner', terr: 'ground height (a radar altimeter)' };
+function fldRun() {
+  const N = FLD.N, k = fldStr(), sg = fldNoise(), keys = Object.keys(FLD.on).filter((q) => FLD.on[q]);
+  while (FLD.noise.length < 5) FLD.noise.push(ngauss());
+  const reads = {}; keys.forEach((q, i) => { reads[q] = FIELD_FN[q](FLD.x * 10, FLD.y * 10, k) + sg * FLD.noise[i % 5]; });
+  const post = new Float64Array(N * N); let mx = 0;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { let L = 0; for (const q of keys) { const d = FIELD_FN[q]((i + 0.5) / N * 10, (j + 0.5) / N * 10, k) - reads[q]; L += d * d / (2 * sg * sg); } post[j * N + i] = Math.exp(-L); if (post[j * N + i] > mx) mx = post[j * N + i]; }
+  let tot = 0, ex = 0, ey = 0, area = 0; for (let n = 0; n < N * N; n++) { post[n] /= mx || 1; tot += post[n]; if (post[n] > 0.5) area++; }
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const p = post[j * N + i] / (tot || 1); ex += p * (((i + 0.5) / N * 10 - FLD.x * 10) ** 2 + ((j + 0.5) / N * 10 - FLD.y * 10) ** 2); }
+  FLD.post = post; FLD.keys = keys; FLD.stat = { err: Math.sqrt(ex), area: area / (N * N) * 100 };
+}
+function drawFields() {
+  fldRun(); const N = FLD.N, { c, w, h } = fit($('fd-c'), 1), pick = FLD.show || 'mag1', k = fldStr();
+  const hm = (v) => { const t = clamp(v, 0, 1); return [Math.round(40 + 190 * t), Math.round(60 + 140 * (1 - Math.abs(t - 0.5) * 2)), Math.round(210 - 170 * t)]; };
+  const img = c.createImageData(1, 1); c.clearRect(0, 0, w, h);
+  const cw = w / N, ch = h / N;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const v = FIELD_FN[pick]((i + 0.5) / N * 10, (j + 0.5) / N * 10, k), [r, g, b] = hm(v), p = FLD.post ? FLD.post[j * N + i] : 0; c.fillStyle = `rgb(${r},${g},${b})`; c.fillRect(i * cw, j * ch, cw + 0.5, ch + 0.5); if (p > 0.05) { c.fillStyle = `rgba(255,255,255,${0.15 + 0.7 * p})`; c.fillRect(i * cw, j * ch, cw + 0.5, ch + 0.5); } }
+  c.strokeStyle = css('--red'); c.lineWidth = 2.5; c.beginPath(); c.arc(FLD.x * w, FLD.y * h, 8, 0, 7); c.stroke(); c.beginPath(); c.moveTo(FLD.x * w - 12, FLD.y * h); c.lineTo(FLD.x * w + 12, FLD.y * h); c.moveTo(FLD.x * w, FLD.y * h - 12); c.lineTo(FLD.x * w, FLD.y * h + 12); c.stroke();
+  const st = FLD.stat; $('fd-out').innerHTML = FLD.keys.length ? `Colour: <b>${FLD_NAME[pick]}</b>. The white patches are every place the fly's readings are consistent with. Typical position error: <b>${st.err.toFixed(2)} maze cells</b>; the white patch covers <b>${st.area.toFixed(1)}%</b> of the map.` : 'Switch on at least one field.';
+}
+const fldNoise = (() => { const g = ctl('fd-nz', (v) => (v / 1000).toFixed(3)); return () => g() / 1000; })(), fldStr = (() => { const g = ctl('fd-st', (v) => (v / 100).toFixed(2) + '×'); return () => g() / 100; })();
+['fd-nz', 'fd-st'].forEach((id) => $(id).addEventListener('input', drawFields));
+['mag1', 'mag2', 'mag3', 'radio', 'terr'].forEach((q) => { const el = $('fd-' + q); el.checked = !!FLD.on[q]; el.addEventListener('change', () => { FLD.on[q] = el.checked; drawFields(); }); });
+segHook($('fd-show'), (v) => { FLD.show = v; drawFields(); });
+$('fd-c').addEventListener('pointerdown', (ev) => { const r = $('fd-c').getBoundingClientRect(); FLD.x = clamp((ev.clientX - r.left) / r.width, 0.02, 0.98); FLD.y = clamp((ev.clientY - r.top) / r.height, 0.02, 0.98); FLD.noise = []; drawFields(); });
+$('fd-new').addEventListener('click', () => { FLD.noise = []; drawFields(); });
+redraws.push(drawFields);
+
+// ---------------------------------------------------------------- the scale ladder
+const LADDER = [
+  { n: 'Pulsars (SEXTANT goal)', r: 1e11, e: 1e4, c: 0, note: 'goal of 10 km, anywhere in the solar system' },
+  { n: 'A sextant, 0.1° (our arithmetic)', r: 2e7, e: 1.1e4, c: 0, note: 'about 11 km, across the globe' },
+  { n: 'Star tracker (SR-71)', r: 2e7, e: 90, c: 1, note: 'about 90 m, half way round the world' },
+  { n: 'Magnetic anomaly map', r: 3e6, e: 74, c: 1, note: 'under 74 m in an hour of flight' },
+  { n: 'Gravity gradient', r: 3e6, e: 100, c: 1, note: 'better than 100 m' },
+  { n: 'Radio SLAM (cell towers)', r: 4.3e4, e: 7, c: 2, note: '7 m over a 43 km flight' },
+  { n: 'Scene matching (DSMAC)', r: 5e3, e: 10, c: 2, note: 'about 10 m near the target' },
+  { n: 'This lab\'s fly (simulated)', r: 1.2e3, e: 30, c: 3, note: 'about half a maze cell, over a maze of 24 cells (our estimate)' },
+];
+function drawLadder() {
+  const { c, w, h } = fit($('ld2-c'), 0.62), pl = 54, pr = 14, pt = 14, pb = 40, X = (r) => pl + (Math.log10(r) - 3) / 8.2 * (w - pl - pr), Y = (e) => pt + (1 - (Math.log10(e) - 0.5) / 4) * (h - pt - pb);
+  c.clearRect(0, 0, w, h); c.font = '11px system-ui,sans-serif'; c.fillStyle = css('--muted'); c.strokeStyle = css('--line'); c.lineWidth = 1;
+  for (let p = 3; p <= 11; p++) { c.beginPath(); c.moveTo(X(10 ** p), pt); c.lineTo(X(10 ** p), h - pb); c.stroke(); c.textAlign = 'center'; c.fillText(p <= 3 ? '1 km' : p === 6 ? '1,000 km' : '10^' + p + ' m', X(10 ** p), h - pb + 14); }
+  for (let p = 1; p <= 4; p++) { c.beginPath(); c.moveTo(pl, Y(10 ** p)); c.lineTo(w - pr, Y(10 ** p)); c.stroke(); c.textAlign = 'right'; c.fillText(10 ** p >= 1000 ? (10 ** p / 1000) + ' km' : 10 ** p + ' m', pl - 6, Y(10 ** p) + 4); }
+  c.textAlign = 'center'; c.fillText('how far it works (range)  →', (pl + w - pr) / 2, h - 6); c.save(); c.translate(12, (pt + h - pb) / 2); c.rotate(-Math.PI / 2); c.fillText('how fine a position it gives (smaller is better) →', 0, 0); c.restore();
+  const col = [css('--muted'), css('--teal'), css('--red'), SUN_COL];
+  c.strokeStyle = css('--muted'); c.setLineDash([4, 4]); c.beginPath(); LADDER.forEach((p, i) => (i ? c.lineTo(X(p.r), Y(p.e)) : c.moveTo(X(p.r), Y(p.e)))); c.stroke(); c.setLineDash([]);
+  LADDER.forEach((p, i) => { c.fillStyle = col[p.c]; c.beginPath(); c.arc(X(p.r), Y(p.e), 6, 0, 7); c.fill(); c.fillStyle = css('--ink'); c.textAlign = X(p.r) > w * 0.6 ? 'right' : 'left'; c.fillText(p.n, X(p.r) + (X(p.r) > w * 0.6 ? -10 : 10), Y(p.e) - 8 + (i % 2) * 15); });
+  $('ld2-out').textContent = 'No point is both far-reaching and fine. The ladder runs from the top left (global, coarse) to the bottom right (local, fine): each rung must be good enough to hand over to the next.';
+}
+redraws.push(drawLadder);
+
+// ---------------------------------------------------------------- the 3D terrain
+const T3 = { yaw: -0.7, pitch: 0.95, zoom: 1, drag: null, N: 56, H: null, water: null, cache: null };
+const terrH = (x, y, relief) => clamp((VN(x / 3 + 11, y / 3 + 5, 3) - 0.36) * 1.7, 0, 1) * (relief === 1 ? 1 : relief);
+const isWater = (x, y) => T3.lake && x > 3.5 + 0.7 * (VN(y / 1.4, 3, 2) - 0.5) && x < 6.5 + 0.5 * (VN(y / 1.4, 3, 2) - 0.5);
+const routeAt = (t) => { const x = 0.5 + 9 * t; return [x, 5 + 2.1 * Math.sin(x * 0.85 + 0.6) + 0.8 * Math.sin(x * 2.1)]; };
+const t3relief = ctl('t3-rel', (v) => (v / 100).toFixed(2) + ' cells'), t3pos = ctl('t3-pos', (v) => v + '%'), t3sun = ctl('t3-sun', (v) => v + '°');
+function t3Height(x, y) { return isWater(x, y) ? 0 : terrH(x, y, t3relief() / 100); }
+function t3Colour(x, y) {
+  const rl = t3relief() / 100;
+  if (isWater(x, y)) return [0.1, 0.24, 0.36];
+  const e = rl > 0 ? clamp(t3Height(x, y) / rl, 0, 1) : 0, hx = (t3Height(x + 0.12, y) - t3Height(x - 0.12, y)) / 0.24, hy = (t3Height(x, y + 0.12) - t3Height(x, y - 0.12)) / 0.24, sa = t3sun() * DEG;
+  const nl = Math.hypot(hx, hy, 1), lam = clamp((-hx * Math.sin(sa) - hy * Math.cos(sa) + 0.8) / nl, 0, 1.4), shade = 0.45 + 0.75 * lam;
+  const f = VN(x * 2.2, y * 2.2, 2), g = [0.30 + 0.25 * f, 0.50 - 0.05 * f, 0.22], rock = [0.46, 0.42, 0.4], kr = 0.65 * e, ks = clamp((e - 0.85) / 0.15, 0, 1);
+  const out = [0, 1, 2].map((i) => { let v = g[i] * (1 - kr) + rock[i] * kr; v = v * (1 - ks) + [0.93, 0.95, 0.97][i] * ks; return clamp(v * shade, 0, 1); });
+  return out;
+}
+function t3Mode() { const b = $('t3-mode').querySelector('[aria-pressed=true]'); return b ? b.dataset.v : 'hold'; }
+function drawT3() {
+  const { c, w, h } = fit($('t3-c'), 0.78), N = T3.N, rl = t3relief() / 100, ZS = 2.6, D = 17 / T3.zoom, f = w * 1.25;
+  const cph = Math.cos(T3.yaw), sph = Math.sin(T3.yaw), ct = Math.cos(T3.pitch), st = Math.sin(T3.pitch);
+  const proj = (X, Y, Z) => { const x0 = X - 5, y0 = Y - 5, x1 = x0 * cph - y0 * sph, y1 = x0 * sph + y0 * cph, dep = y1 * ct - (Z * ZS) * st + D; return [w / 2 + (f * x1) / dep, h * 0.56 - (f * ((Z * ZS) * ct + y1 * st)) / dep, dep]; };
+  c.clearRect(0, 0, w, h); const sky = c.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, 'rgba(120,170,225,.35)'); sky.addColorStop(1, 'rgba(120,170,225,0)'); c.fillStyle = sky; c.fillRect(0, 0, w, h);
+  const hs = new Float32Array((N + 1) * (N + 1)); for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) hs[j * (N + 1) + i] = t3Height(i / N * 10, j / N * 10);
+  const P = new Array((N + 1) * (N + 1)); for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) P[j * (N + 1) + i] = proj(i / N * 10, j / N * 10, hs[j * (N + 1) + i]);
+  const quads = []; for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = P[j * (N + 1) + i], b = P[j * (N + 1) + i + 1], d = P[(j + 1) * (N + 1) + i], e2 = P[(j + 1) * (N + 1) + i + 1]; quads.push([(a[2] + b[2] + d[2] + e2[2]) / 4, i, j, a, b, e2, d]); }
+  quads.sort((p, q) => q[0] - p[0]);
+  for (const [, i, j, a, b, e2, d] of quads) { const col = t3Colour((i + 0.5) / N * 10, (j + 0.5) / N * 10); c.fillStyle = `rgb(${Math.round(col[0] * 255)},${Math.round(col[1] * 255)},${Math.round(col[2] * 255)})`; c.strokeStyle = c.fillStyle; c.lineWidth = 0.6; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.lineTo(e2[0], e2[1]); c.lineTo(d[0], d[1]); c.closePath(); c.fill(); c.stroke(); }
+  // the route draped over the ground, and the helicopter
+  const gz = (x, y) => t3Height(x, y) + 0.02; c.strokeStyle = '#fff'; c.lineWidth = 2; c.setLineDash([5, 4]); c.beginPath(); for (let k = 0; k <= 60; k++) { const [x, y] = routeAt(k / 60), p = proj(x, y, gz(x, y)); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); } c.stroke(); c.setLineDash([]);
+  const t = t3pos() / 100, [hx, hy] = routeAt(t), [nx, ny] = routeAt(Math.min(1, t + 0.01)), th = Math.atan2(ny - hy, nx - hx), g0 = t3Height(hx, hy), alt = 1, zabs = alt + rl, hold = t3Mode() === 'hold', zHeli = hold ? zabs : g0 + alt, agl = zHeli - g0, len = 1.6 * agl, wid = len * 20 / 14;
+  const corner = (a, b) => { const x = hx + Math.cos(th) * a - Math.sin(th) * b, y = hy + Math.sin(th) * a + Math.cos(th) * b; return proj(x, y, t3Height(x, y)); };
+  const fp = [corner(len / 2, -wid / 2), corner(len / 2, wid / 2), corner(-len / 2, wid / 2), corner(-len / 2, -wid / 2)], hp = proj(hx, hy, zHeli);
+  c.fillStyle = 'rgba(232,162,26,.16)'; c.strokeStyle = 'rgba(232,162,26,.8)'; c.lineWidth = 1; for (const q of fp) { c.beginPath(); c.moveTo(hp[0], hp[1]); c.lineTo(q[0], q[1]); c.stroke(); }
+  c.fillStyle = 'rgba(232,162,26,.28)'; c.strokeStyle = SUN_COL; c.lineWidth = 2; c.beginPath(); fp.forEach((q, i) => (i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]))); c.closePath(); c.fill(); c.stroke();
+  const gp = proj(hx, hy, g0); c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(gp[0], gp[1]); c.lineTo(hp[0], hp[1]); c.stroke();
+  c.fillStyle = css('--red'); c.beginPath(); c.arc(hp[0], hp[1], 6, 0, 7); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke();
+  $('t3-out').innerHTML = `Height above the ground here: <b>${agl.toFixed(2)} cells</b>. The camera sees <b>${(agl / alt).toFixed(2)}×</b> as much ground as when it learned the route on flat ground at 1 cell` + (hold ? ' (it holds its height above sea level, so the view shrinks over hills and grows in valleys).' : ' (terrain-following: the view stays the same size, only the shading and colour change).');
+  // the camera's own picture: 20 x 14 sensors on the ground
+  const V = new Float32Array(840), kk = 0; for (let r = 0; r < 14; r++) for (let q = 0; q < 20; q++) { const a = -0.5 * (-1 + (2 * (r + 0.5)) / 14) * len, b = 0.5 * (-1 + (2 * (q + 0.5)) / 20) * wid, x = hx + Math.cos(th) * a - Math.sin(th) * b, y = hy + Math.sin(th) * a + Math.cos(th) * b, col = (x < 0 || y < 0 || x > 10 || y > 10) ? [0.3, 0.3, 0.3] : t3Colour(x, y), i = (r * 20 + q) * 3; V[i] = col[0]; V[i + 1] = col[1]; V[i + 2] = col[2]; }
+  paintSensors($('t3-cam'), V);
+  // the same terrain from above, with contour lines
+  const m = fit($('t3-top'), 1), M = m.w, c2 = m.c, n2 = 64; for (let j = 0; j < n2; j++) for (let i = 0; i < n2; i++) { const col = t3Colour((i + 0.5) / n2 * 10, (j + 0.5) / n2 * 10); c2.fillStyle = `rgb(${Math.round(col[0] * 255)},${Math.round(col[1] * 255)},${Math.round(col[2] * 255)})`; c2.fillRect(i * M / n2, j * M / n2, M / n2 + 0.6, M / n2 + 0.6); }
+  if (rl > 0.05) { c2.strokeStyle = 'rgba(0,0,0,.35)'; c2.lineWidth = 0.8; const lev = rl / 6; for (let j = 0; j < n2; j++) for (let i = 0; i < n2; i++) { const a = Math.floor(t3Height(i / n2 * 10, j / n2 * 10) / lev), b = Math.floor(t3Height((i + 1) / n2 * 10, j / n2 * 10) / lev), d = Math.floor(t3Height(i / n2 * 10, (j + 1) / n2 * 10) / lev); if (a !== b) { c2.beginPath(); c2.moveTo((i + 1) * M / n2, j * M / n2); c2.lineTo((i + 1) * M / n2, (j + 1) * M / n2); c2.stroke(); } if (a !== d) { c2.beginPath(); c2.moveTo(i * M / n2, (j + 1) * M / n2); c2.lineTo((i + 1) * M / n2, (j + 1) * M / n2); c2.stroke(); } } }
+  c2.strokeStyle = '#fff'; c2.lineWidth = 2; c2.setLineDash([5, 4]); c2.beginPath(); for (let k = 0; k <= 60; k++) { const [x, y] = routeAt(k / 60); k ? c2.lineTo(x / 10 * M, y / 10 * M) : c2.moveTo(x / 10 * M, y / 10 * M); } c2.stroke(); c2.setLineDash([]);
+  c2.strokeStyle = SUN_COL; c2.lineWidth = 2; c2.beginPath(); [[len / 2, -wid / 2], [len / 2, wid / 2], [-len / 2, wid / 2], [-len / 2, -wid / 2]].forEach(([a, b], i) => { const x = hx + Math.cos(th) * a - Math.sin(th) * b, y = hy + Math.sin(th) * a + Math.cos(th) * b; i ? c2.lineTo(x / 10 * M, y / 10 * M) : c2.moveTo(x / 10 * M, y / 10 * M); }); c2.closePath(); c2.stroke(); c2.fillStyle = css('--red'); c2.beginPath(); c2.arc(hx / 10 * M, hy / 10 * M, 5, 0, 7); c2.fill();
+}
+['t3-rel', 't3-pos', 't3-sun'].forEach((id) => $(id).addEventListener('input', drawT3)); $('t3-lake').addEventListener('change', () => { T3.lake = $('t3-lake').checked; drawT3(); }); segHook($('t3-mode'), drawT3);
+{ const cv = $('t3-c'); cv.style.touchAction = 'none';
+  cv.addEventListener('pointerdown', (e) => { T3.drag = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', (e) => { if (!T3.drag) return; T3.yaw += (e.clientX - T3.drag[0]) * 0.008; T3.pitch = clamp(T3.pitch + (e.clientY - T3.drag[1]) * 0.006, 0.25, 1.45); T3.drag = [e.clientX, e.clientY]; drawT3(); });
+  cv.addEventListener('pointerup', () => { T3.drag = null; }); cv.addEventListener('wheel', (e) => { e.preventDefault(); T3.zoom = clamp(T3.zoom * (e.deltaY < 0 ? 1.1 : 0.91), 0.6, 2.2); drawT3(); }, { passive: false }); }
+redraws.push(drawT3);
+
+// ---------------------------------------------------------------- the camera in the wild
+const WL = { x: 0, y: 0, th: 0, ready: false, smudge: null };
+function wlSmudge(frac) { let s = 321; const rg = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; const m = new Float32Array(280), n = Math.max(0, Math.round(frac * 280 / 5)); for (let b = 0; b < n; b++) { const r0 = rg() * 14, c0 = rg() * 20, st = 0.4 + 0.5 * rg(); for (let r = 0; r < 14; r++) for (let q = 0; q < 20; q++) m[r * 20 + q] = Math.min(1, m[r * 20 + q] + st * Math.exp(-((r - r0) ** 2 + (q - c0) ** 2) / 2.2)); } return m; }
+const wlBlur = ctl('wl-blur', (v) => (v / 100).toFixed(2)), wlJit = ctl('wl-jit', (v) => (v / 1000).toFixed(3)), wlSm = ctl('wl-sm', (v) => v + '%'), wlSh = ctl('wl-sh', (v) => v + '%'), wlAu = ctl('wl-au', (v) => v + '%');
+function wildView(x, y, th, o) {
+  const len = CELL * 1.6;
+  let base;
+  if (!o.clean && o.blur > 0) { const K = 5, acc = new Float32Array(840); for (let k = 0; k < K; k++) { const off = (k / (K - 1) - 0.5) * o.blur * len, v = seeCamera('A', x + Math.cos(th) * off + o.jx * len, y + Math.sin(th) * off + o.jy * len, th + o.jth, 1, {}); for (let i = 0; i < 840; i++) acc[i] += v[i] / K; } base = acc; } else base = seeCamera('A', x + (o.clean ? 0 : o.jx * len), y + (o.clean ? 0 : o.jy * len), th + (o.clean ? 0 : o.jth), 1, {});
+  if (o.clean) return base; const v = Float32Array.from(base), wid = len * 20 / 14, S = CELL * 3;
+  for (let r = 0; r < 14; r++) for (let q = 0; q < 20; q++) {
+    const i = (r * 20 + q) * 3, a = -0.5 * (-1 + (2 * (r + 0.5)) / 14) * len, b = 0.5 * (-1 + (2 * (q + 0.5)) / 20) * wid, gx = x + Math.cos(th) * a - Math.sin(th) * b, gy = y + Math.sin(th) * a + Math.cos(th) * b;
+    let R = v[i], G = v[i + 1], B = v[i + 2];
+    if (o.au) { const d = Math.max(0, G - R); R += 0.5 * o.au * d; G -= 0.25 * o.au * d; B *= 1 - 0.3 * o.au; }
+    if (o.sh) { const vv = 0.5 + 0.25 * (Math.sin(gx / S + 1.3) * Math.cos(gy / (0.8 * S) + 2.1) + Math.sin((gx + gy) / (1.7 * S) + 0.4)), k = 1 - o.sh * clamp((vv - 0.55) / 0.25, 0, 1); R *= k; G *= k; B *= k; }
+    const m = o.sm ? o.sm[r * 20 + q] : 0; if (m) { R = R * (1 - m) + 0.35 * m; G = G * (1 - m) + 0.35 * m; B = B * (1 - m) + 0.35 * m; }
+    v[i] = R; v[i + 1] = G; v[i + 2] = B;
+  }
+  return v;
+}
+function drawWild() {
+  if (!ME) return; drawBase($('wl-map'), 'A', true); const s2 = setup($('wl-map')), k2 = s2.k, cc = s2.c; cc.fillStyle = css('--red'); cc.beginPath(); cc.arc(WL.x * k2, WL.y * k2, 6, 0, 7); cc.fill();
+  nseed = 99; const jit = wlJit() / 1000, o = { blur: wlBlur() / 100, jx: jit * ngauss(), jy: jit * ngauss(), jth: 0.5 * jit * ngauss(), sm: wlSm() ? wlSmudge(wlSm() / 100) : null, sh: wlSh() / 100, au: wlAu() / 100, clean: false };
+  const clean = wildView(WL.x, WL.y, WL.th, { clean: true }), wild = wildView(WL.x, WL.y, WL.th, o); paintSensors($('wl-a'), clean); paintSensors($('wl-b'), wild);
+  const lum = (v) => { const a = new Float32Array(280); for (let i = 0; i < 280; i++) a[i] = 0.299 * v[i * 3] + 0.587 * v[i * 3 + 1] + 0.114 * v[i * 3 + 2]; return a; };
+  let A = lum(clean), B = lum(wild); const norm = $('wl-norm').checked, smooth = $('wl-smooth').checked;
+  const sm = (a) => { const o2 = new Float32Array(280); for (let r = 0; r < 14; r++) for (let q = 0; q < 20; q++) { let s = 0, n = 0; for (let dr = -1; dr <= 1; dr++) for (let dq = -1; dq <= 1; dq++) { const rr = r + dr, qq = q + dq; if (rr >= 0 && rr < 14 && qq >= 0 && qq < 20) { s += a[rr * 20 + qq]; n++; } } o2[r * 20 + q] = s / n; } return o2; };
+  if (smooth) { A = sm(A); B = sm(B); }
+  const stats = (a) => { let m = 0; for (const v of a) m += v / 280; let s = 0; for (const v of a) s += (v - m) ** 2 / 280; return [m, Math.sqrt(s) + 1e-6]; };
+  const [ma, sa] = stats(A), [mb, sb] = stats(B); if (norm) { A = A.map((v) => (v - ma) / sa); B = B.map((v) => (v - mb) / sb); }
+  let d2 = 0; for (let i = 0; i < 280; i++) d2 += (A[i] - B[i]) ** 2 / 280; const dd = Math.sqrt(d2) / (norm ? 1 : sa);
+  const fam = clamp(1 - dd / 1.2, 0, 1); const bar = $('wl-bar'); bar.style.width = (fam * 100).toFixed(0) + '%'; bar.style.background = fam > 0.6 ? css('--teal') : fam > 0.3 ? SUN_COL : css('--red');
+  $('wl-out').innerHTML = `How different is the view from the one the fly learned? <b>${dd.toFixed(2)}</b> (in units of the picture's own contrast; below 0.5 it still looks familiar). <b>${fam > 0.6 ? 'Still familiar.' : fam > 0.3 ? 'Doubtful.' : 'Looks like somewhere else.'}</b>`;
+}
+['wl-blur', 'wl-jit', 'wl-sm', 'wl-sh', 'wl-au'].forEach((id) => $(id).addEventListener('input', drawWild)); ['wl-norm', 'wl-smooth'].forEach((id) => $('' + id).addEventListener('change', drawWild));
+const wlPreset = { clear: [0, 0, 0, 0, 0], plane: [45, 15, 0, 0, 0], rain: [0, 0, 25, 0, 0], cloudy: [0, 0, 0, 35, 0], autumn: [0, 0, 0, 0, 80], wild: [15, 30, 10, 30, 60] };
+segHook($('wl-pre'), (v) => { ['wl-blur', 'wl-jit', 'wl-sm', 'wl-sh', 'wl-au'].forEach((id, i) => { $(id).value = wlPreset[v][i]; $(id).dispatchEvent(new Event('input')); }); });
+$('wl-map').addEventListener('pointerdown', (ev) => { const [x, y] = pt(ev, $('wl-map')); let bi = 0, bd = 1e18; ROUTE.forEach((p, i) => { const d = (p[0] - x) ** 2 + (p[1] - y) ** 2; if (d < bd) { bd = d; bi = i; } }); WL.x = ROUTE[bi][0]; WL.y = ROUTE[bi][1]; WL.th = ME.tangent(bi); drawWild(); });
+redraws.push(() => { if (ME && !WL.ready) { WL.ready = true; const i = Math.floor(ROUTE.length * 0.35); WL.x = ROUTE[i][0]; WL.y = ROUTE[i][1]; WL.th = ME.tangent(i); } drawWild(); });
+
+// ---------------------------------------------------------------- the wind triangle over a lake
+const WT = { run: null };
+const wtWind = ctl('wt-w', (v) => (v / 100).toFixed(2) + ' × speed'), wtDir = ctl('wt-d', (v) => v + '°'), wtGust = ctl('wt-g', (v) => (v / 100).toFixed(2));
+function wtSim(withMemory) {
+  nseed = 4711; const cells = 10, lakeA = 3.5, lakeB = 6.5, sp = 0.05, w0 = wtWind() / 100, dir = wtDir() * DEG, gust = wtGust() / 100; let x = 0.6, y = 5, wx = w0 * Math.cos(dir), wy = w0 * Math.sin(dir), est = null, path = [[x, y]];
+  const gx = 9.4, gy = 5;
+  for (let s = 0; s < 800; s++) {
+    wx += -0.01 * (wx - w0 * Math.cos(dir)) + 0.1 * gust * ngauss(); wy += -0.01 * (wy - w0 * Math.sin(dir)) + 0.1 * gust * ngauss();
+    const over = x > lakeA && x < lakeB; if (!over) est = est ? { x: est.x + 0.05 * (wx - est.x), y: est.y + 0.05 * (wy - est.y) } : { x: wx, y: wy };
+    const want = Math.atan2(gy - 5, gx - 0.6); let hd = want; // (it holds the direction of the route: over water it cannot see where the goal is)
+    if (withMemory && est) { const wl = -Math.sin(want) * est.x + Math.cos(want) * est.y; hd = want - Math.asin(clamp(wl, -0.95, 0.95)); }
+    x += sp * Math.cos(hd) + wx * sp; y += sp * Math.sin(hd) + wy * sp; path.push([x, y]);
+    if (x >= gx || y < -2 || y > 12) break;
+  }
+  return { path, miss: Math.abs(path[path.length - 1][1] - gy) };
+}
+function drawWt(upto) {
+  const { c, w, h } = fit($('wt-c'), 0.5), X = (v) => v / 10 * w, Y = (v) => (v - 2) / 6 * h; c.clearRect(0, 0, w, h);
+  c.fillStyle = 'rgba(80,140,70,.35)'; c.fillRect(0, 0, X(3.5), h); c.fillRect(X(6.5), 0, w - X(6.5), h); c.fillStyle = 'rgba(40,100,160,.45)'; c.fillRect(X(3.5), 0, X(3) , h);
+  c.fillStyle = css('--muted'); c.font = '11px system-ui,sans-serif'; c.textAlign = 'center'; c.fillText('shore (the fly can see the ground: it learns the wind here)', X(1.75), 14); c.fillText('lake: nothing to recognise', X(5), 14); c.fillText('far shore', X(8.2), 14);
+  c.fillStyle = css('--red'); c.beginPath(); c.arc(X(9.4), Y(5), 6, 0, 7); c.fill(); c.fillText('goal', X(9.4), Y(5) - 10); c.fillStyle = css('--ink'); c.beginPath(); c.arc(X(0.6), Y(5), 5, 0, 7); c.fill();
+  const runs = [[wtSim(false), css('--muted'), 'no wind sense'], [wtSim(true), css('--teal'), 'wind memory + crab angle']];
+  runs.forEach(([r, col], i) => { c.strokeStyle = col; c.lineWidth = 3; c.beginPath(); const n = Math.min(r.path.length, upto == null ? 1e9 : upto); for (let k = 0; k < n; k++) { const [x, y] = r.path[k]; k ? c.lineTo(X(x), Y(y)) : c.moveTo(X(x), Y(y)); } c.stroke(); });
+  const wd = wtDir() * DEG, wv = wtWind() / 100; c.strokeStyle = SUN_COL; c.lineWidth = 3; c.beginPath(); c.moveTo(w - 70, h - 40); c.lineTo(w - 70 + 50 * wv / 0.6 * Math.cos(wd) + 1, h - 40 + 50 * wv / 0.6 * Math.sin(wd) + 1); c.stroke(); c.fillStyle = SUN_COL; c.fillText('wind', w - 70, h - 14);
+  if (upto == null) $('wt-out').innerHTML = `Missed the goal by: <b style="color:${css('--muted')}">${runs[0][0].miss.toFixed(1)} cells</b> with no wind sense; <b style="color:${css('--teal')}">${runs[1][0].miss.toFixed(1)} cells</b> with the wind memory and crab angle.`;
+}
+['wt-w', 'wt-d', 'wt-g'].forEach((id) => $(id).addEventListener('input', () => drawWt(null)));
+$('wt-go').addEventListener('click', () => { let k = 0; clearInterval(WT.run); WT.run = setInterval(() => { k += 8; drawWt(k); if (k > 900) { clearInterval(WT.run); drawWt(null); } }, 16); });
+redraws.push(() => drawWt(null));
 
 // 14. quiz
 const QUIZ = [

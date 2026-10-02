@@ -22,6 +22,11 @@ export const WEATHER = {
   noisy: { noise: 0.08 },
   deepnight: { light: 0.1, tint: [0.8, 0.9, 1.2], noise: 0.05 },
   foggynight: { fog: 0.4, light: 0.25, tint: [0.8, 0.9, 1.2], noise: 0.05 },
+  // the wild: cloud shadows sweeping the ground (patches of ground a third darker), autumn (greens turn yellow and brown), rain on the lens (dull smudges over part of the sensors, a little haze), and all three
+  cloudy: { shadow: 0.35 },
+  autumn: { season: 0.8 },
+  rain: { smudge: 0.25, fog: 0.15, noise: 0.03, light: 0.9 },
+  wild: { shadow: 0.3, season: 0.6, smudge: 0.15, fog: 0.1 },
 };
 
 export class RouteFlight {
@@ -45,6 +50,7 @@ export class RouteFlight {
       const p = a.p.map((src) => { const d = new Float32Array(w * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = 2 * y * a.w + 2 * x; d[y * w + x] = (src[i] + src[i + 1] + src[i + a.w] + src[i + a.w + 1]) / 4; } return d; });
       this.levels.push({ w, h, p });
     }
+    this.hwSmudge = e.smudge ? this._smudgeMask(e.smudge, 777) : null; // dirt on the lens that is always there (hardware)
     this.hint = 0; // where on the route the last lookup ended (speeds up the next one)
     this.setWeather('clear');
     this._seed = 12345;
@@ -52,8 +58,21 @@ export class RouteFlight {
   // name of a WEATHER preset, or { fog, light, tint, noise }
   setWeather(w) {
     const p = typeof w === 'string' ? WEATHER[w] || {} : w || {};
-    this.weather = { fog: p.fog || 0, light: p.light ?? 1, tint: p.tint || [1, 1, 1], noise: p.noise || 0, fogCol: [0.78, 0.8, 0.82] };
+    const rg = (() => { let s = 99; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; })();
+    this.weather = { fog: p.fog || 0, light: p.light ?? 1, tint: p.tint || [1, 1, 1], noise: p.noise || 0, fogCol: [0.78, 0.8, 0.82], shadow: p.shadow || 0, season: p.season || 0, smudge: p.smudge ? this._smudgeMask(p.smudge, 4242) : null, ph: [rg() * 6.3, rg() * 6.3, rg() * 6.3] };
   }
+  // blobs of dirt or rain on the lens, fixed in sensor space: a mask 0..1 over the sensors (frac = about the share of sensors affected)
+  _smudgeMask(frac, seed) {
+    let s = seed; const rg = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
+    const m = new Float32Array(this.R * this.C), n = Math.max(1, Math.round((frac * this.R * this.C) / 5));
+    for (let b = 0; b < n; b++) {
+      const r0 = rg() * this.R, c0 = rg() * this.C, st = 0.4 + 0.5 * rg();
+      for (let r = 0; r < this.R; r++) for (let c = 0; c < this.C; c++) { const d2 = (r - r0) ** 2 + (c - c0) ** 2; m[r * this.C + c] = Math.min(1, m[r * this.C + c] + st * Math.exp(-d2 / 2.2)); }
+    }
+    return m;
+  }
+  // cloud shadows: how much of the ground at (x, y) is in the shade (0..1), from slowly varying patterns about three maze cells across
+  _cloud(x, y) { const S = this.w.cell * 3, [a, b, c] = this.weather.ph, v = 0.5 + 0.25 * (Math.sin(x / S + a) * Math.cos(y / (0.8 * S) + b) + Math.sin((x + y) / (1.7 * S) + c)); return Math.max(0, Math.min(1, (v - 0.55) / 0.25)); }
   _gauss() { // camera noise
     let u = 0;
     for (let i = 0; i < 4; i++) { this._seed = (Math.imul(this._seed, 1664525) + 1013904223) >>> 0; u += this._seed / 4294967296; }
@@ -79,6 +98,8 @@ export class RouteFlight {
     // over hills at constant height above sea level the ground rises toward the helicopter: its height above the ground here is (alt + amp - ground height), so the view shrinks
     const sc = rel && this.w.holdAlt ? (p.alt + rel.amp - reliefAt(rel, p.x, p.y)) / p.alt : 1;
     const len = this.viewLen * p.alt * sc, wid = len * (C / R);
+    // vibration: the camera shakes a little from frame to frame (e.jitter: shift in view lengths, turn in radians about half that)
+    if (e.jitter) p = { ...p, x: p.x + e.jitter * len * this._gauss(), y: p.y + e.jitter * len * this._gauss(), th: p.th + 0.5 * e.jitter * this._gauss() };
     const fx = Math.cos(p.th), fy = Math.sin(p.th), rx = -fy, ry = fx; // forward and right on the map
     // optional centre of gaze (a swarm member's own viewpoint): p.gx ahead, p.gy to the right, in view lengths
     const cx = p.x + ((p.gx || 0) * fx + (p.gy || 0) * rx) * len, cy = p.y + ((p.gx || 0) * fy + (p.gy || 0) * ry) * len;
@@ -94,7 +115,15 @@ export class RouteFlight {
         f = x1 * t; s = y2 * t;
       }
       const gxp = cx + fx * f + rx * s, gyp = cy + fy * f + ry * s;
-      this._sample(gxp, gyp, spread, col);
+      if (e.blur) { // motion blur: the ground moves while the shutter is open, so every sensor averages the ground along the flight direction (e.blur: smear length in view lengths)
+        const K = 5, tmp = [0, 0, 0]; col[0] = col[1] = col[2] = 0;
+        for (let k = 0; k < K; k++) { const off = (k / (K - 1) - 0.5) * e.blur * len; this._sample(gxp + fx * off, gyp + fy * off, spread, tmp); col[0] += tmp[0] / K; col[1] += tmp[1] / K; col[2] += tmp[2] / K; }
+      } else this._sample(gxp, gyp, spread, col);
+      { const wx = this.weather; // the wild: autumn colours, cloud shadows, smudges on the lens
+        if (wx.season) { const d = Math.max(0, col[1] - col[0]); col[0] += 0.5 * wx.season * d; col[1] -= 0.25 * wx.season * d; col[2] *= 1 - 0.3 * wx.season; }
+        if (wx.shadow) { const k = 1 - wx.shadow * this._cloud(gxp, gyp); col[0] *= k; col[1] *= k; col[2] *= k; }
+        const sm = Math.max(this.hwSmudge ? this.hwSmudge[i] : 0, wx.smudge ? wx.smudge[i] : 0);
+        if (sm) for (let c = 0; c < 3; c++) col[c] = col[c] * (1 - sm) + 0.35 * sm; }
       if (water) { // over water: new ripples every frame, and now and then a glint of sun
         const xi = Math.round(gxp), yi = Math.round(gyp);
         if (xi >= 0 && yi >= 0 && xi < this.w.W && yi < this.w.H && water[yi * this.w.W + xi]) { const rp = 0.04 * this._gauss() + (this._gauss() > 2.2 ? 0.25 : 0); for (let c = 0; c < 3; c++) col[c] = Math.max(0, col[c] + rp + 0.008 * this._gauss()); }
@@ -105,6 +134,14 @@ export class RouteFlight {
       Q[i] = e.colour ? col[0] - col[1] : 0;
       Q[R * C + i] = e.colour ? col[2] - (col[0] + col[1]) / 2 : 0;
       if (wt.noise) { const nz = wt.noise / Math.sqrt(e.burst || 1); L[i] += nz * this._gauss(); if (e.colour) { Q[i] += 0.5 * nz * this._gauss(); Q[R * C + i] += 0.5 * nz * this._gauss(); } } // burst: the camera takes several frames per step and averages them
+    }
+    // fields (a magnetometer, radio receivers, a radar altimeter): the last row of sensors reads four fields at five points each (see landscape.js addFields), with a little sensor noise, instead of looking at the ground
+    if (e.fieldRow && this.w.fieldFn) {
+      const offs = [[0, 0], [0.4, 0], [-0.4, 0], [0, 0.4], [0, -0.4]], base = (R - 1) * C, fn = this.w.fieldFn, fnz = e.fieldNoise ?? 0.02;
+      for (let j = 0; j < C; j++) {
+        const k = Math.floor(j / 5) % 4, [a, b] = offs[j % 5], x = cx + (a * fx + b * rx) * len, y = cy + (a * fy + b * ry) * len;
+        L[base + j] = fn(k, x, y) + fnz * this._gauss(); Q[base + j] = 0; Q[R * C + base + j] = 0;
+      }
     }
     // what the camera itself saw (weather included), before any contrast filter: for showing
     if (e.normalize) { this.rawL = Float32Array.from(L); this.rawQ = Float32Array.from(Q); } else { this.rawL = L; this.rawQ = Q; }

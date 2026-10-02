@@ -62,3 +62,30 @@ export function applyLandscape(world, kind, { relief = 0.6, hold = true, seed = 
   } else throw new Error('unknown landscape ' + kind);
   return world;
 }
+
+// ---- Fields: readings that do not come from looking at the ground (a magnetometer, radio receivers, a radar altimeter)
+// addFields(world, kind, seed) gives the world world.fieldFn(k, x, y) -> a reading 0..1 for field k = 0..3, which RouteFlight.view turns into one row of its sensors
+// (4 fields x 5 sample points: at the fly, and 0.4 view lengths ahead, behind, left and right of it).
+//   mag:   smooth random fields (like the crust's magnetic anomalies), correlation lengths 1.2, 2, 3.5 and 1.6 maze cells; the same whatever the ground looks like.
+//   radio: the strength of four transmitters, one near each corner of the map, falling off linearly with distance (a direction finder's idea of a place).
+//   both:  two of each.   terrain: the ground height, its slope toward east and toward south, and its average over a ring a cell wide (a radar altimeter's idea; hills only).
+//   none:  a row of constant 0.5 (the control: the same sensors lost, nothing gained).
+export function addFields(world, kind, seed = 1) {
+  if (!kind) return world;
+  const { W, H, cell } = world, noise = makeNoise(mulberry32(seed * 104729 + 5)), diag = Math.hypot(W, H);
+  const mag = (k, x, y) => { const L = [1.2, 2, 3.5, 1.6][k] * cell; return Math.max(0, Math.min(1, 0.5 + 1.6 * (noise(x / L + 50 * k, y / L + 17 * k, 2) - 0.5))); };
+  const corners = [[0, 0], [W, 0], [W, H], [0, H]];
+  const radio = (k, x, y) => Math.max(0, 1 - Math.hypot(x - corners[k][0], y - corners[k][1]) / (0.9 * diag));
+  const rel = (x, y) => (world.relief ? Math.min(1, reliefAt(world.relief, x, y) / Math.max(1e-6, world.relief.amp)) : 0.5);
+  const terrain = (k, x, y) => {
+    const d = 0.5 * cell;
+    if (k === 0) return rel(x, y);
+    if (k === 1) return Math.max(0, Math.min(1, 0.5 + (rel(x + d, y) - rel(x - d, y)) * 1.5));
+    if (k === 2) return Math.max(0, Math.min(1, 0.5 + (rel(x, y + d) - rel(x, y - d)) * 1.5));
+    return (rel(x + cell, y) + rel(x - cell, y) + rel(x, y + cell) + rel(x, y - cell)) / 4;
+  };
+  const fn = { mag, radio, both: (k, x, y) => (k < 2 ? mag(k, x, y) : radio(k - 2, x, y)), terrain, none: () => 0.5 }[kind];
+  if (!fn) throw new Error('unknown fields ' + kind);
+  world.fieldFn = fn;
+  return world;
+}
