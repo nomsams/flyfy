@@ -186,6 +186,20 @@ footer{padding-top:30px;color:var(--muted);font:13px/1.5 var(--display)}
 <body>
 <style>
 /* the maze guide's own additions (the rest of the look comes from the field guide) */
+details.exp{border:1px solid var(--line);border-radius:12px;background:var(--paper);margin:12px 0;max-width:80ch}
+details.exp>summary{display:flex;gap:12px;align-items:center;padding:12px 14px;cursor:pointer;list-style:none}
+details.exp>summary::-webkit-details-marker{display:none}
+details.exp .num{font:800 15px var(--mono);color:var(--teal);min-width:1.6em}
+details.exp .tt{flex:1;display:grid;gap:2px}
+details.exp .tt b{font:800 15.5px/1.25 var(--display)}
+details.exp .tt small{font:600 13px/1.35 var(--display);color:var(--muted)}
+details.exp dl{margin:0;padding:2px 16px 14px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+details.exp dd,details.exp dt{min-width:0;overflow-wrap:anywhere}
+details.exp .tbl{overflow-x:auto}
+details.exp dt{font:800 11.5px/1.2 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-top:6px}
+details.exp dd{margin:0;font-size:15px;line-height:1.55}
+details.exp dd code{font:12.5px/1.5 var(--mono);word-break:break-word}
+details.exp .tbl{margin:6px 0}
 canvas.map{width:100%;max-width:470px;height:auto;aspect-ratio:1;border-radius:10px;background:var(--bg);touch-action:none;cursor:crosshair;display:block}
 canvas.mini{width:100%;max-width:210px;height:auto;aspect-ratio:10/7;image-rendering:pixelated;border-radius:6px;background:var(--bg);display:block}
 canvas.fan{width:100%;max-width:300px;height:auto;aspect-ratio:2/1;display:block}
@@ -254,12 +268,13 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     <a href="#senses"><small>11</small>All of the fly's senses</a>
     <a href="#swarms"><small>12</small>Bigger swarms, other ways</a>
     <a href="#tried"><small>13</small>Everything we tried</a>
-    <a href="#big"><small>14</small>How big, how long</a>
-    <a href="#uses"><small>15</small>Where else it could work</a>
-    <a href="#limits"><small>16</small>What this does not show</a>
-    <a href="#run"><small>17</small>Try it, run it</a>
-    <a href="#quiz"><small>18</small>Test yourself</a>
-    <a href="#words"><small>19</small>Words to know</a>
+    <a href="#notebook"><small>14</small>Lab notebook: expected, got, why</a>
+    <a href="#big"><small>15</small>How big, how long</a>
+    <a href="#uses"><small>16</small>Where else it could work</a>
+    <a href="#limits"><small>17</small>What this does not show</a>
+    <a href="#run"><small>18</small>Try it, run it</a>
+    <a href="#quiz"><small>19</small>Test yourself</a>
+    <a href="#words"><small>20</small>Words to know</a>
   </nav>
 </aside>
 
@@ -280,12 +295,13 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <a href="#senses"><small>11</small>All of the fly's senses</a>
   <a href="#swarms"><small>12</small>Bigger swarms, other ways</a>
   <a href="#tried"><small>13</small>Everything we tried</a>
-  <a href="#big"><small>14</small>How big, how long</a>
-  <a href="#uses"><small>15</small>Where else it could work</a>
-  <a href="#limits"><small>16</small>What this does not show</a>
-  <a href="#run"><small>17</small>Try it, run it</a>
-  <a href="#quiz"><small>18</small>Test yourself</a>
-  <a href="#words"><small>19</small>Words to know</a>
+    <a href="#notebook"><small>14</small>Lab notebook: expected, got, why</a>
+  <a href="#big"><small>15</small>How big, how long</a>
+  <a href="#uses"><small>16</small>Where else it could work</a>
+  <a href="#limits"><small>17</small>What this does not show</a>
+  <a href="#run"><small>18</small>Try it, run it</a>
+  <a href="#quiz"><small>19</small>Test yourself</a>
+  <a href="#words"><small>20</small>Words to know</a>
 </details>
 <div class="mbar" role="status"><div class="num" id="mb-num">–</div><div class="what" id="mb-what">Nothing flown yet. First, the world.</div><div class="meter"><i id="mb-bar" style="width:0%"></i></div></div>
 
@@ -301,7 +317,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <div class="paths">
     <a href="#route"><small>5 minutes</small><b>Just the story</b><span>Read the short version above, then the "Where this leaves us" box at the end of each chapter.</span></a>
     <a href="#camera"><small>20 minutes</small><b>Play along</b><span>Each chapter has a widget with a small fly you can run. Guess first where a "Predict first" box asks you to, then check.</span></a>
-    <a href="#run"><small>Deeper</small><b>Reproduce the numbers</b><span>Every table comes from runs of one command-line tool. Chapter 17 shows how to repeat them.</span></a>
+    <a href="#run"><small>Deeper</small><b>Reproduce the numbers</b><span>Every table comes from runs of one command-line tool. Chapter 18 shows how to repeat them.</span></a>
   </div>
   <h3>What the colours on the maps mean</h3>
   <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
@@ -1047,7 +1063,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
       <tr><td>Climb when unsure</td><td>Rise to see beyond the hedges</td><td class="n">63% → 55%</td><td><span class="pill bad">worse</span></td></tr>
       <tr><td>Cast when lost</td><td>Sweep side to side like a moth that lost a scent</td><td class="n">50% → 29%</td><td><span class="pill bad">worse, off</span></td></tr>
       <tr><td>Edge boost</td><td>The face-guide trick</td><td class="n">no help in weather</td><td><span class="pill bad">off</span></td></tr>
-      <tr><td>Separate route memory for each stretch of route</td><td>Chapter 14's "region" idea: 4 or 8 cells of route per memory, chosen by where the fly thinks it is</td><td class="n">14 × 14: 94% → 61% (4 cells), 50% (8 cells); 18 × 18: 75% → 96% (6 cells)</td><td><span class="pill meh">mixed: hurt in one maze size, helped in another</span></td></tr>
+      <tr><td>Separate route memory for each stretch of route</td><td>Chapter 15's "region" idea: 4 or 8 cells of route per memory, chosen by where the fly thinks it is</td><td class="n">14 × 14: 94% → 61% (4 cells), 50% (8 cells); 18 × 18: 75% → 96% (6 cells)</td><td><span class="pill meh">mixed: hurt in one maze size, helped in another</span></td></tr>
       <tr><td>A face swarm whose flies have different abilities</td><td>Flies cycle: all senses / no edge cells / no colour</td><td class="n">+0.7 points over an ordinary swarm</td><td><span class="pill meh">no clear gain</span></td></tr>
       <tr><td>Learning flights only in a corridor around the route</td><td>Fewer views, a less crowded memory (6 cells either side)</td><td class="n">24 × 24: 46% → 38%</td><td><span class="pill bad">no gain</span></td></tr>
       <tr><td>Scouting when the map belief is unsure</td><td>Fly straight on after 10 unsure steps</td><td class="n">24 × 24: 46% → 46%; 18 × 18: 75% → 75%</td><td><span class="pill meh">never triggers</span></td></tr>
@@ -1067,8 +1083,151 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <div class="leaves"><span class="n">95%</span><b>Where this leaves us</b><div>The recipe that works: a big sparse memory, keeping track, learning flights, the map, several heights and a contrast filter. The rest helps a little or hurts.</div></div>
 </section>
 
-<section class="ch" id="big" data-score="95" data-what="Measured to 18 × 18 with the two fixes; 12 × 12 is solid.">
+<!--NB-->
+<section class="ch" id="notebook" data-score="95" data-what="Every experiment of the long-voyage work: what we set up, what we expected, what we got and why.">
   <div class="kicker">Chapter 14</div>
+  <h2>The lab notebook: expected, got, and why</h2>
+  <p class="question">For each experiment on the way to long voyages: what did we try, what did we think would happen, what happened, and what do we think the reason is?</p>
+  <p>Open an entry to read it. The expectations are what we wrote down <i>before</i> the run, and several were wrong; that is the useful part. Everything is the simulation of this guide, run with <code>tools/route.mjs</code>.</p>
+  <div class="side remember"><b class="t">How to read the numbers</b>
+    <b>Score</b>: the share of flights that got within 0.8 maze cells of the end. A row is 24 to 36 flights (mazes × flies × launches), so it is good to about <b>±10 points</b>: a difference of 10 or less is a hint, not a result. Rows that are compared used the same mazes and launch points.
+    <b>Dropped anywhere</b>: put down anywhere on the map, facing any way, so it must find out where it is. <b>Launched from A</b>: within 1 maze cell of the start, facing roughly along the route, with wind and a drifting odometer pushing it off: the realistic job, used from section 6 on. <b>Wind 0.3</b> is a steady push of 0.3 × the flying speed that the odometer does not see.</div>
+  <details class="exp" open>
+    <summary><span class="num">1</span><span class="tt"><b>How big a maze can the plain fly cope with?</b><small>10–14 cells: 92–94%. 18: 75%. 24: 46%.</small></span><span class="pill meh">mixed or small</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>The plain fly, dropped anywhere, in mazes of 10 to 24 cells. Fresh runs, all from one frozen version of the code.</dd>
+      <dt>We expected</dt><dd>A slow decline with size. An earlier run had given 75% at 14 × 14 and 67% at 18 × 18.</dd>
+      <dt>We got</dt><dd>10 × 10: 92%. 12 × 12: 92%. 14 × 14: <b>94%</b>. 18 × 18: 75%. 24 × 24: <b>46%</b>.</dd>
+      <dt>Why, as far as we can tell</dt><dd>The early 75% at 14 × 14 was wrong: the lab's code was being edited between runs. At 24 × 24, two of the four flies fail in <i>every</i> setting we ever tried (per-fly results 0, 0, 100, 83%), and even the "teacher" (the same fly with a perfect sense of where the route is) reaches the goal in only 58% of drops. So at that size the failure belongs to those particular mazes (long routes, look-alike corridors), not to a setting we changed.</dd>
+      <dt>Rerun</dt><dd><code>node tools/route.mjs --cells 24 --worlds 2 --setups colour --policy familiar --kc 20000 --sparsity 0.01 --drop --approach 1 --track --map --flights 1 --calibrate 0.25</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">2</span><span class="tt"><b>More Kenyon cells</b><small>60,000 cells: no gain.</small></span><span class="pill bad">did not work</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>60,000 cells instead of 20,000, at 10 × 10 and at 24 × 24.</dd>
+      <dt>We expected</dt><dd>More cells mean fewer chance collisions between stored views, so it should help most in big mazes.</dd>
+      <dt>We got</dt><dd>10 × 10: 92% against 90%. 24 × 24: 50% against 46%.</dd>
+      <dt>Why, as far as we can tell</dt><dd>The failures are not a full memory (the calibrated level already handles that). They are look-alike places and a missing absolute position, and more memory does not tell two look-alike corridors apart.</dd>
+      <dt>Rerun</dt><dd><code>… --kc 60000</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">3</span><span class="tt"><b>A separate route memory for each stretch of route</b><small>14 × 14: 94% → 61%. 18 × 18: 75% → 96%.</small></span><span class="pill meh">mixed or small</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>The route is cut into stretches of 4, 6 or 8 cells, each with its own memory, chosen by where the fly believes it is.</dd>
+      <dt>We expected</dt><dd>A shorter stretch fills its memory less, so views are told apart better.</dd>
+      <dt>We got</dt><dd>14 × 14: 94% → 61% (4-cell stretches) and 50% (8-cell). 18 × 18: 75% → <b>96%</b> (6-cell).</dd>
+      <dt>Why, as far as we can tell</dt><dd>Choosing the wrong stretch loads the wrong memory, and then the true route looks unfamiliar: that is what hurt at 14 × 14, where one memory was not full yet. At 18 × 18 the long route does fill one memory, so splitting it paid off. We did not test this by logging wrong-stretch choices, so it is an explanation, not a result. Verdict: depends on the maze.</dd>
+      <dt>Rerun</dt><dd><code>… --regions 4</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">4</span><span class="tt"><b>Training only near the route; flying straight on when unsure</b><small>Corridor 46% → 38%. Scouting: no change at all.</small></span><span class="pill bad">did not work</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>Dropped anywhere. Corridor: learning flights only within 6 cells of the route. Scouting: when the map belief has been unsure for 10 steps in a row, fly straight on.</dd>
+      <dt>We expected</dt><dd>Fewer views crowd the memory (corridor); stopping the dithering gets the fly out of featureless places (scouting).</dd>
+      <dt>We got</dt><dd>Corridor: 46% → 38% at 24 × 24. Scouting: exactly the baseline (46% and 75%).</dd>
+      <dt>Why, as far as we can tell</dt><dd>Dropped anywhere, a fly that lands outside the corridor has no approach memory there, so the corridor loses it (section 6 revisits it for a fly launched near A, where it works). Scouting never triggered: the failures are <i>confidently wrong</i>, not unsure.</dd>
+      <dt>Rerun</dt><dd><code>… --corridor 6   … --scout 10</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">5</span><span class="tt"><b>A face swarm whose flies have different abilities</b><small>+0.7 points: no clear gain.</small></span><span class="pill meh">mixed or small</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>25 flies cycling between all senses, no edge cells and no colour, doing the face task; circle 10°, 300 sessions.</dd>
+      <dt>We expected</dt><dd>Flies with different senses make different mistakes, so voting should gain.</dd>
+      <dt>We got</dt><dd>69.9% with boosting, 68.7% with equal votes: +0.7 over an ordinary swarm.</dd>
+      <dt>Why, as far as we can tell</dt><dd>The flies' mistakes were already decorrelated by their different gaze points, so extra diversity adds little.</dd>
+      <dt>Rerun</dt><dd><code>node tools/boost.mjs --rounds 5 --per 5 --circle 10 --episodes 300 --mix</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">6</span><span class="tt"><b>Launched from A with a cone of drift, and training in a funnel</b><small>18 × 18: funnel costs nothing, 2.7× fewer views; cone +8 to +16. 24 × 24: cone hurts.</small></span><span class="pill meh">mixed or small</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>The realistic job: launched within 1 cell of A, with wind (0.3 × flying speed, unseen by the odometer) and a noisy odometer. <b>Cone</b>: the map belief starts inside the launch zone and may not stray further than the zone + 0.4 × the distance flown from where the odometer says. <b>Funnel</b>: learning flights only in a band 2 cells wide that widens by 0.3 per cell flown, plus 3 cells around the goal.</dd>
+      <dt>We expected</dt><dd>The cone cuts false matches to look-alike places far away. The funnel cuts training without hurting, since the fly stays near the route.</dd>
+      <dt>We got</dt><dd><div class="tbl"><table><thead><tr><th>training</th><th>belief</th><th>18 × 18</th><th>views</th><th>24 × 24</th></tr></thead><tbody><tr><td>whole map</td><td>as before</td><td class="n">50%</td><td class="n">20,121</td><td class="n">38%</td></tr><tr><td>whole map</td><td>cone</td><td class="n">58%</td><td class="n">20,121</td><td class="n">29%</td></tr><tr><td>funnel</td><td>as before</td><td class="n">46%</td><td class="n">7,479</td><td class="n">42%</td></tr><tr><td>funnel</td><td>cone</td><td class="n">62%</td><td class="n">7,479</td><td class="n">21%</td></tr></tbody></table></div></dd>
+      <dt>Why, as far as we can tell</dt><dd>The funnel costs nothing measurable because the fly rarely needs views from far outside the band. The cone helps while the true position stays inside it. At 24 × 24 half the flies fail from the start (section 1), and a long flight in unseen wind probably carries the truth out of a cone of 0.4 per cell (the wind alone is 0.3); we did not log that, so it is a guess.</dd>
+      <dt>Rerun</dt><dd><code>… --launch 1 --wind 0.3 --odo-noise 0.05 --corridor 2 --funnel 0.3 --end-zone 3 --prior --cone 0.4</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">7</span><span class="tt"><b>Better ways to localise</b><small>tf-idf 62% → 71%. The rest: nothing, or worse.</small></span><span class="pill meh">mixed or small</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>All on top of funnel + cone, 18 × 18: tf-idf (rare Kenyon cells count more, as in bag-of-words place recognition), anchors (views that no far place resembles count more), sequence matching (match the last 8 looks, shifted by the odometer), coarse-to-fine (match only the 6 most likely 64-pixel blocks), a particle filter (1,500 guesses instead of the grid belief).</dd>
+      <dt>We expected</dt><dd>Sequence matching, the standard trick for long routes, should help most. The particle filter should handle the drift cone best.</dd>
+      <dt>We got</dt><dd><div class="tbl"><table><thead><tr><th>idea</th><th>goal reached (from 62%)</th></tr></thead><tbody><tr><td>tf-idf</td><td class="n"><b>71%</b></td></tr><tr><td>anchors</td><td class="n">67%</td></tr><tr><td>sequence matching</td><td class="n">58%</td></tr><tr><td>coarse-to-fine</td><td class="n">50%</td></tr><tr><td>particle filter</td><td class="n">25%</td></tr></tbody></table></div>One run each, so only tf-idf is even a hint.</dd>
+      <dt>Why, as far as we can tell</dt><dd>tf-idf: cells that fire in many places say little, so weighting by rarity sharpens the match between look-alikes. Sequence matching adds nothing because the grid belief already adds up evidence over time. Coarse-to-fine is an efficiency device, and picking blocks from a sometimes-wrong belief loses the true place. The particle filter had too few guesses for a 1,500-pixel map, and wind the odometer cannot see is not in its drift model.</dd>
+      <dt>Rerun</dt><dd><code>… --idf   --anchors 1   --seq 8   --coarse 6   --particles 1500</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">8</span><span class="tt"><b>A sky compass: the sun by day, the stars by night</b><small>A drifting gyro: 33–58%. A sky compass: 86–94%.</small></span><span class="pill good">worked</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>12 × 12, launched at A, no wind. A gyro compass whose error random-walks (0.03 or 0.08 radians per step) against a sky compass whose error is fresh each step and never accumulates (0.05 or 0.15).</dd>
+      <dt>We expected</dt><dd>A gyro's heading error grows with the square root of the time, so it should ruin long flights; a sky compass should fix it.</dd>
+      <dt>We got</dt><dd><div class="tbl"><table><thead><tr><th>heading</th><th>goal reached</th></tr></thead><tbody><tr><td>perfect</td><td class="n">97%</td></tr><tr><td>gyro, 0.03 per step</td><td class="n">58%</td></tr><tr><td>gyro, 0.08 per step</td><td class="n">33%</td></tr><tr><td>sky compass, 0.05</td><td class="n">86%</td></tr><tr><td>sky compass, 0.15</td><td class="n">94%</td></tr></tbody></table></div>The last two are within noise of each other.</dd>
+      <dt>Why, as far as we can tell</dt><dd>A wrong heading turns the map's north-up views by the wrong angle and skews the odometer, and because the error accumulates, a long flight is hit hard. The sun, the polarisation pattern of the sky, or the star field at night gives a reference that does not accumulate. No polynomial fit of the sun's movement is needed: it moves about one degree in a few minutes, so rate × time is enough (and two readings could not fix a 2nd or 3rd degree curve anyway).</dd>
+      <dt>Rerun</dt><dd><code>… --launch 1 --yaw-walk 0.03   or   --yaw-compass 0.05</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">9</span><span class="tt"><b>Other ground: hills and a lake</b><small>Hills were easy (up to 100%). The lake was hard (38–50%).</small></span><span class="pill meh">mixed or small</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>10 × 10, launched from A, wind 0.3, a drifting gyro unless there is a sky compass; 24 flights per row. <b>Hills</b>: a heightfield 0.6 cells high, shaded by a low sun, with rock and snow tints; the helicopter holds its height above sea level, so the view shrinks over high ground. <b>Lake</b>: a strait about a third of the map wide, no maze there, a sandy shore, fresh ripples and glints of sun every frame; optic flow is off over water because the waves move.</dd>
+      <dt>We expected</dt><dd>Hills would be hard (the picture changes scale and shading from place to place) and the lake harder still (nothing to remember).</dd>
+      <dt>We got</dt><dd><div class="tbl"><table><thead><tr><th></th><th>countryside</th><th>hills</th><th>lake</th></tr></thead><tbody><tr><td>plain fly</td><td class="n">58%</td><td class="n">67%</td><td class="n">38%</td></tr><tr><td>funnel + cone + tf-idf</td><td class="n">67%</td><td class="n">92%</td><td class="n">38%</td></tr><tr><td>+ sky compass</td><td class="n">71%</td><td class="n">96%</td><td class="n">50%</td></tr><tr><td>+ optic-flow odometer</td><td class="n">79%</td><td class="n"><b>100%</b></td><td class="n">42%</td></tr></tbody></table></div></dd>
+      <dt>Why, as far as we can tell</dt><dd>The fly compares nine directions <i>through the same camera</i>, so a change of scale or shading affects every direction alike, and with a good heading it still sees which way is familiar. Over the water the views are fresh ripples each frame, so familiarity says nothing and the fly has to dead-reckon, and the wind pushes it off before it sees the far shore.</dd>
+      <dt>Rerun</dt><dd><code>… --landscape hills --relief 0.6   or   --landscape lake</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">10</span><span class="tt"><b>Wind memory and a wind triangle</b><small>Lake 42% → 87%. Countryside 79% → 92%.</small></span><span class="pill good">worked</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>Over land, optic flow shows how the ground moves against what the fly commanded; the difference is the wind. The fly keeps a running estimate (a slow average), keeps it over water, and steers into it by the crab angle (the arcsine of the wind's sideways share), so its track over the ground follows the route's direction. Same setup as section 9.</dd>
+      <dt>We expected</dt><dd>A big help over the lake, where the wind was the unseen push; a small help elsewhere.</dd>
+      <dt>We got</dt><dd><div class="tbl"><table><thead><tr><th></th><th>countryside</th><th>hills</th><th>lake</th></tr></thead><tbody><tr><td>consolidated + sky + optic flow</td><td class="n">79%</td><td class="n">100%</td><td class="n">42%</td></tr><tr><td>+ wind memory</td><td class="n"><b>92%</b></td><td class="n"><b>100%</b></td><td class="n"><b>87%</b></td></tr></tbody></table></div></dd>
+      <dt>Why, as far as we can tell</dt><dd>Once the heading was fixed, wind was the largest error left: it pushed the fly sideways by 0.3 cells per cell flown, and nothing in the views could correct that over water. With the wind known, the track stays on the route. The lab's wind is exactly steady and the estimate is learned over land for as long as it likes, so this is the best case.</dd>
+      <dt>Rerun</dt><dd><code>… --flow-odo --wind-mem</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">11</span><span class="tt"><b>Climbing and casting over the lake</b><small>Climbing: 87% → 0%. Casting: 87% → 54%.</small></span><span class="pill bad">did not work</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>The lake, with the wind memory. Climbing: rise to 2.5 × the height when unsure, to see the far shore. Casting: sweep from side to side when nothing looks familiar.</dd>
+      <dt>We expected</dt><dd>Climbing widens the view so the far shore appears earlier; casting finds it by sweeping.</dd>
+      <dt>We got</dt><dd>Climbing: 0%. Casting: 54%.</dd>
+      <dt>Why, as far as we can tell</dt><dd>The memories are of one height. At 2.5 × the pictures are ones the fly never learned, so <i>nothing</i> looks familiar. Casting spends the steps that dead reckoning needed. (Section 13 retries climbing with practice at height.)</dd>
+      <dt>Rerun</dt><dd><code>… --wind-mem --climb 2.5   or   --cast</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">12</span><span class="tt"><b>Gusty wind, and how fast the wind estimate should follow</b><small>Wind memory still helps in gusts: +16 to +24 points. A faster estimate: no clear gain.</small></span><span class="pill good">worked</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>The lake of section 10, but the wind wanders around its mean (an Ornstein-Uhlenbeck walk, spread about 0.7 × the gust value: 0.15 or 0.3) instead of being exactly steady. The estimate of the wind memory follows with a slow average (5% of the new reading each step) or a fast one (20%). Same launches as the steady-wind rows (the gusts have their own random stream).</dd>
+      <dt>We expected</dt><dd>The wind memory should lose some of its gain, since the estimate learned over land is out of date over the water; a faster estimate should help.</dd>
+      <dt>We got</dt><dd><div class="tbl"><table><thead><tr><th>wind</th><th>no wind memory</th><th>slow estimate</th><th>fast estimate</th></tr></thead><tbody><tr><td>steady</td><td class="n">42%</td><td class="n">87%</td><td class="n">92%</td></tr><tr><td>gusts 0.15</td><td class="n">63%</td><td class="n">87%</td><td class="n">71%</td></tr><tr><td>gusts 0.3</td><td class="n">63%</td><td class="n"></td><td class="n">79%</td></tr></tbody></table></div></dd>
+      <dt>Why, as far as we can tell</dt><dd>The gain survives gusts, which was the main worry: a gust is a wander around a mean, and the mean is what the fly estimated over land, so over the lake the estimate is still about right on average. A fast estimate is not clearly better (92 against 87 in steady wind, 71 against 87 in gusts, both inside the ±10 noise): over water it freezes anyway, so how fast it followed over land matters little, and a faster one also follows the noise of the land. The no-memory row is higher in gusts (63%) than in steady wind (42%); we think that is the gusts sometimes cancelling the steady push, but did not check it. The gusts in the lab are still gentle compared with real weather.</dd>
+      <dt>Rerun</dt><dd><code>… --wind-mem --gust 0.15   (and --gust 0.3, --wind-alpha 0.2)</code></dd>
+    </dl>
+  </details>
+  <details class="exp">
+    <summary><span class="num">13</span><span class="tt"><b>A wider lake, and climbing with practice at height</b><small>Lake 55% of the map: 75% (67% without wind memory). Climbing, now practised: 79%, no better than not climbing (87%).</small></span><span class="pill meh">mixed or small</span></summary>
+    <dl>
+      <dt>Setup</dt><dd>The wind-memory fly on the 10 × 10 lake. (a) The water covers 55% of the map width instead of 30%. (b) Climbing to 2.5 × the height when unsure, but now the fly also practises the route at that height (one memory per height, so about twice the learning views).</dd>
+      <dt>We expected</dt><dd>(a) A wider lake means longer dead reckoning, so clearly worse. (b) With practice at height, the climb should now pay off: the far shore comes into view earlier.</dd>
+      <dt>We got</dt><dd><div class="tbl"><table><thead><tr><th>setup</th><th>goal reached</th><th>learning views</th></tr></thead><tbody><tr><td>lake 30%, wind memory (section 10)</td><td class="n">87%</td><td class="n">2,772</td></tr><tr><td>lake 55%, no wind memory</td><td class="n">67%</td><td class="n">2,772</td></tr><tr><td>lake 55%, wind memory</td><td class="n">75%</td><td class="n">2,772</td></tr><tr><td>lake 30%, wind memory + climb, practised at height</td><td class="n">79%</td><td class="n">5,525</td></tr></tbody></table></div></dd>
+      <dt>Why, as far as we can tell</dt><dd>(a) The wide lake is worse (87% to 75%), but less than we feared, and the wind memory still helps (+8); the flies in one maze fail whatever we do (a 0% fly in both wide rows), so the maze matters as much as the lake. The surprising 67% without wind memory (the narrow lake gave 42%) says that rows from different lake widths are flights in different conditions, so only compare a row with its own pair. (b) Practising at height cured the 0% of section 11, which confirms the explanation there (the fly had never seen those pictures), but it does not beat flying low (79% against 87%) and costs twice the training: from the view at 2.5 × height the far shore is just as featureless.</dd>
+      <dt>Rerun</dt><dd><code>… --landscape lake --lake-width 0.55 --wind-mem   and   … --wind-mem --train-alts 1,2.5 --banks --climb 2.5</code></dd>
+    </dl>
+  </details>
+  <div class="leaves"><span class="n">95%</span><b>Where this leaves us</b><div>What worked: a sky compass (a heading that does not drift), a wind estimate that is kept over water, training in a funnel, and rare-cell weighting. What did not: more memory, regional memories (in general), sequence matching, particle filters, climbing and casting. The honest caveat for all of it: small samples, one simulated world, a perfectly steady wind.</div></div>
+</section>
+<!--/NB-->
+
+<section class="ch" id="big" data-score="95" data-what="Measured to 18 × 18 with the two fixes; 12 × 12 is solid.">
+  <div class="kicker">Chapter 15</div>
   <h2>How big a maze, and how long would it take?</h2>
   <p class="question">Could this fly a real area, like 100 × 100 maze cells, or 1,000 × 1,000?</p>
   <p>Training time is dominated by the learning flights, because they cover the whole map, so it grows with the <i>area</i>. Learning the route itself grows only with its length. Move the sliders to plan a real flight: one maze cell is taken to be about the flying height, since the camera sees a patch of ground roughly 1.5 times as long as it is high.</p>
@@ -1114,7 +1273,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="uses" data-score="95" data-what="Ideas for where the same trick could work; none has been tried outside the simulation.">
-  <div class="kicker">Chapter 15</div>
+  <div class="kicker">Chapter 16</div>
   <h2>Where else the same trick could work</h2>
   <p class="question">Who would want a tiny brain that repeats a route it was shown once?</p>
   <p>"Visual teach and repeat" is a real technique in robotics: show a robot a route once, and it repeats it using a camera. What is unusual here is how <i>small</i> it is: one yes-or-no flag per memory cell, 2.5 KB per route, no map, no GPS, and a brain that could run on a camera board costing a few dollars. Some ideas, none tried outside the simulation:</p>
@@ -1139,7 +1298,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="limits" data-score="95" data-what="Everything here is a simulation. Here is what it leaves out.">
-  <div class="kicker">Chapter 16</div>
+  <div class="kicker">Chapter 17</div>
   <h2>What this does not show</h2>
   <p class="question">How far can the results be trusted?</p>
   <ul>
@@ -1155,7 +1314,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="run" data-score="95" data-what="Try it, or reproduce every number.">
-  <div class="kicker">Chapter 17</div>
+  <div class="kicker">Chapter 18</div>
   <h2>Try it, run it</h2>
   <p class="question">How do I fly it myself?</p>
   <p><a class="btn primary" style="display:inline-block;text-decoration:none" href="https://nomsams.github.io/flyfy/maze/">Open the Maze app</a> Build a maze (size, wobble, variety), teach the fly the route at chosen heights, tap anywhere on the map to drop it, and watch what it sees and how unfamiliar each direction looks. Change its height mid-flight, switch on the swarm layouts, the wrong-way memory or climbing, pick the weather and the contrast filter, and fly over a changed version of the maze.</p>
@@ -1181,7 +1340,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="quiz" data-score="95" data-what="Everything here is a simulation. Test what stuck.">
-  <div class="kicker">Chapter 18</div>
+  <div class="kicker">Chapter 19</div>
   <h2>Test yourself</h2>
   <p class="question">Did the story stick? Ten quick questions.</p>
   <div class="widget">
@@ -1192,7 +1351,7 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
 </section>
 
 <section class="ch" id="words" data-score="95" data-what="Everything here is a simulation. Test what stuck.">
-  <div class="kicker">Chapter 19</div>
+  <div class="kicker">Chapter 20</div>
   <h2>Words to know</h2>
   <dl class="glossary">
     <dt>Familiarity navigation</dt><dd>Following a route by turning toward whichever direction looks most familiar, the way ants and bees are thought to do it.</dd>

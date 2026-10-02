@@ -25,11 +25,11 @@ export function reliefAt(rel, x, y) {
   return (h[j * nx + i] * (1 - tx) + h[j * nx + i + 1] * tx) * (1 - ty) + (h[(j + 1) * nx + i] * (1 - tx) + h[(j + 1) * nx + i + 1] * tx) * ty;
 }
 
-export function applyLandscape(world, kind, { relief = 0.6, hold = true, seed = 1 } = {}) {
+export function applyLandscape(world, kind, { relief = 0.6, hold = true, seed = 1, lake = 0.3 } = {}) {
   if (!kind || kind === 'countryside') return world;
   const { W, H, cell, margin, cells, rgb } = world, N = W * H, noise = makeNoise(mulberry32(seed * 7919 + 101));
   if (kind === 'lake') {
-    const water = new Uint8Array(N), x0 = margin + 0.35 * cells * cell, x1 = margin + 0.65 * cells * cell, shore = 0.35 * cell;
+    const water = new Uint8Array(N), x0 = margin + (0.5 - lake / 2) * cells * cell, x1 = margin + (0.5 + lake / 2) * cells * cell, shore = 0.35 * cell;
     for (let y = 0; y < H; y++) {
       const wob = (noise(y / 90, 3) - 0.5) * 1.4 * cell;
       for (let x = 0; x < W; x++) {

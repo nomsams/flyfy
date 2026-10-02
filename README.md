@@ -598,6 +598,8 @@ The wind triangle is the single biggest gain since the sky compass: the lake goe
 is learned over land for as long as the fly likes; a real gusty, shifting wind would need the estimate to keep adapting, and a real estimate needs an air-speed sensor. Climbing to see the far shore failed completely (0%): the memories are of one height, so a climbing fly sees pictures it never learned
 (it would have to practise at the higher height too, `--train-alts --banks`). Casting at the shore hurt (87% to 54%), as it did before.
 
+**Gusts, a wider lake, climbing with practice.** Wind that wanders around its mean (`--gust 0.15`): the wind memory still helps (63% -> 87%; `--gust 0.3`: 63% -> 79%), a faster estimate (`--wind-alpha 0.2`) makes no clear difference. A lake 55% of the map wide (`--lake-width 0.55`): 67% without, 75% with the wind memory. Climbing over the lake with practice at the higher height (`--train-alts 1,2.5 --banks --climb 2.5`): 79%, against 87% flying low, at twice the training. Every experiment of this long-voyage work, with its setup, what we expected, what we got and why, is chapter 14 of the maze guide (maze-guide.html, "The lab notebook").
+
 Six mazes, one pass, fixed level: fog + filter 97%, night + filter + 16 frames 92%, wind 40% 79%, odometer 17
 degrees off 97%. The maze app now flies the route once and calibrates by default. The guide has a widget
 that flies the same fly in four different mazes.

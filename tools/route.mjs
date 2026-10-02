@@ -36,6 +36,7 @@
 //        [--idf] (rare Kenyon cells count more) [--anchors 1] (distinctive views count more) [--particles 1500 --part-drift 0.3] (a particle filter instead of the grid belief)
 //        [--corridor 2 --funnel 0.3 --end-zone 3] (learning flights only in a band around the route 2 cells wide that widens by 0.3 cells per cell flown, and within 3 cells of the goal)
 //        [--landscape lake|hills] (a lake across the middle of the map: nothing to remember over water; or hills: --relief 0.6 cells high, the helicopter holds its height above sea level, or --follow the terrain)
+//        [--gust 0.15] (the wind wanders around its mean: gusts) [--wind-alpha 0.2] (how fast the wind estimate follows: default 0.05 per step) [--lake-width 0.55] (share of the map width that is water)
 //        [--wind-mem] (with --flow-odo: the fly estimates the wind from optic flow over land, keeps the estimate over water, and steers into it: a wind triangle)
 //        [--map-swarm] (every swarm member also votes in the map localisation) [--map-sharp 20] (a sharper map belief)
 //        [--decay 0.9] (how much each learning-flight view dims the cells it uses; default 0.5)
@@ -97,16 +98,20 @@ function fly(world, F, p, policy, { maxSteps, onStep, lostAt = 1.5, global = fal
     if (drift) { // imperfect odometry (its heading is off by a bias plus noise, its distance by a scale error) and wind (a steady push the fly does not know about)
       if (!p.ox) { p.ox = p.x; p.oy = p.y; }
       const e = drift.bias + drift.noise * gauss(drift.rng) + (p.yawErr || 0), sc = 1 + drift.scale;
-      const tx = speed * Math.cos(p.th) + drift.wind * speed * Math.cos(drift.windDir), ty = speed * Math.sin(p.th) + drift.wind * speed * Math.sin(drift.windDir);
+      // the wind (fractions of the flying speed): steady, or with gusts - it wanders around its mean (an Ornstein-Uhlenbeck walk, spread about 0.7 x gust)
+      const w0x = drift.wind * Math.cos(drift.windDir), w0y = drift.wind * Math.sin(drift.windDir);
+      if (drift.gust) { drift.ws ||= { x: w0x, y: w0y }; drift.grng ||= mulberry32(Math.floor(drift.windDir * 1e6) + 7); /* (its own random stream, so gusts do not change where the next flights are released) */ drift.ws.x += -0.01 * (drift.ws.x - w0x) + 0.1 * drift.gust * gauss(drift.grng); drift.ws.y += -0.01 * (drift.ws.y - w0y) + 0.1 * drift.gust * gauss(drift.grng); }
+      const wx = drift.ws ? drift.ws.x : w0x, wy = drift.ws ? drift.ws.y : w0y;
+      const tx = speed * Math.cos(p.th) + wx * speed, ty = speed * Math.sin(p.th) + wy * speed;
       // without optic flow the odometer believes it flew exactly as commanded (wind unseen); with it, the odometer sees the true ground motion (still turned by the heading error)
       const overWater = world.water && p.x >= 0 && p.y >= 0 && p.x < world.W && p.y < world.H && world.water[Math.floor(p.y) * world.W + Math.floor(p.x)], useFlow = drift.flow && !overWater; // (over water the waves move: optic flow sees nothing reliable)
       const bx = useFlow ? tx : speed * Math.cos(p.th), by = useFlow ? ty : speed * Math.sin(p.th);
       if (drift.windMem && drift.flow) { // wind memory: over land optic flow shows how the ground moves against what the fly commanded; over water the last estimate is kept (the wind is steady)
-        if (!overWater) { const ex = (tx - speed * Math.cos(p.th)) / speed + 0.03 * gauss(drift.rng), ey = (ty - speed * Math.sin(p.th)) / speed + 0.03 * gauss(drift.rng); drift.we = drift.we ? { x: drift.we.x + 0.05 * (ex - drift.we.x), y: drift.we.y + 0.05 * (ey - drift.we.y) } : { x: ex, y: ey }; }
+        if (!overWater) { const ex = (tx - speed * Math.cos(p.th)) / speed + 0.03 * gauss(drift.rng), ey = (ty - speed * Math.sin(p.th)) / speed + 0.03 * gauss(drift.rng); drift.we = drift.we ? { x: drift.we.x + (drift.alpha || 0.05) * (ex - drift.we.x), y: drift.we.y + (drift.alpha || 0.05) * (ey - drift.we.y) } : { x: ex, y: ey }; }
         p.wEst = drift.we;
       }
       p.ox += sc * (bx * Math.cos(e) - by * Math.sin(e)); p.oy += sc * (bx * Math.sin(e) + by * Math.cos(e));
-      p.x += drift.wind * speed * Math.cos(drift.windDir); p.y += drift.wind * speed * Math.sin(drift.windDir);
+      p.x += wx * speed; p.y += wy * speed;
     }
     p.x += speed * Math.cos(p.th); p.y += speed * Math.sin(p.th);
     const nr = F.nearest(p, global);
@@ -149,8 +154,8 @@ function releaseAnywhere(world, F, r, alt) {
 // itself, only what the world looked like while it was on it.
 export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt = 0, policy = 'steer', kc = 0, sparsity = 0, testVariant = 0,
   trainAlts = null, altBanks = false, testAlt = 0, swarm = 1, gazeR = 0.25, cast = false, castThr = 0.1, approach = 0, drop = false, track = false,
-  aversive = false, climb = 0, row = null, map = false, arrive = false, weather = 'clear', trainWeather = 'clear', normalize = false, edges = false, burst = 0, smooth = 0, approachDecay = 0.5, calibrate = 0, odoBias = 0, odoNoise = 0, odoScale = 0, wind = 0, tilt = 0, tiltEst = 0, tiltComp = false, tiltTrain = false, yawWalk = 0, yawCompass = 0, flowOdo = false, windMem = false, mapSwarm = false, mapSharp = 12, scales = null, regions = 0, corridor = 0, scout = 0, launch = -1, prior = false, cone = 0, field = false, seq = 0, coarse = 0, idf = false, anchors = 0, particles = 0, partDrift = 0.3, funnel = 0, endZone = 0 }) {
-  const world = applyLandscape(makeWonderland(worldOpts), worldOpts.landscape, { relief: worldOpts.relief, hold: worldOpts.hold !== false, seed: worldOpts.seed });
+  aversive = false, climb = 0, row = null, map = false, arrive = false, weather = 'clear', trainWeather = 'clear', normalize = false, edges = false, burst = 0, smooth = 0, approachDecay = 0.5, calibrate = 0, odoBias = 0, odoNoise = 0, odoScale = 0, wind = 0, tilt = 0, tiltEst = 0, tiltComp = false, tiltTrain = false, yawWalk = 0, yawCompass = 0, flowOdo = false, windMem = false, gust = 0, windAlpha = 0, mapSwarm = false, mapSharp = 12, scales = null, regions = 0, corridor = 0, scout = 0, launch = -1, prior = false, cone = 0, field = false, seq = 0, coarse = 0, idf = false, anchors = 0, particles = 0, partDrift = 0.3, funnel = 0, endZone = 0 }) {
+  const world = applyLandscape(makeWonderland(worldOpts), worldOpts.landscape, { relief: worldOpts.relief, hold: worldOpts.hold !== false, seed: worldOpts.seed, lake: worldOpts.lake });
   const over = { eye: { activeVision: 0, normalize: normalize ? 1 : 0, lateralInhib: edges ? 1.5 : 0, ...(burst ? { burst } : {}), ...(smooth ? { smooth: 1 } : {}) }, learn: { anneal: 0 } };
   if (kc) over.mb = { cells: kc, ...(sparsity ? { sparsity } : {}) };
   const cfg = mergeConfig(over, mergeConfig(setupConfig('faces', SETUPS[setup])));
@@ -206,7 +211,7 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
   }
   // ---- test: learning frozen, released near the route with a wrong heading (optionally over a
   // slightly changed version of the maze: same layout and route, different details)
-  if (testVariant) { F = new RouteFlight(applyLandscape(makeWonderland({ ...worldOpts, variant: testVariant }), worldOpts.landscape, { relief: worldOpts.relief, hold: worldOpts.hold !== false, seed: worldOpts.seed }), cfg); if (fam) fam.F = F; }
+  if (testVariant) { F = new RouteFlight(applyLandscape(makeWonderland({ ...worldOpts, variant: testVariant }), worldOpts.landscape, { relief: worldOpts.relief, hold: worldOpts.hold !== false, seed: worldOpts.seed, lake: worldOpts.lake }), cfg); if (fam) fam.F = F; }
   F.setWeather(weather); // the weather while it is tested
   const rt = mulberry32(900001 + seed), out = { reached: 0, progress: 0, dev: 0, tracks: [], teacher: 0, blind: 0, found: 0, near: 0, falseStop: 0 };
   for (let k = 0; k < releases; k++) {
@@ -216,7 +221,7 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
     const glob = drop || launch >= 0, maxSteps = Math.ceil((world.route.length / (world.cell / 8)) * (glob ? 3.5 : 2.5));
     const how = glob ? { maxSteps, lostAt: Infinity, global: true } : { maxSteps };
     const windDir = rt() * 2 * Math.PI; // (always drawn, so runs with and without wind release the fly at the same places)
-    const drift = odoBias || odoNoise || odoScale || wind || yawWalk || yawCompass || flowOdo ? { bias: odoBias, noise: odoNoise, scale: odoScale, wind, windDir, rng: rt, walk: yawWalk, compass: yawCompass, flow: flowOdo, windMem } : null;
+    const drift = odoBias || odoNoise || odoScale || wind || yawWalk || yawCompass || flowOdo ? { bias: odoBias, noise: odoNoise, scale: odoScale, wind, windDir, rng: rt, walk: yawWalk, compass: yawCompass, flow: flowOdo, windMem, gust, alpha: windAlpha } : null;
     const att = tilt ? mkAtt(rt) : null;
     const res = fly(world, F, { ...p0 }, testPolicy(), { ...how, drift, att });
     out.found += res.found / releases; out.near += res.near / releases; out.falseStop += res.falseStop / releases;
@@ -243,12 +248,12 @@ if (isMain && args.one) {
 
 // ---------------------------------------------------------------- parent
 if (isMain && !args.one) {
-  const worldBase = { cells: +(args.cells || 6), wobble: +(args.wobble ?? 0.6), variety: +(args.variety ?? 0.7), landscape: args.landscape || null, relief: +(args.relief || 0.6), hold: !args.follow };
+  const worldBase = { cells: +(args.cells || 6), wobble: +(args.wobble ?? 0.6), variety: +(args.variety ?? 0.7), landscape: args.landscape || null, relief: +(args.relief || 0.6), hold: !args.follow, lake: +(args['lake-width'] || 0.3) };
   const worlds = +(args.worlds || 2), seeds = +(args.seeds || 3), setups = (args.setups || 'raw,memory,colour,edges,fovea').split(',');
   const common = { flights: +(args.flights || 40), releases: +(args.releases || 30), alt: +(args.alt || 0), policy: args.policy || 'steer', kc: +(args.kc || 0), sparsity: +(args.sparsity || 0), testVariant: +(args['test-variant'] || 0),
     trainAlts: args['train-alts'] ? args['train-alts'].split(',').map(Number) : null, altBanks: !!args.banks, testAlt: +(args['test-alt'] || 0),
     swarm: +(args.swarm || 1), gazeR: +(args.gaze ?? 0.25), cast: !!args.cast, castThr: +(args['cast-thr'] || 0.1), approach: +(args.approach || 0), drop: !!args.drop, track: !!args.track,
-    aversive: !!args.aversive, map: !!args.map, arrive: !!args.arrive, weather: args.weather || 'clear', trainWeather: args['train-weather'] || 'clear', normalize: !!args.normalize, edges: !!args.edges, burst: +(args.burst || 0), tilt: +(args.tilt || 0), tiltEst: +(args['tilt-est'] || 0), tiltComp: !!args['tilt-comp'], tiltTrain: !!args['tilt-train'], yawWalk: +(args['yaw-walk'] || 0), yawCompass: +(args['yaw-compass'] || 0), flowOdo: !!args['flow-odo'], windMem: !!args['wind-mem'], mapSwarm: !!args['map-swarm'], regions: +(args.regions || 0), corridor: +(args.corridor || 0), launch: args.launch !== undefined ? +args.launch : -1, prior: !!args.prior, cone: +(args.cone || 0), field: !!args.field, seq: +(args.seq || 0), coarse: +(args.coarse || 0), idf: !!args.idf, anchors: +(args.anchors || 0), particles: +(args.particles || 0), partDrift: +(args['part-drift'] ?? 0.3), funnel: +(args.funnel || 0), endZone: +(args['end-zone'] || 0), scout: +(args.scout || 0), scales: args.scales ? args.scales.split(',').map(Number) : null, mapSharp: +(args['map-sharp'] || 12), calibrate: +(args.calibrate || 0), approachDecay: +(args.decay || 0.5), smooth: +(args.smooth || 0), odoBias: +(args['odo-bias'] || 0), odoNoise: +(args['odo-noise'] || 0), odoScale: +(args['odo-scale'] || 0), wind: +(args.wind || 0), climb: +(args.climb || 0), row: args.row ? (([side, mid]) => ({ side, mid }))(args.row.split(',').map(Number)) : null };
+    aversive: !!args.aversive, map: !!args.map, arrive: !!args.arrive, weather: args.weather || 'clear', trainWeather: args['train-weather'] || 'clear', normalize: !!args.normalize, edges: !!args.edges, burst: +(args.burst || 0), tilt: +(args.tilt || 0), tiltEst: +(args['tilt-est'] || 0), tiltComp: !!args['tilt-comp'], tiltTrain: !!args['tilt-train'], yawWalk: +(args['yaw-walk'] || 0), yawCompass: +(args['yaw-compass'] || 0), flowOdo: !!args['flow-odo'], windMem: !!args['wind-mem'], gust: +(args.gust || 0), windAlpha: +(args['wind-alpha'] || 0), mapSwarm: !!args['map-swarm'], regions: +(args.regions || 0), corridor: +(args.corridor || 0), launch: args.launch !== undefined ? +args.launch : -1, prior: !!args.prior, cone: +(args.cone || 0), field: !!args.field, seq: +(args.seq || 0), coarse: +(args.coarse || 0), idf: !!args.idf, anchors: +(args.anchors || 0), particles: +(args.particles || 0), partDrift: +(args['part-drift'] ?? 0.3), funnel: +(args.funnel || 0), endZone: +(args['end-zone'] || 0), scout: +(args.scout || 0), scales: args.scales ? args.scales.split(',').map(Number) : null, mapSharp: +(args['map-sharp'] || 12), calibrate: +(args.calibrate || 0), approachDecay: +(args.decay || 0.5), smooth: +(args.smooth || 0), odoBias: +(args['odo-bias'] || 0), odoNoise: +(args['odo-noise'] || 0), odoScale: +(args['odo-scale'] || 0), wind: +(args.wind || 0), climb: +(args.climb || 0), row: args.row ? (([side, mid]) => ({ side, mid }))(args.row.split(',').map(Number)) : null };
   const jobs = [];
   const w0 = +(args.w0 || 1); // the first maze number (to test one particular maze)
   for (const setup of setups) for (let w = w0; w < w0 + worlds; w++) for (let s = 1; s <= seeds; s++) jobs.push({ ...common, setup, seed: s, worldOpts: { ...worldBase, seed: w } });
