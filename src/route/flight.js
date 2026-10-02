@@ -8,6 +8,8 @@
 // the fly. At height 1 the view covers 1.6 x 2.3 maze cells. Every sensor averages the ground
 // under it (a small image pyramid), so the view doesn't shimmer as the fly moves.
 
+import { reliefAt } from './landscape.js';
+
 // Weather and time of day, applied to what the camera sees: the light (and its colour), haze or fog
 // (the picture fades toward a pale grey) and camera noise (random speckle on every sensor, every frame).
 export const WEATHER = {
@@ -73,14 +75,17 @@ export class RouteFlight {
 
   // render the downward view for a pose into retinas[0] (brightness) and chroma[0] (colour)
   view(p) {
-    const { R, C } = this, e = this.cfg.eye, len = this.viewLen * p.alt, wid = len * (C / R);
+    const { R, C } = this, e = this.cfg.eye, rel = this.w.relief, water = this.w.water;
+    // over hills at constant height above sea level the ground rises toward the helicopter: its height above the ground here is (alt + amp - ground height), so the view shrinks
+    const sc = rel && this.w.holdAlt ? (p.alt + rel.amp - reliefAt(rel, p.x, p.y)) / p.alt : 1;
+    const len = this.viewLen * p.alt * sc, wid = len * (C / R);
     const fx = Math.cos(p.th), fy = Math.sin(p.th), rx = -fy, ry = fx; // forward and right on the map
     // optional centre of gaze (a swarm member's own viewpoint): p.gx ahead, p.gy to the right, in view lengths
     const cx = p.x + ((p.gx || 0) * fx + (p.gy || 0) * rx) * len, cy = p.y + ((p.gx || 0) * fy + (p.gy || 0) * ry) * len;
     const L = this.retinas[0], Q = this.chroma[0], col = [0, 0, 0], spread = len / R;
     // a tilted camera (p.roll: right side down, p.pitch: nose up, radians): each sensor looks along its own ray, rotated with the helicopter,
     // and sees the ground where that ray hits it. The camera height is one maze cell at height 1 (so the view is about 1.6 cells long).
-    const roll = p.roll || 0, pitch = p.pitch || 0, tilted = roll !== 0 || pitch !== 0, Hh = this.w.cell * p.alt;
+    const roll = p.roll || 0, pitch = p.pitch || 0, tilted = roll !== 0 || pitch !== 0, Hh = this.w.cell * p.alt * sc;
     const cr = Math.cos(roll), sr = Math.sin(roll), cp = Math.cos(pitch), sp = Math.sin(pitch);
     for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
       let f = this.fwd[r] * len, s = this.side[c] * wid; const i = r * C + c;
@@ -88,7 +93,12 @@ export class RouteFlight {
         const x0 = f, y0 = s, z0 = Hh, x1 = x0 * cp - z0 * sp, z1 = x0 * sp + z0 * cp, y2 = y0 * cr + z1 * sr, z2 = -y0 * sr + z1 * cr, t = Hh / Math.max(0.17 * Hh, z2);
         f = x1 * t; s = y2 * t;
       }
-      this._sample(cx + fx * f + rx * s, cy + fy * f + ry * s, spread, col);
+      const gxp = cx + fx * f + rx * s, gyp = cy + fy * f + ry * s;
+      this._sample(gxp, gyp, spread, col);
+      if (water) { // over water: new ripples every frame, and now and then a glint of sun
+        const xi = Math.round(gxp), yi = Math.round(gyp);
+        if (xi >= 0 && yi >= 0 && xi < this.w.W && yi < this.w.H && water[yi * this.w.W + xi]) { const rp = 0.04 * this._gauss() + (this._gauss() > 2.2 ? 0.25 : 0); for (let c = 0; c < 3; c++) col[c] = Math.max(0, col[c] + rp + 0.008 * this._gauss()); }
+      }
       const wt = this.weather;
       if (wt.fog || wt.light !== 1) for (let c = 0; c < 3; c++) col[c] = (col[c] * (1 - wt.fog) + wt.fogCol[c] * wt.fog) * wt.light * wt.tint[c];
       L[i] = 0.299 * col[0] + 0.587 * col[1] + 0.114 * col[2];

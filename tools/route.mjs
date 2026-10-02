@@ -35,6 +35,7 @@
 //        [--field] (map likelihood spread over nearby cells) [--seq 8] (matched over the last 8 looks, shifted by odometry) [--coarse 6] (only the 6 most likely 64-px blocks are matched)
 //        [--idf] (rare Kenyon cells count more) [--anchors 1] (distinctive views count more) [--particles 1500 --part-drift 0.3] (a particle filter instead of the grid belief)
 //        [--corridor 2 --funnel 0.3 --end-zone 3] (learning flights only in a band around the route 2 cells wide that widens by 0.3 cells per cell flown, and within 3 cells of the goal)
+//        [--landscape lake|hills] (a lake across the middle of the map: nothing to remember over water; or hills: --relief 0.6 cells high, the helicopter holds its height above sea level, or --follow the terrain)
 //        [--map-swarm] (every swarm member also votes in the map localisation) [--map-sharp 20] (a sharper map belief)
 //        [--decay 0.9] (how much each learning-flight view dims the cells it uses; default 0.5)
 //        [--wind 0.3] (a steady wind of 0.3 x the flying speed, in a random direction, that the fly does not know about)
@@ -49,6 +50,7 @@ import { setupConfig } from '../src/abilities.js';
 import { Brain } from '../src/brain.js';
 import { mulberry32 } from '../src/rng.js';
 import { makeWonderland } from '../src/route/terrain.js';
+import { applyLandscape } from '../src/route/landscape.js';
 import { RouteFlight } from '../src/route/flight.js';
 import { FamiliarSwarm, rowOfCircles } from '../src/route/familiar.js';
 import { encodePNG } from './png.mjs';
@@ -96,7 +98,8 @@ function fly(world, F, p, policy, { maxSteps, onStep, lostAt = 1.5, global = fal
       const e = drift.bias + drift.noise * gauss(drift.rng) + (p.yawErr || 0), sc = 1 + drift.scale;
       const tx = speed * Math.cos(p.th) + drift.wind * speed * Math.cos(drift.windDir), ty = speed * Math.sin(p.th) + drift.wind * speed * Math.sin(drift.windDir);
       // without optic flow the odometer believes it flew exactly as commanded (wind unseen); with it, the odometer sees the true ground motion (still turned by the heading error)
-      const bx = drift.flow ? tx : speed * Math.cos(p.th), by = drift.flow ? ty : speed * Math.sin(p.th);
+      const overWater = world.water && p.x >= 0 && p.y >= 0 && p.x < world.W && p.y < world.H && world.water[Math.floor(p.y) * world.W + Math.floor(p.x)], useFlow = drift.flow && !overWater; // (over water the waves move: optic flow sees nothing reliable)
+      const bx = useFlow ? tx : speed * Math.cos(p.th), by = useFlow ? ty : speed * Math.sin(p.th);
       p.ox += sc * (bx * Math.cos(e) - by * Math.sin(e)); p.oy += sc * (bx * Math.sin(e) + by * Math.cos(e));
       p.x += drift.wind * speed * Math.cos(drift.windDir); p.y += drift.wind * speed * Math.sin(drift.windDir);
     }
@@ -142,7 +145,7 @@ function releaseAnywhere(world, F, r, alt) {
 export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt = 0, policy = 'steer', kc = 0, sparsity = 0, testVariant = 0,
   trainAlts = null, altBanks = false, testAlt = 0, swarm = 1, gazeR = 0.25, cast = false, castThr = 0.1, approach = 0, drop = false, track = false,
   aversive = false, climb = 0, row = null, map = false, arrive = false, weather = 'clear', trainWeather = 'clear', normalize = false, edges = false, burst = 0, smooth = 0, approachDecay = 0.5, calibrate = 0, odoBias = 0, odoNoise = 0, odoScale = 0, wind = 0, tilt = 0, tiltEst = 0, tiltComp = false, tiltTrain = false, yawWalk = 0, yawCompass = 0, flowOdo = false, mapSwarm = false, mapSharp = 12, scales = null, regions = 0, corridor = 0, scout = 0, launch = -1, prior = false, cone = 0, field = false, seq = 0, coarse = 0, idf = false, anchors = 0, particles = 0, partDrift = 0.3, funnel = 0, endZone = 0 }) {
-  const world = makeWonderland(worldOpts);
+  const world = applyLandscape(makeWonderland(worldOpts), worldOpts.landscape, { relief: worldOpts.relief, hold: worldOpts.hold !== false, seed: worldOpts.seed });
   const over = { eye: { activeVision: 0, normalize: normalize ? 1 : 0, lateralInhib: edges ? 1.5 : 0, ...(burst ? { burst } : {}), ...(smooth ? { smooth: 1 } : {}) }, learn: { anneal: 0 } };
   if (kc) over.mb = { cells: kc, ...(sparsity ? { sparsity } : {}) };
   const cfg = mergeConfig(over, mergeConfig(setupConfig('faces', SETUPS[setup])));
@@ -198,7 +201,7 @@ export function trial({ worldOpts, setup, seed, flights = 40, releases = 30, alt
   }
   // ---- test: learning frozen, released near the route with a wrong heading (optionally over a
   // slightly changed version of the maze: same layout and route, different details)
-  if (testVariant) { F = new RouteFlight(makeWonderland({ ...worldOpts, variant: testVariant }), cfg); if (fam) fam.F = F; }
+  if (testVariant) { F = new RouteFlight(applyLandscape(makeWonderland({ ...worldOpts, variant: testVariant }), worldOpts.landscape, { relief: worldOpts.relief, hold: worldOpts.hold !== false, seed: worldOpts.seed }), cfg); if (fam) fam.F = F; }
   F.setWeather(weather); // the weather while it is tested
   const rt = mulberry32(900001 + seed), out = { reached: 0, progress: 0, dev: 0, tracks: [], teacher: 0, blind: 0, found: 0, near: 0, falseStop: 0 };
   for (let k = 0; k < releases; k++) {
@@ -235,7 +238,7 @@ if (isMain && args.one) {
 
 // ---------------------------------------------------------------- parent
 if (isMain && !args.one) {
-  const worldBase = { cells: +(args.cells || 6), wobble: +(args.wobble ?? 0.6), variety: +(args.variety ?? 0.7) };
+  const worldBase = { cells: +(args.cells || 6), wobble: +(args.wobble ?? 0.6), variety: +(args.variety ?? 0.7), landscape: args.landscape || null, relief: +(args.relief || 0.6), hold: !args.follow };
   const worlds = +(args.worlds || 2), seeds = +(args.seeds || 3), setups = (args.setups || 'raw,memory,colour,edges,fovea').split(',');
   const common = { flights: +(args.flights || 40), releases: +(args.releases || 30), alt: +(args.alt || 0), policy: args.policy || 'steer', kc: +(args.kc || 0), sparsity: +(args.sparsity || 0), testVariant: +(args['test-variant'] || 0),
     trainAlts: args['train-alts'] ? args['train-alts'].split(',').map(Number) : null, altBanks: !!args.banks, testAlt: +(args['test-alt'] || 0),

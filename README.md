@@ -547,6 +547,41 @@ anchors a little, sequence matching and coarse-to-fine nothing, the particle fil
 Wind that the odometer cannot see is the main enemy (on 6 x 6 mazes wind of 40% of the flying speed took 94% down to 69%, and only the optic-flow odometer gave much back), which is why the optic-flow odometer matters more than any of these. A quick run only; not repeated, not a proof.
 Not done: the same techniques with the fly dropped anywhere (the batch was dropped as beside the point), and the 24 x 24 runs of the extras.
 
+**A sky compass (sun by day, stars by night).** The fly's heading comes from a gyro whose error accumulates (a random walk), so on a long
+flight it grows with the square root of the time. A sun/polarised-light compass (insects use the sky's polarisation pattern; bees correct for the sun's slow
+movement with a clock) gives an absolute heading whose error does not accumulate; at night the same job would be done by the star field's rotation around the pole (a dim-light
+upward camera and a small star-pattern lookup). Modelled with the existing flags: `--yaw-walk` for the gyro, `--yaw-compass` for a sky compass (an error each step that never accumulates).
+12 x 12 mazes, launched at A, no wind, 36 flights per row:
+
+| heading | goal reached |
+|---|---|
+| perfect | 97% |
+| gyro only, drifting 0.03 rad per step | 58% |
+| gyro only, drifting 0.08 rad per step | 33% |
+| sky compass, error 0.05 rad every step | 86% |
+| sky compass, error 0.15 rad every step | 94% |
+
+Over a long flight an unreferenced gyro costs 40-60 points; any sky compass gives most of it back (the 0.15 row scoring above the 0.05 row is noise). It does nothing about wind, which
+pushes the helicopter without turning it. (A polynomial fit of the sun's movement from two readings is not needed: the sun moves about 15 degrees an hour, one degree in a few minutes, so a
+straight line, rate x elapsed time, is enough, and two points could not fix a 2nd or 3rd degree curve anyway.)
+
+**The consolidated fly over three kinds of ground** (`src/route/landscape.js`; `--landscape lake|hills`). Lake: a strait about a third of the map wide crosses the route, the maze is gone
+there, the shore is sand, and every frame has fresh ripples and the odd sun glint, so there is nothing to remember out over the water. Hills: a heightfield 0.6 maze cells high, shaded by a low sun,
+rock and snow tints; the helicopter holds its height above sea level (the view shrinks over hills; `--follow` would follow the terrain). 10 x 10 mazes, launched within 1 cell of A, wind 0.3, noisy
+odometer, a gyro compass that drifts (0.03 rad per step) unless a sky compass is used; 24 flights per row, about +-10 points. "Consolidated" = funnel training + drift cone + tf-idf. Optic flow is switched off over water (the waves move).
+
+| | countryside | hills | lake crossing | learning views |
+|---|---|---|---|---|
+| plain fly (whole-map training, gyro) | 58% | 67% | 38% | 5,331 |
+| consolidated, gyro | 67% | 92% | 38% | 2,772 |
+| + sky compass | 71% | 96% | 50% | 2,772 |
+| + optic-flow odometer | **79%** | **100%** | 42% | 2,772 |
+
+Training views halve. The consolidated fly with a sky compass and optic flow flies the hills perfectly (the shading and the shrinking view do not fool a fly that has a good heading and sees its own ground motion) and gets
+about 80% over countryside. The lake is the real limit: all four rows are 38-50%. There is nothing to recognise over the water, so the fly has to dead-reckon across, and a noisy odometer plus wind that optic flow cannot see over waves
+pushes it off before it sees the far shore. What a real helicopter would add: an air-speed sensor plus the sun compass for a wind estimate, a GPS-free "wind triangle", or a few floating landmarks. Not tried: stars, a moon, more than one lake or hill setting, hills with terrain-following,
+mountains as such (steep slopes, occlusion, lighting that changes with the time of day).
+
 Six mazes, one pass, fixed level: fog + filter 97%, night + filter + 16 frames 92%, wind 40% 79%, odometer 17
 degrees off 97%. The maze app now flies the route once and calibrates by default. The guide has a widget
 that flies the same fly in four different mazes.
