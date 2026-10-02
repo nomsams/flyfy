@@ -420,6 +420,8 @@ export class FamiliarSwarm {
     const LOST_AFTER = 12; // steps (1.5 cells) out of sight before it gives up on where it thought it was
     // climbing when unsure, back down to cruising height when sure
     const height = (q, sure) => (climb ? Math.max(-climb.rate, Math.min(climb.rate, (sure ? climb.cruise : climb.top) - q.alt)) : 0);
+    // wind triangle: with an estimate of the wind (q.wEst, as a fraction of the flying speed, from optic flow over land), steer a little into it, so the track over the ground follows `want`
+    const crab = (want, q) => { const w = q.wEst; if (!w) return want; const wl = -Math.sin(want) * w.x + Math.cos(want) * w.y; return want - Math.asin(Math.max(-0.95, Math.min(0.95, wl))); };
     return (q) => {
       q.region = this.regionCells && curRegion != null ? curRegion : null;
       onMapNow = always ? mapTracker(q) : null;
@@ -436,7 +438,7 @@ export class FamiliarSwarm {
         if (mapTracker) { // from where it thinks it is on the map, straight toward the route - as firmly as it is sure
           onMap = onMapNow || mapTracker(q);
           if (this.regionCells && onMap.conf > 0.5) curRegion = Math.floor(this.F.nearest({ x: onMap.x, y: onMap.y }, true).s / regPx);
-          const score = (i) => approach[i] / per + this.mapGain * onMap.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - onMap.want))) / 2;
+          const score = (i) => approach[i] / per + this.mapGain * onMap.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - crab(onMap.want, q)))) / 2;
           for (let i = 0; i < SCAN.length; i++) if (score(i) < score(ca)) ca = i;
         }
         unsure = this.scout && (!onMap || onMap.conf < 0.3) ? unsure + 1 : 0;
@@ -453,7 +455,7 @@ export class FamiliarSwarm {
         if (this.regionCells && where.conf > 0.4) curRegion = Math.floor(where.best / regPx);
         endBy = 'route'; vote(inSight && where.conf > 0.6 && where.best >= LEN - 0.5 * CELL);
         // prefer directions near the route's direction at the best guess, as much as the fly is sure of it
-        const score = (i) => route[i] / per + avoid(i) + this.trackGain * where.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - where.want))) / 2;
+        const score = (i) => route[i] / per + avoid(i) + this.trackGain * where.conf * (1 - Math.cos(wrap(q.th + SCAN[i] - crab(where.want, q)))) / 2;
         let c = 0; for (let i = 1; i < SCAN.length; i++) if (score(i) < score(c)) c = i;
         cr = c;
       }

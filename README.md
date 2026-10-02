@@ -582,6 +582,22 @@ about 80% over countryside. The lake is the real limit: all four rows are 38-50%
 pushes it off before it sees the far shore. What a real helicopter would add: an air-speed sensor plus the sun compass for a wind estimate, a GPS-free "wind triangle", or a few floating landmarks. Not tried: stars, a moon, more than one lake or hill setting, hills with terrain-following,
 mountains as such (steep slopes, occlusion, lighting that changes with the time of day).
 
+**Wind memory and the wind triangle (the lake fixed).** Over land the optic-flow odometer shows how the ground really moves compared with what the fly commanded (it knows its own
+air-speed), and the difference is the wind. `--wind-mem` (with `--flow-odo`) keeps a running estimate of that wind (a slow average, with a little noise), keeps it unchanged over water, where waves
+give no usable flow, and steers a little into the wind (the crab angle, `asin` of the wind's sideways share) so the track over the ground follows the route's direction: the way birds and bees cross water. Same setup as the table above
+(10 x 10, wind 0.3, noisy odometer, sky compass, consolidated), 24 flights per row:
+
+| | countryside | hills | lake crossing |
+|---|---|---|---|
+| consolidated + sky compass + optic flow | 79% | 100% | 42% |
+| + wind memory and crab angle | **92%** | **100%** | **87%** |
+| lake + wind memory + climbing to 2.5 x height | | | 0% |
+| lake + wind memory + casting | | | 54% |
+
+The wind triangle is the single biggest gain since the sky compass: the lake goes from 42% to 87%, the countryside from 79% to 92%. Honest limits: the wind in the lab is exactly steady, and the estimate
+is learned over land for as long as the fly likes; a real gusty, shifting wind would need the estimate to keep adapting, and a real estimate needs an air-speed sensor. Climbing to see the far shore failed completely (0%): the memories are of one height, so a climbing fly sees pictures it never learned
+(it would have to practise at the higher height too, `--train-alts --banks`). Casting at the shore hurt (87% to 54%), as it did before.
+
 Six mazes, one pass, fixed level: fog + filter 97%, night + filter + 16 frames 92%, wind 40% 79%, odometer 17
 degrees off 97%. The maze app now flies the route once and calibrates by default. The guide has a widget
 that flies the same fly in four different mazes.
