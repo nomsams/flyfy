@@ -201,6 +201,20 @@ details.exp dd{margin:0;font-size:15px;line-height:1.55}
 details.exp dd code{font:12.5px/1.5 var(--mono);word-break:break-word}
 details.exp .tbl{margin:6px 0}
 .pkrow{display:grid;grid-template-columns:130px 1fr 44px;gap:10px;align-items:center;font:600 13px var(--display)}
+details.how{border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:10px;background:var(--bg)}
+details.how>summary{cursor:pointer;list-style:none;padding:10px 14px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font:700 14px var(--display)}
+details.how>summary::-webkit-details-marker{display:none}
+details.how>summary::before{content:"\25B8";color:var(--teal);margin-right:2px}
+details.how[open]>summary::before{content:"\25BE"}
+details.how>summary small{font:500 12.5px var(--display);color:var(--muted)}
+.how-body{padding:2px 16px 14px;display:grid;gap:8px;font-size:15px;line-height:1.55}
+.how-body h5{margin:8px 0 0;font:800 11.5px/1.2 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}
+.how-body p{margin:0}
+dl.ctl{margin:0;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+dl.ctl dt{font:700 14px var(--display);margin-top:4px}
+dl.ctl dd{margin:0;color:var(--muted)}
+.expt{display:grid;gap:5px;border-top:1px dashed var(--line);padding-top:8px}
+.expt .mean{background:var(--paper);border-radius:8px;padding:7px 10px}
 canvas.w3{width:100%;max-width:640px;height:auto;display:block;border-radius:10px;background:var(--bg);touch-action:none}
 canvas.map{width:100%;max-width:470px;height:auto;aspect-ratio:1;border-radius:10px;background:var(--bg);touch-action:none;cursor:crosshair;display:block}
 canvas.mini{width:100%;max-width:210px;height:auto;aspect-ratio:10/7;image-rendering:pixelated;border-radius:6px;background:var(--bg);display:block}
@@ -343,7 +357,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>The first version of this world was a patchwork of pink checkers and blue ponds. It was much easier: every spot had its own colourful fingerprint. Inside a real hedge maze every corridor looks nearly the same, and that turns out to be the hard part.</p>
   <div class="widget" id="w-world">
     <div class="wh"><h4>The garden from above</h4><span>the world the lab flies over</span></div>
-    <div class="rowc">
+    <!--HOW:w-world--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A picture of the whole world the fly will fly over, seen from straight above: the hedge maze in the middle, and the fields, roads, houses and trees round it. The green dot is where the route starts, the red one where it ends. The white dashed line is the route the fly is taught; the fly never sees it drawn.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>The maze it learns / A changed version</dt><dd>Switches between the world the fly practises in and a second version with the same layout but different flowers, hedge bends and light. It is there so you can see how much of what the fly sees is detail, and how much is the place itself.</dd><dt>Show the route</dt><dd>Draws the route over the picture. It is off by default because the fly never gets this line; turn it on to see what it has to find.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> turn "Show the route" on and look for where it passes between look-alike corridors, <b>you will see</b> a line that winds through the maze and out the other side, with several corridors close by that look just like the right one.</p><p><b>If you instead</b> flip between the two versions with the route on, <b>you might see</b> a few differences (flower dots, a hedge a little thicker) but the same layout.</p><p class="mean"><b>What it means:</b> the "changed version" is a test of whether the fly recognises the place or has just memorised one picture.</p></div>
+    </div></details><!--/HOW:w-world-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="world-c" aria-label="Map of the hedge maze and countryside"></canvas>
         <div class="legend2"><span><i class="dot" style="background:#39d353"></i>start</span><span><i class="dot" style="background:#f0605a"></i>goal</span><span><i class="dot" style="background:#fff;border:1px solid var(--muted)"></i>the route (the fly never sees it)</span></div></div>
       <div class="side-panel">
@@ -358,7 +377,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Later, the fly will recognise where it is by its "fingerprint": the pattern of memory cells that fire for what its camera sees. So the first question is how alike different places look. Tap the map: the fly will compare the view at your tap with the view at every other place, and show where the look-alikes are.</p>
   <div class="widget" id="w-alike">
     <div class="wh"><h4>Which other places look like this one?</h4><span>tap the map · the first tap wakes up the memory centre</span></div>
-    <div class="rowc">
+    <!--HOW:w-alike--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>You tap a spot. The fly computes the fingerprint of the view there (which Kenyon cells fire) and compares it with the fingerprint at every other place on the map. The map is then coloured by how alike each place is: bright means a near twin. The small picture is what the camera sees at your tap.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Tapping the map</dt><dd>Chooses the spot to compare against. It is the only control because the question is "what else looks like here?" for any place.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> tap in the middle of a hedge corridor, then in another corridor far away, <b>you will see</b> bright patches in many other corridors: the maze is full of twins of any corridor.</p><p><b>If you instead</b> tap on the road or next to a house, <b>you might see</b> very few bright patches, because those places have something distinctive.</p><p class="mean"><b>What it means:</b> distinctive places are easy to recognise and look-alike corridors are not, which is why the maze is the hard case and why the fly needs more than one look.</p></div>
+    </div></details><!--/HOW:w-alike-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="al-c" aria-label="Map showing how alike every place looks to the one you tapped"></canvas></div>
       <div class="side-panel">
         <div class="mini"><canvas class="mini" id="al-v" width="140" height="98" aria-label="What the camera sees at the tapped spot"></canvas><p class="cap">What the camera sees at your tap (facing north)</p></div>
@@ -379,7 +403,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>The helicopter is ideal: it always knows its compass heading, its speed and its height, and its camera always points straight down. The camera is the same eye as in the first guide, <b>14 rows × 20 columns = 280 sensors</b>, lying on the ground below and turning with the fly. At the normal height it covers about 1.6 × 2.3 maze cells. Each sensor reports brightness and two colour differences (red–green and blue–yellow), and that is all the brain ever gets: 840 numbers per look.</p>
   <div class="widget" id="w-cam">
     <div class="wh"><h4>Fly the camera around</h4><span>drag on the map · turn · go higher or lower</span></div>
-    <div class="rowc">
+    <!--HOW:w-cam--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The camera's footprint on the map, and the two pictures it makes. The upper small picture is the ground under the camera, the lower is what the fly actually gets: 20 by 14 coarse sensors. Everything the fly knows is built from that second picture.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Heading</dt><dd>Turns the camera (the picture turns with the fly, because the camera is bolted to the helicopter). It is here to show that the same place looks different facing a different way.</dd><dt>Height</dt><dd>Moves the camera lower or higher. Lower: a small sharp patch of ground. Higher: a bigger blurrier patch. It is the same camera, but a different view, which becomes important in chapter 6.</dd><dt>Dragging on the map</dt><dd>Moves the fly to look at other places.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> drag onto the lawn, then turn the heading by 90°, <b>you will see</b> the 20 × 14 picture rotates and the stripes of the lawn change direction.</p><p><b>If you instead</b> drag onto a corridor and raise the height to 1.5, <b>you might see</b> the hedge walls shrink to a few coarse sensors and the corridor becomes hard to tell from its neighbour.</p><p class="mean"><b>What it means:</b> the fly decides from a very coarse picture, so what it stores must be a robust fingerprint, not a detailed image.</p></div>
+    </div></details><!--/HOW:w-cam-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="cam-c" aria-label="Map with the camera's footprint"></canvas></div>
       <div class="side-panel">
         <div class="controls" style="grid-template-columns:minmax(0,1fr)">
@@ -397,14 +426,24 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>It is the same kind of brain as in the <a href="https://nomsams.github.io/flyfy/guide.html">first guide</a>, cut down to what this job needs: a <b>memory centre</b> and nothing else. Walk through it one stage at a time.</p>
   <div class="widget" id="w-chain">
     <div class="wh"><h4>From picture to steering</h4><span>tap a stage</span></div>
-    <div class="chain" id="st-chain" role="group" aria-label="Brain stages"></div>
+    <!--HOW:w-chain--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The brain is a short chain of stages. Tap a stage and the panel under it explains what it does and what numbers go in and out: from the 840 numbers of the camera, to the memory cells, to the choice of a direction.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>The stage buttons</dt><dd>Each button is one stage of the brain. They are buttons so that you can read them one at a time instead of facing a diagram of everything at once.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> tap the stages from left to right, <b>you will see</b> each stage shrinking the information: 840 numbers, then about 100 firing cells, then one steering choice.</p><p><b>If you instead</b> go back and tap the memory-centre stage again after you have read the later chapters, <b>you might see</b> a clearer sense of why "which cells fired" is all that is remembered.</p><p class="mean"><b>What it means:</b> the fly never stores a picture, only a short sparse fingerprint, and everything later is built on that.</p></div>
+    </div></details><!--/HOW:w-chain-->
+        <div class="chain" id="st-chain" role="group" aria-label="Brain stages"></div>
     <div class="detail" id="st-detail" aria-live="polite"></div>
   </div>
   <h3>One look, in real numbers</h3>
   <p>Now see it happen. Put the fly down anywhere. The grid below is the memory centre: <b>10,000 Kenyon cells</b>, one square each. Bright squares are the ~100 cells that fire for this view. The fly's route memory is taught in the background the first time you tap. Green cells are ones that fired while it learned the route ("familiar"); red cells are new to it.</p>
   <div class="widget" id="w-code">
     <div class="wh"><h4>The code for one view</h4><span>tap the map · turn the fly · compare on and off the route</span></div>
-    <div class="rowc">
+    <!--HOW:w-code--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The fly's fingerprint of one view, in real numbers. The big grid is the memory centre: 10,000 Kenyon cells, one square each. Roughly 100 squares light up for the current view. Green ones are cells that fired while the fly flew the route (familiar); red ones are new. The blue background shows every cell the route ever made familiar.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Tapping the map</dt><dd>Puts the fly down at that spot.</dd><dt>Put it on the route / Put it somewhere else</dt><dd>Jump to a random spot on, or off, the route, so you can compare many places quickly.</dd><dt>Facing</dt><dd>Turns the fly in place to show that the code depends on which way it points.</dd><dt>Show the route</dt><dd>Overlays the route on the map.</dd><dt>Show the whole memory</dt><dd>Paints every familiar cell blue. It is the memory itself; with it off you see only what fires now.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> press "Put it on the route" five times, then "Put it somewhere else" five times and read the share of new (red) cells each time, <b>you will see</b> a somewhat lower share of new cells on the route (about 35–40% new) than off it (about 43–52%).</p><p><b>If you instead</b> do the same with the facing turned 90° away from the route direction, <b>you might see</b> the route values rise toward the off-route ones.</p><p class="mean"><b>What it means:</b> a single look is only a faint clue, and it depends on facing; that is why the fly needs a sequence of looks and the map.</p></div>
+    </div></details><!--/HOW:w-code-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="cd-c" aria-label="Map: tap to put the fly down"></canvas>
         <div class="row" style="gap:8px"><button class="btn" id="cd-onroute">Put it on the route</button><button class="btn" id="cd-off">Put it somewhere else</button></div>
         <label class="switch-row"><input type="checkbox" id="cd-route"> Show the route</label></div>
@@ -423,10 +462,39 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     <li>Press "Measure 40 places" to see the whole picture as three overlapping curves.</li></ol></div>
   <div class="widget" id="w-hist">
     <div class="wh"><h4>How well does one look tell the route from elsewhere?</h4><span>40 places each</span></div>
-    <canvas class="chart" id="cd-hist" height="190" aria-label="Distribution of the share of new cells on the route and elsewhere"></canvas>
+    <!--HOW:w-hist--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>Many measurements instead of one. The button picks 40 places on the route and 40 elsewhere, counts the share of new cells in each, and draws how those shares are spread: one hill for the route, one for the rest. The more the two hills overlap, the less one look can tell them apart.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Measure 40 places</dt><dd>Runs the measurement. It is a button because it takes a moment and each press draws a new random set.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> press the button once and look at the two hills, <b>you will see</b> two humps that overlap heavily, the route one slightly to the left (fewer new cells).</p><p><b>If you instead</b> press it again a few times, <b>you might see</b> the humps move a little each time but keep their overlap.</p><p class="mean"><b>What it means:</b> one look separates route from not-route only weakly, so the rest of the fly has to make many weak clues add up.</p></div>
+    </div></details><!--/HOW:w-hist-->
+        <canvas class="chart" id="cd-hist" height="190" aria-label="Distribution of the share of new cells on the route and elsewhere"></canvas>
     <div class="row" style="gap:8px"><button class="btn primary" id="cd-measure">Measure 40 places</button></div>
     <p class="cap" id="cd-hist-out">Press the button.</p>
   </div>
+<!--SP-->
+  <h3>How far can you move before it stops looking familiar?</h3>
+  <p>The fly's fingerprint of a view is the handful of Kenyon cells that fire for it. Two views that are nearly the same fire nearly the same cells; two different views share only what chance gives. So the number of <i>shared</i> cells is a measure of "have I seen this?" Choose a place on the route. The fly learns what it sees there; the curve shows what share of those cells fire for views taken further along (or back along) the route. The dashed line is a typical place elsewhere. The route's neighbourhood sits well above it, and then the curve falls away: that is how far a memory reaches.</p>
+  <div class="widget" id="w-sparse">
+    <div class="wh"><h4>Familiarity against distance</h4><span>the learned view is at 0; the curve is how many of its cells fire at other places</span></div>
+    <!--HOW:w-sparse--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The fly learns the view at one place on the route. For every other place along the route, the curve shows what share of the learned view's firing cells also fire there. At 0 the share is 100% (it is the same view). Moving away along the route, the share falls. The dashed line is what a place elsewhere shares. Where the curve is still well above the dashed line, a view still looks familiar.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Where on the route</dt><dd>Chooses which view the fly learned, so you can see that some stretches of the route are more distinctive than others.</dd><dt>Share of cells that fire</dt><dd>The sparseness of the code. It is the knob of the real brain: the fly has only about 1–2% of its Kenyon cells fire at once.</dd><dt>Number of Kenyon cells</dt><dd>How many cells there are in the code. A real fruit fly has about 2,000 per side; the lab's fly uses 10,000–20,000.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> keep 10,000 cells and 2% firing, and look at how fast the curve drops over the first cell of distance, <b>you will see</b> a quick fall from 100% to a low value: a view stops matching after about a cell of movement.</p><p><b>If you instead</b> drop the number of cells to 500 or raise the share firing to 15%, <b>you might see</b> the curve gets noisy and the gap above the dashed line shrinks.</p><p class="mean"><b>What it means:</b> a sparse code in many cells makes similar views share cells and different views share almost none; too few cells or too many firing blur the difference.</p></div>
+    </div></details><!--/HOW:w-sparse-->
+        <div class="rowc">
+      <div class="mapbox"><canvas class="chart" id="sp-c" height="230" aria-label="Share of shared Kenyon cells against distance along the route"></canvas></div>
+      <div class="side-panel">
+        <div class="two"><div><canvas class="mini" id="sp-v" width="140" height="98" aria-label="The view that was learned"></canvas><p class="cap">The view it learned</p></div></div>
+        <div class="controls" style="grid-template-columns:minmax(0,1fr)">
+          <label for="sp-pos">Where on the route <output id="sp-pos-o"></output><input type="range" id="sp-pos" min="3" max="97" value="40"></label>
+          <label for="sp-s">Share of cells that fire <output id="sp-s-o"></output><input type="range" id="sp-s" min="5" max="150" value="20"></label>
+        </div>
+        <div class="f">Number of Kenyon cells<div class="seg" id="sp-n" role="group" aria-label="Number of Kenyon cells"><button aria-pressed="false" data-v="500">500</button><button aria-pressed="false" data-v="2000">2,000</button><button aria-pressed="true" data-v="10000">10,000</button><button aria-pressed="false" data-v="20000">20,000</button></div></div>
+        <div class="status" id="sp-out"></div>
+      </div>
+    </div>
+  </div>
+<!--/SP-->
   <div class="tbl"><table>
     <thead><tr><th>Part</th><th>A real fruit fly</th><th>Our maze fly</th></tr></thead>
     <tbody>
@@ -453,7 +521,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Before anything is flown, here is what teaching looks like. The fly (white, with its camera boxes around it) flies the route once with a teacher. Every square of ground it passes turns <b>green</b>: those are the views it filed under "familiar". Then it makes its <b>learning flights</b>: from spots all over the map it flies toward the route, and every square it crosses turns <b>teal</b>. Those squares are where it can later say "I have been here, and from here the route is that way". Pick a swarm first if you like: each coloured box is one member looking at its own patch of ground.</p>
   <div class="widget" id="w-teach">
     <div class="wh"><h4>Teaching the fly</h4><span>press the button and watch the map</span></div>
-    <div class="rowc">
+    <!--HOW:w-teach--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The fly is taught, and you watch the map fill. The white fly flies the route once with a teacher; every square it passes turns green (a view filed as familiar). Then it makes learning flights from spots all over the map toward the route; the squares it crosses turn teal. Rings around the fly show the patches of ground each swarm member looks at.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Teach it</dt><dd>Starts the teaching, a few seconds in the page.</dd><dt>1 fly / Circle of 3 / Circle of 5 / 3 circles in a row (7)</dt><dd>Chooses how many virtual flies share the camera frame and where each looks. A bigger swarm takes longer because each member files its own view.</dd><dt>Show what it has learned</dt><dd>Turns the green and teal overlay on or off on every map in the guide.</dd><dt>Show the route it was shown</dt><dd>Draws the true route over the map.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> press "Teach it" with one fly, watching the green line grow along the route and then the teal squares spread out from it, <b>you will see</b> a green line along the route, then teal patches across most of the map.</p><p><b>If you instead</b> teach it again with a circle of five, <b>you might see</b> the same pattern but five rings of gaze at each step, and a longer wait.</p><p class="mean"><b>What it means:</b> the learned region is a thin ribbon (the route) plus a wide skirt (the learning flights): that skirt is what lets the fly find the route from nearly anywhere.</p></div>
+    </div></details><!--/HOW:w-teach-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="tc-c" aria-label="The map while the fly learns: green where it learned the route, teal where it made learning flights"></canvas>
         <div class="legend2"><span><i class="dot" style="background:rgba(40,255,110,.9)"></i>the route it learned</span><span><i class="dot" style="background:rgba(60,220,190,.6)"></i>where it practised flying to the route</span><span><i class="dot" style="background:transparent;border:2px solid #ffd23f"></i>a swarm member's patch of ground</span></div>
         <div class="prog"><i id="tc-prog"></i></div></div>
@@ -471,7 +544,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Below is a small version of it that runs in your browser. Teach it the route, put it down near the route facing the wrong way, and watch. The fan shows how unfamiliar each direction looks (a long bar = new).</p>
   <div class="widget" id="w-route">
     <div class="wh"><h4>Which way looks familiar?</h4><span>a small version, in your browser</span></div>
-    <div class="rowc">
+    <!--HOW:w-route--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A small version of the fly runs in your browser. After it has been taught the route, you put it down near the route and watch it steer. The fan under the map shows how unfamiliar each of the nine directions looks (long bar = new); it turns toward the shortest bar. The chart at the bottom, once the fly keeps track, shows where it thinks it is along the route against where it really is.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Teach it the route</dt><dd>Teaches the in-page fly, a few seconds.</dd><dt>Facing</dt><dd>Sets which way the fly points when put down, so you can see the fan change.</dd><dt>Most familiar way / + keep track</dt><dd>Chooses the steering: only the most familiar of nine directions, or that plus keeping a belief of where on the route it is (chapter 4).</dd><dt>1 fly … 3 circles in a row</dt><dd>The swarm layout, as in the teaching widget.</dd><dt>Fly it / Try 8 releases / Stop</dt><dd>Fly one release, eight releases in a row with a score, or stop.</dd><dt>Show what it has learned / Show the route</dt><dd>Overlays, as before.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> teach it, tap on the route, set "Facing" away from the route and press "Fly it", <b>you will see</b> the fan shows the route direction as the shortest bar, the fly turns onto the route and follows it for a while.</p><p><b>If you instead</b> switch to "Most familiar way" only and press "Try 8 releases near the route", then repeat with "+ keep track", <b>you might see</b> more of the eight reaching the goal with tracking, though fewer than the lab's numbers because this fly is smaller.</p><p class="mean"><b>What it means:</b> familiarity alone turns the fly the right way but cannot keep it from taking a look-alike corridor; keeping track fixes that.</p></div>
+    </div></details><!--/HOW:w-route-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="w2-c" aria-label="The maze with the fly and its trails"></canvas>
         <div class="legend2"><span><i class="dot" style="background:#4f9dff"></i>following the route</span><span><i class="dot" style="background:#ffa940"></i>heading for the route</span></div>
         <div class="prog"><i id="w2-prog"></i></div></div>
@@ -501,7 +579,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Another way to see it: put the fly at 324 spots on a grid, let it look in 12 compass directions at each, and colour every spot by how familiar its best direction looks. The arrows show which way it would go.</p>
   <div class="widget" id="w-land">
     <div class="wh"><h4>Rolling downhill</h4><span>the fly's view of the whole map</span></div>
-    <div class="rowc">
+    <!--HOW:w-land--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The fly's whole-map view of "which way looks familiar", computed at 324 spots in 12 directions each. Colour shows how familiar the best direction looks; arrows show the direction the fly would choose. A good memory makes a bright valley around the route, with arrows pointing into it.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Show the landscape</dt><dd>Computes it (a few seconds).</dd><dt>Route memory / Approach memory</dt><dd>Which of the fly's two memories is shown: the yes-or-no route memory, or the graded memory made on the learning flights.</dd><dt>Show arrows</dt><dd>Turns the arrows on or off so you can see the colours alone.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> press "Show the landscape" with the route memory, <b>you will see</b> a thin bright ribbon along the route and nothing elsewhere: the arrows far away point anywhere.</p><p><b>If you instead</b> switch to the approach memory, <b>you might see</b> a wide faint funnel around the route and arrows that lean toward it.</p><p class="mean"><b>What it means:</b> the route memory only lights up on the route, so a fly dropped elsewhere has nothing to follow; the approach memory is what the learning flights bought.</p></div>
+    </div></details><!--/HOW:w-land-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="ld-c" aria-label="Map coloured by familiarity, with arrows for the most familiar direction"></canvas></div>
       <div class="side-panel">
         <button class="btn primary" id="ld-go">Show the landscape</button>
@@ -528,7 +611,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <h3>"Keeping track", step by step</h3>
   <div class="widget" id="w-tracksteps">
     <div class="wh"><h4>How it keeps track along the route</h4><span>tap a step</span></div>
-    <div class="chain" id="tk-chain" role="group" aria-label="Steps of keeping track"></div>
+    <!--HOW:w-tracksteps--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>Keeping track, one step at a time. Each button is a step of the fly's running belief about how far along the route it is: store, move on, blur, sharpen, steer. The panel explains it with the numbers.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>The step buttons</dt><dd>Read them in order. They are separate so you can stop on the one you do not understand.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> tap the steps in order, <b>you will see</b> the belief being moved forward by the distance flown, spread out a little, then sharpened by the current view.</p><p><b>If you instead</b> imagine a look-alike corridor at the "sharpen" step, <b>you might see</b> two bumps in the belief instead of one, with the distance flown deciding which stays.</p><p class="mean"><b>What it means:</b> a sequence of looks plus distance flown is much harder to fool than one look.</p></div>
+    </div></details><!--/HOW:w-tracksteps-->
+        <div class="chain" id="tk-chain" role="group" aria-label="Steps of keeping track"></div>
     <div class="detail" id="tk-detail" aria-live="polite"></div>
   </div>
   <div class="predict" id="pr-track"></div>
@@ -554,7 +642,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>This phrase hides a lot, so here it is slowly. It does <b>not</b> mean the fly has a drawing of the maze, coordinates, or GPS. It means the fly owns a big <b>lookup table</b>: for thousands of spots on the ground, "at this spot, looking north, the camera fingerprint was this". Dropped somewhere, it asks: <i>which spot in my table looks most like what I see now?</i> That spot is its guess. One look is sometimes fooled, so it keeps a set of guesses that it updates as it flies. Walk through it:</p>
   <div class="widget" id="w-mapsteps">
     <div class="wh"><h4>How it knows where it is</h4><span>tap a step</span></div>
-    <div class="chain" id="mp-chain" role="group" aria-label="Steps of map localisation"></div>
+    <!--HOW:w-mapsteps--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>Knowing where it is on the map, one step at a time: store north-up fingerprints during the learning flights, compare the current view with all of them, keep a belief that its own flying moves along, and head for the route once sure.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>The step buttons</dt><dd>One button per step, so that the long process can be read in pieces.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> tap through the steps and then read the cards under the widget, <b>you will see</b> a lookup table of north-up fingerprints used as a map.</p><p><b>If you instead</b> look for the step where "belief" appears and think about what a look-alike place does to it, <b>you might see</b> a second, weaker bump on a look-alike place.</p><p class="mean"><b>What it means:</b> the map is a table of fingerprints, not a drawing, so it can be fooled by places that look alike but is cheap and small.</p></div>
+    </div></details><!--/HOW:w-mapsteps-->
+        <div class="chain" id="mp-chain" role="group" aria-label="Steps of map localisation"></div>
     <div class="detail" id="mp-detail" aria-live="polite"></div>
   </div>
   <div class="cards">
@@ -570,7 +663,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>The route memory is a yes-or-no flag. The learning flights show the fly thousands of views, and a yes-or-no memory fills up. Drag the slider to store more views and watch both kinds of memory fill (the views are north-up views from the learning flights).</p>
   <div class="widget" id="w-fill">
     <div class="wh"><h4>Yes-or-no versus graded memory</h4><span>drag to store more views</span></div>
-    <div class="controls" style="grid-template-columns:minmax(0,1fr)"><label for="mf-k">Views stored <output id="mf-k-o">0</output><input type="range" id="mf-k" min="0" max="2000" step="20" value="0"></label></div>
+    <!--HOW:w-fill--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>Two kinds of memory filling up. Each square is a Kenyon cell. Yes-or-no: has the cell ever fired? Graded: how often has it fired (brighter = more)? The more views you store, the more cells the yes-or-no memory marks as familiar, until almost every cell is marked.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Views stored</dt><dd>How many learning-flight views have been put into both memories.</dd><dt>Store all of them</dt><dd>Jumps to all 2,000 or so.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> drag the slider to a few hundred, <b>you will see</b> a sprinkle of marked cells in both memories.</p><p><b>If you instead</b> drag to the end, <b>you might see</b> the yes-or-no memory nearly full (almost every cell familiar) while the graded one still shows a spread of brightness.</p><p class="mean"><b>What it means:</b> a full yes-or-no memory says "familiar" about everything; a graded memory keeps telling a common view from a rare one, which is why the learning-flight memory is graded.</p></div>
+    </div></details><!--/HOW:w-fill-->
+        <div class="controls" style="grid-template-columns:minmax(0,1fr)"><label for="mf-k">Views stored <output id="mf-k-o">0</output><input type="range" id="mf-k" min="0" max="2000" step="20" value="0"></label></div>
     <div class="two">
       <div><canvas class="kgrid" id="mf-yes" width="300" height="300" aria-label="Yes-or-no memory"></canvas><p class="cap">Yes-or-no: has this cell ever fired?</p></div>
       <div><canvas class="kgrid" id="mf-gr" width="300" height="300" aria-label="Graded memory"></canvas><p class="cap">Graded: how often has it fired? (brighter = more)</p></div>
@@ -584,7 +682,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Add the ideas one at a time and drop the fly. The first drop teaches it the route and the learning flights (a few seconds).</p>
   <div class="widget" id="w-any">
     <div class="wh"><h4>Drop it anywhere</h4><span>add the ideas one at a time</span></div>
-    <div class="rowc">
+    <!--HOW:w-any--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The in-page fly is dropped at a random place and has to find the route and follow it. You choose which ideas it may use. Blue is following the route, orange is heading for it, and the dashed green ring is its guess of where it is on the map.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>What it uses</dt><dd>Adds the ideas one at a time: route memory only, then the learning flights, then keeping track, then the map. It is a ladder so that you see what each rung buys.</dd><dt>Swarm</dt><dd>How many virtual flies share the camera.</dd><dt>Drop it somewhere / Try 8 drops / Stop</dt><dd>One drop, eight drops with a score, or stop.</dd><dt>Fly over</dt><dd>The learned maze, or the changed version.</dd><dt>Weather / Contrast filter / Frames averaged / Smooth</dt><dd>The conditions of chapter 7: fog, dusk and night, and the cures for them.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> choose "Route memory only" and press "Try 8 drops", <b>you will see</b> most drops ending somewhere nowhere near the goal: with no map there is nothing to follow off the route.</p><p><b>If you instead</b> choose "+ the map" and repeat; then switch to fog without the contrast filter, <b>you might see</b> many more drops reaching the goal with the map, then failing again in fog until you switch the filter on.</p><p class="mean"><b>What it means:</b> knowing where it is on the map is the big step, and every idea has conditions it fails under.</p></div>
+    </div></details><!--/HOW:w-any-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="w3-c" aria-label="The maze with the fly and its trails"></canvas>
         <div class="legend2"><span><i class="dot" style="background:#4f9dff"></i>following the route</span><span><i class="dot" style="background:#ffa940"></i>heading for the route</span><span><i class="dot" style="background:transparent;border:2px solid #9ff09f"></i>its guess on the map</span></div>
         <div class="prog"><i id="w3-prog"></i></div></div>
@@ -615,7 +718,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>The clearest comparison is to give four fliers the same drop. Press the button: each tier flies from the same spot, facing the same way.</p>
   <div class="widget" id="w-race">
     <div class="wh"><h4>Four fliers, one drop</h4><span>the ideas from left to right, in colours</span></div>
-    <div class="rowc">
+    <!--HOW:w-race--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>Four fliers, one drop. Each uses one more idea than the last, and they all start from the same spot facing the same way, so you can compare them directly. Each flier is a different colour on the map and has a line in the list.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Race from a new drop</dt><dd>Picks a new random spot and flies all four.</dd><dt>Swarm</dt><dd>The swarm layout all four use.</dd><dt>The maze it learned / A changed version</dt><dd>Which version they fly over.</dd><dt>Show what it has learned</dt><dd>Overlay of the learned ground.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> press "Race from a new drop" a few times, <b>you will see</b> the map-using flier usually reaching the goal while the route-memory-only one wanders.</p><p><b>If you instead</b> switch to the changed version and race again, <b>you might see</b> one or two of the fliers failing that succeeded before.</p><p class="mean"><b>What it means:</b> the order of the ideas matters, and a changed version shows whether the fly knows the place or only the picture.</p></div>
+    </div></details><!--/HOW:w-race-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="rc-c" aria-label="Four flights from the same drop"></canvas></div>
       <div class="side-panel">
         <button class="btn primary" id="rc-go">Race from a new drop</button>
@@ -630,7 +738,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <h3>Where am I on the map?</h3>
   <div class="widget" id="w-where">
     <div class="wh"><h4>Where am I on the map?</h4><span>one look, then a guess</span></div>
-    <div class="rowc">
+    <!--HOW:w-where--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>One look, then a guess. When you tap, the fly turns its picture north-up and compares it with the stored view at every spot. The red glow is how well each place matches; the green ring is the best match. It is a single look, not a flight.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Tapping the map</dt><dd>Puts the fly down; its facing does not matter because of the north-up trick.</dd><dt>Contrast filter</dt><dd>Stretches every view to the same contrast; turn it on in the fog of chapter 7.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> tap in several places in clear weather, <b>you will see</b> the green ring on or close to where you tapped, in most cases.</p><p><b>If you instead</b> tap on a plain corridor and look at the red glow, <b>you might see</b> the ring on a twin corridor elsewhere, with glow at several places.</p><p class="mean"><b>What it means:</b> one look finds the right place about three times in four; the belief over several looks is what makes it reliable.</p></div>
+    </div></details><!--/HOW:w-where-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="w4-c" aria-label="Map with the fly's belief about where it is"></canvas></div>
       <div class="side-panel">
         <p class="cap">Tap the map to put the fly down. Its compass turns what the camera sees so north is up, so which way it faces does not matter. It compares that view with the view stored at every spot; the red glow shows how well each place matches, and the green ring is its best guess.</p>
@@ -644,7 +757,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <h3>The ladder, from the lab</h3>
   <div class="widget ladder" id="w-ladder">
     <div class="wh"><h4>Each idea, on the same drops</h4><span>share that reached the goal · dropped anywhere</span></div>
-    <div class="where">
+    <!--HOW:w-ladder--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A bar chart of how many drops reached the goal as the ideas were added, from route memory alone to the full fly. It is a set of fixed lab results, not something you can run.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>No controls</dt><dd>The widget is a record of what we measured. The numbers underneath say how many mazes and drops there were and how uncertain they are.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> read the bars from top to bottom, <b>you will see</b> a slow rise and then a big step at the last bar.</p><p><b>If you instead</b> compare "+ keeping track" with "+ learning flights", <b>you might see</b> a small difference, inside the uncertainty of about ±8 points.</p><p class="mean"><b>What it means:</b> finding the route is not the same as staying on it, and the map was the idea that closed the gap.</p></div>
+    </div></details><!--/HOW:w-ladder-->
+        <div class="where">
       <div class="stepline"><div class="lbl"><b>Route memory only</b></div><div class="bar"><i style="width:25%"></i></div><div class="readout">25%</div></div>
       <div class="stepline"><div class="lbl"><b>+ learning flights</b></div><div class="bar"><i style="width:30%"></i></div><div class="readout">30%</div></div>
       <div class="stepline"><div class="lbl"><b>+ 4 heights, a memory per height, swarm of 3</b></div><div class="bar"><i style="width:55%"></i></div><div class="readout">55%</div></div>
@@ -667,7 +785,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Press the button to measure it in the page. For three flies, the widget measures how much newer a random spot away from the route looks than a spot on the route, at heights from 0.5 to 1.5. A bigger gap means a clearer signal for steering.</p>
   <div class="widget" id="w-cliff">
     <div class="wh"><h4>The height cliff</h4><span>how clearly the route stands out at each height</span></div>
-    <canvas class="chart" id="hc-c" height="250" aria-label="The route's signal against flying height for three flies"></canvas>
+    <!--HOW:w-cliff--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>At each flying height from 0.5 to 1.5, for three flies, the widget measures how much newer a random place away from the route looks than a place on the route. A bigger gap is a clearer signal for steering. The fly learned the route at height 1.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Measure it</dt><dd>Runs the measurement; it takes a moment.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> press "Measure it" and look at the gap at height 1, <b>you will see</b> the biggest gap at 1, shrinking toward 0.5 and 1.5.</p><p><b>If you instead</b> look at the fly that learned at several heights, <b>you might see</b> a gap that stays larger across heights.</p><p class="mean"><b>What it means:</b> a memory is only good at the height it was made, so the fly should practise at several heights and keep a memory for each.</p></div>
+    </div></details><!--/HOW:w-cliff-->
+        <canvas class="chart" id="hc-c" height="250" aria-label="The route's signal against flying height for three flies"></canvas>
     <div class="legend2"><span><i class="dot" style="background:#ff5a5a"></i>trained at height 1 only</span><span><i class="dot" style="background:#ffa940"></i>4 heights, one memory</span><span><i class="dot" style="background:#38e08a"></i>4 heights, a memory per height</span></div>
     <div class="row" style="gap:8px"><button class="btn primary" id="hc-go">Measure it</button></div>
     <div class="status" id="hc-out">Press the button (about 10 seconds: it teaches three more flies).</div>
@@ -700,7 +823,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <div class="predict" id="pr-fog"></div>
   <div class="widget" id="w-weather">
     <div class="wh"><h4>Weather and the contrast filter</h4><span>choose a weather</span></div>
-    <div class="seg" id="wx-pick" role="group" aria-label="Weather"></div>
+    <!--HOW:w-weather--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The same spot in different weather. The pictures show what the camera reports and what the fly's brain gets after the contrast filter, and a bar shows how familiar it looks against the clear-weather memory.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Weather buttons</dt><dd>Pick fog, haze, dusk, night, overcast or a noisy camera. These are the conditions the fly did not learn in.</dd><dt>Position along the route</dt><dd>Chooses where on the route to look.</dd><dt>Contrast filter on</dt><dd>Stretches every view to the same spread, like the gain control in real eyes.</dd><dt>Frames averaged per step (1 / 4 / 16)</dt><dd>Averages several camera frames, which cuts random noise by the square root of the number.</dd><dt>Smooth every view</dt><dd>Averages each sensor with its neighbours.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> choose fog and turn the contrast filter on and off, <b>you will see</b> the foggy picture flat and grey without the filter, and clear-looking with it.</p><p><b>If you instead</b> choose night and try 1, 4 and 16 frames, <b>you might see</b> a grainy picture that clears up as you average more frames.</p><p class="mean"><b>What it means:</b> fog changes the contrast of the picture, so a contrast filter cures it; night changes the noise, so averaging cures it.</p></div>
+    </div></details><!--/HOW:w-weather-->
+        <div class="seg" id="wx-pick" role="group" aria-label="Weather"></div>
     <div class="row" style="gap:18px">
       <label class="switch-row"><input type="checkbox" id="wx-filter" checked> Contrast filter on</label>
       <label class="switch-row"><input type="checkbox" id="wx-smooth"> Smooth every view</label>
@@ -742,7 +870,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <div class="idea"><small>The idea</small>Several looks at slightly different patches of ground are worth more than one look repeated, as long as the members see different things.</div>
   <div class="widget" id="w-swarm">
     <div class="wh"><h4>Where each fly looks</h4><span>pick a layout</span></div>
-    <div class="seg" id="sw-layout" role="group" aria-label="Layout"><button aria-pressed="false" data-v="one">1 fly</button><button aria-pressed="true" data-v="c3">Circle of 3</button><button aria-pressed="false" data-v="c5">Circle of 5</button><button aria-pressed="false" data-v="row">Three circles in a row (2 + 3 + 2)</button></div>
+    <!--HOW:w-swarm--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>Where each member of the swarm looks. The map shows the camera frame and a small box for each member's patch of ground; the pictures show what each member sees. Every member contributes an opinion on the nine directions, and the opinions are added up.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Layout buttons</dt><dd>One fly, a circle of three, a circle of five, or three circles in a row.</dd><dt>Circle size</dt><dd>How far from the centre each member looks. Too small and they all see the same thing; too large and they leave the frame.</dd><dt>Position along the route</dt><dd>Moves the fly to see the patches at another spot.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> choose a circle of five and slide the circle size from small to large, <b>you will see</b> the five boxes spreading from one patch to five clearly different ones.</p><p><b>If you instead</b> choose the three circles in a row, <b>you might see</b> seven boxes spanning the width of the frame, looking left, centre and right.</p><p class="mean"><b>What it means:</b> a swarm only helps when its members see different things, which is the result of the first guide.</p></div>
+    </div></details><!--/HOW:w-swarm-->
+        <div class="seg" id="sw-layout" role="group" aria-label="Layout"><button aria-pressed="false" data-v="one">1 fly</button><button aria-pressed="true" data-v="c3">Circle of 3</button><button aria-pressed="false" data-v="c5">Circle of 5</button><button aria-pressed="false" data-v="row">Three circles in a row (2 + 3 + 2)</button></div>
     <div class="rowc">
       <div class="mapbox"><canvas class="map" id="sw-c" aria-label="Map with each member's patch of ground"></canvas></div>
       <div class="side-panel">
@@ -780,7 +913,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <div class="predict" id="pr-wind"></div>
   <div class="widget" id="w-break">
     <div class="wh"><h4>Try to break it</h4><span>the full fly (learning flights + tracking + map)</span></div>
-    <div class="rowc">
+    <!--HOW:w-break--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The full in-page fly is dropped on the map and you break one thing at a time: wind that pushes it, a bad odometer, the helicopter tilting, a wrong compass. Each slider is a different kind of fault; the tally says how many drops reached the goal.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Wind</dt><dd>A steady push the fly does not know about. What it sees is still true, so its belief should survive.</dd><dt>Odometer heading error / noise</dt><dd>Its estimate of the way it moved is wrong by a fixed angle or randomly each step. This one corrupts the belief.</dd><dt>Odometer distance error</dt><dd>It thinks it moved further or less far than it did.</dd><dt>Roll and pitch</dt><dd>The helicopter tilts, so the camera looks at the wrong patch of ground (chapter 10).</dd><dt>Counter-rotate / attitude error</dt><dd>A gyro-like sensor that undoes the tilt, with the error it makes.</dd><dt>Compass error</dt><dd>The heading is wrong each step; the map's north-up views are turned wrongly.</dd><dt>Optic-flow odometer</dt><dd>The odometer sees the true ground motion, wind included.</dd><dt>Drop it / Try 8 drops</dt><dd>One drop, or eight with a tally.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> set the wind to 30% and try 8 drops, <b>you will see</b> most still reaching the goal.</p><p><b>If you instead</b> instead set the odometer heading error to 17° and try 8 drops, <b>you might see</b> a few more failures, since the belief is carried to the wrong place.</p><p class="mean"><b>What it means:</b> wind moves the aircraft but not what it sees; a wrong odometer moves what it believes, so the second does more damage per unit of error.</p></div>
+    </div></details><!--/HOW:w-break-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="bk-c" aria-label="The maze with the fly and its trails"></canvas><div class="prog"><i id="bk-prog"></i></div></div>
       <div class="side-panel">
         <div class="controls" style="grid-template-columns:minmax(0,1fr)">
@@ -848,7 +986,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Everything above used the same maze, or the two mazes the fly was developed on. That flatters it. Making four more mazes (the same generator, different seeds) showed something else: in some mazes the fly is nearly perfect and in others it is lost almost every time. Across six 6 × 6 mazes, with 16 drops each, the full fly (route flown three times) got within 0.8 cells of the goal 81%, 94%, 88%, 0%, 25% and 25% of the time: <b>54% overall</b>, not the 95–100% of the first two.</p>
   <div class="widget" id="w-mazes">
     <div class="wh"><h4>The same fly, different mazes</h4><span>each maze teaches its own fly (about 10 seconds)</span></div>
-    <div class="seg" id="mz-pick" role="group" aria-label="Maze"></div>
+    <!--HOW:w-mazes--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The same fly, taught in a different maze each time. Each maze has its own fly, trained in the page (about 10 seconds), and you drop it eight times. The result shows that the fly is nearly perfect in some mazes and lost in others.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Maze buttons</dt><dd>Choose which maze the fly learns.</dd><dt>Try 8 drops / Stop</dt><dd>Eight drops with a score, or stop.</dd><dt>Show the route</dt><dd>Draws the route over the maze.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> pick the first maze and try 8 drops, <b>you will see</b> most drops reaching the goal.</p><p><b>If you instead</b> pick another maze, wait for it to train, and try 8 drops, <b>you might see</b> a different success rate, sometimes much lower.</p><p class="mean"><b>What it means:</b> a good result in two mazes flatters the fly; how long and look-alike the route is matters as much as the fly.</p></div>
+    </div></details><!--/HOW:w-mazes-->
+        <div class="seg" id="mz-pick" role="group" aria-label="Maze"></div>
     <div class="rowc">
       <div class="mapbox"><canvas class="map" id="mz-c" aria-label="The chosen maze with the fly's flights"></canvas><div class="prog"><i id="mz-prog"></i></div></div>
       <div class="side-panel">
@@ -910,7 +1053,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>So far the camera looked straight down from a helicopter that flew perfectly level. A real one is never level. It <b>rolls</b> (one side dips), <b>pitches</b> (nose up or down) and <b>yaws</b> (turns around its vertical axis: that is its heading). The camera is bolted to the body, so when the body tilts, the camera looks at a different patch of ground, and because the lens is wide, the patch is also stretched on the side that is leaning away. Yaw does two other things: the compass reading is what turns the camera picture "north-up" for the map (chapter 5), and the heading is what the odometer adds up when it keeps track (chapter 4).</p>
   <div class="widget" id="w-tilt">
     <div class="wh"><h4>Tilt the helicopter</h4><span>the white box is where a level camera looks, the red one where the tilted camera looks</span></div>
-    <div class="rowc">
+    <!--HOW:w-tilt--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A helicopter tilts: roll (one side down) and pitch (nose up). The camera is bolted to the body, so it looks at a different patch. The white box is where a level camera looks, the red box where the tilted one looks; the pictures under it show both.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Roll</dt><dd>Right side down.</dd><dt>Pitch</dt><dd>Nose up.</dd><dt>Position along the route</dt><dd>Moves the fly to see other places.</dd><dt>Compensate</dt><dd>Counter-rotates the camera from an estimate of the tilt, like a gyro.</dd><dt>Error of the estimate</dt><dd>How wrong that estimate is; a real sensor is never perfect.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> roll 15°, pitch 0, <b>you will see</b> the red box slides sideways by about a fifth of its length and stretches on the leaning side.</p><p><b>If you instead</b> turn on compensation with an error of 3°, then push the pitch to 40°, <b>you might see</b> the boxes nearly coinciding at 15° but drifting apart again at 40°.</p><p class="mean"><b>What it means:</b> a tilt shifts what the camera sees, and a modest attitude sensor undoes most of it, but a big tilt defeats it.</p></div>
+    </div></details><!--/HOW:w-tilt-->
+        <div class="rowc">
       <div class="mapbox"><canvas class="map" id="tl-c" aria-label="Map with the footprint of a level and of a tilted camera"></canvas></div>
       <div class="side-panel">
         <div class="controls" style="grid-template-columns:minmax(0,1fr)">
@@ -977,7 +1125,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Until now the maze fly had one sense: a downward camera. A real fly has a whole sensor suite, and each of its parts has a counterpart on a drone. Tap a sense to see what it does, what the drone's version is, what it could give the navigator, and whether we tested it.</p>
   <div class="widget" id="w-senses">
     <div class="wh"><h4>The fly's senses and a drone's</h4><span>tap a sense</span></div>
-    <div class="chain" id="sn-chain" role="group" aria-label="Senses"></div>
+    <!--HOW:w-senses--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The fly has more senses than an eye, and each has a counterpart on a drone. Tap one to read what it does, what the drone version is, what it could give the navigator, and whether we tested it.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>The sense buttons</dt><dd>One per sense. They are buttons so you can read them one at a time.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> tap the halteres and the compound eye, <b>you will see</b> a gyroscope role for the first and the camera role for the second.</p><p><b>If you instead</b> look at which senses have "tested" marked and which do not, <b>you might see</b> most of the exotic senses untested.</p><p class="mean"><b>What it means:</b> we have given the fly an eye, a compass and an odometer; most of the other senses are still ideas.</p></div>
+    </div></details><!--/HOW:w-senses-->
+        <div class="chain" id="sn-chain" role="group" aria-label="Senses"></div>
     <div class="detail" id="sn-detail" aria-live="polite"></div>
   </div>
   <div class="tbl"><table>
@@ -1029,7 +1182,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>The face fly of the main app is a different job (men or women, from 32 × 32 photos) but the same idea. One fly scores about 60% on 500 photos it never saw. With <b>25 flies</b>, each looking from its own point of a circle and trained in rounds, the swarm reached <b>68–69%</b>. The swarm is now built into the app: Train tab, step 3b.</p>
   <div class="widget ladder" id="w-faceswarm">
     <div class="wh"><h4>Faces: one fly and swarms</h4><span>share of 500 new photos right (men and women counted equally)</span></div>
-    <div class="where">
+    <!--HOW:w-faceswarm--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A bar chart of the face task: one fly against swarms of different sizes, scored on 500 new photos. It is a record of lab results, not something to run.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>No controls</dt><dd>It is a chart of fixed results.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> compare the one-fly bar with the swarm of 25, <b>you will see</b> a gain of several points.</p><p><b>If you instead</b> compare the bars for different swarm sizes, <b>you might see</b> the gain levelling off past about 25.</p><p class="mean"><b>What it means:</b> a swarm helps, but with diminishing returns once its members all make the same mistakes.</p></div>
+    </div></details><!--/HOW:w-faceswarm-->
+        <div class="where">
       <div class="stepline"><div class="lbl"><b>One fly</b></div><div class="bar"><i style="width:60%"></i></div><div class="readout">60%</div></div>
       <div class="stepline"><div class="lbl"><b>A swarm of 9 (circle of gaze)</b></div><div class="bar"><i style="width:65%"></i></div><div class="readout">65%</div></div>
       <div class="stepline"><div class="lbl"><b>25 flies that boost, equal votes</b></div><div class="bar"><i style="width:68.1%"></i></div><div class="readout">68.1%</div></div>
@@ -1302,6 +1460,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Sunlight scattered in the sky is partly polarised, and the direction of the polarisation draws a pattern that is fixed to the sun. Seen from below, the white dashes show it: the longer and brighter, the more polarised. Straight overhead the dashes always lie at a right angle to the sun's direction, so a fly that senses the angle of that overhead light knows where the sun is, and from the sun (plus the time) which way it is facing. Cloud washes the pattern out, but does not erase it.</p>
   <div class="widget" id="w-sky">
     <div class="wh"><h4>The sky overhead, and a heading from it</h4><span>north is up; the red line is the helicopter's nose</span></div>
+    <!--HOW:w-sky--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The sky as seen from below. The white dashes show the direction of polarisation of the light at each point, and their length and brightness show how strongly it is polarised. The orange disc is the sun; the red line is the helicopter's nose. The text under it says what an overhead sensor reads, and how noisy the reading is.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Sun's compass direction / height</dt><dd>Where the sun is. The pattern is fixed to it: move the sun and every dash turns.</dd><dt>Cloud</dt><dd>Weakens the polarisation: the dashes shrink and the readings get noisier, but do not vanish.</dd><dt>Helicopter heading</dt><dd>Turns the nose; the sensor reads the pattern relative to the nose, so the reading changes with heading. That is how it works as a compass.</dd><dt>Take 20 readings of the heading</dt><dd>Samples the noise: it shows the average error and the spread over twenty readings.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> lower the sun to 10° and turn the cloud to 0, <b>you will see</b> long bright dashes all over and a small noise figure: a good compass.</p><p><b>If you instead</b> raise the sun to 85° or the cloud to 100%, and take 20 readings, <b>you might see</b> short faint dashes and a much larger spread.</p><p class="mean"><b>What it means:</b> the sky is the best compass when the sun is low and the sky clear, and the worst when the sun is overhead, but it still works under cloud.</p></div>
+    </div></details><!--/HOW:w-sky-->
     <div class="rowc">
       <div class="mapbox"><canvas class="w3" id="sk-c" aria-label="The sky seen from below, with dashes showing the direction and strength of polarisation"></canvas></div>
       <div class="side-panel">
@@ -1325,6 +1488,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Here the fly has no camera for a moment. It reads a few numbers: how strong the local magnetic field is, how loud a radio transmitter is, how high the ground is. Each reading rules out every place where the field has a different value. Click to put the fly somewhere; the white patches are the places still possible. A field that hardly changes with position (turn the strength down) rules out almost nothing; a noisy reading smears the patch; two or three fields together usually pin it down.</p>
   <div class="widget" id="w-fields">
     <div class="wh"><h4>Place fingerprints</h4><span>click the map to move the fly (red); colours show the field you pick</span></div>
+    <!--HOW:w-fields--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The fly reads a few numbers (magnetic fields, a radio signal, the ground height) instead of looking. The map is coloured by the field you choose; the white patches show every place consistent with the readings, given the noise. The red cross is the fly's real position.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Show</dt><dd>Which field to colour the map with, just for display.</dd><dt>The fly reads</dt><dd>Which fields it actually measures. More fields, more constraints.</dd><dt>Noise of each reading</dt><dd>How inexact the readings are; it sets how fat the white patches are.</dd><dt>How much the fields vary</dt><dd>The strength of the changes from place to place. A flat field says nothing.</dd><dt>New noise</dt><dd>Draws a fresh set of noise, so you can see how much the answer wobbles.</dd><dt>Clicking the map</dt><dd>Moves the fly.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> switch on only magnetic C (coarse), then also magnetic A (fine), <b>you will see</b> a huge white blob with one field, and a few smaller patches with two.</p><p><b>If you instead</b> turn the strength down to 0.2× and press "New noise" a few times, <b>you might see</b> the patches swelling to cover much of the map and jumping around.</p><p class="mean"><b>What it means:</b> a field gives a position only as well as it changes with place compared with how noisy it is: error = noise ÷ slope.</p></div>
+    </div></details><!--/HOW:w-fields-->
     <div class="rowc">
       <div class="mapbox"><canvas class="map" id="fd-c" aria-label="A field map with the places consistent with the fly's readings in white"></canvas></div>
       <div class="side-panel">
@@ -1347,6 +1515,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <h3>Try it: the ladder of scales</h3>
   <div class="widget" id="w-scale">
     <div class="wh"><h4>How far, and how fine</h4><span>approximate; figures as reported by the sources above</span></div>
+    <!--HOW:w-scale--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>Each navigation method is a dot: how far it works (left to right) against how fine a position it gives (bottom is finer). The dashed line links them in the order of the ladder. The figures are the ones reported by the sources in this chapter (the sextant and the lab fly are our own estimates).</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>No controls</dt><dd>The chart is a map of the idea space. Read the labels.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> look for a dot that is both far-reaching and fine, <b>you will see</b> none: the dots run from top-left (global, coarse) to bottom-right (local, fine).</p><p><b>If you instead</b> find where the lab's fly sits relative to the radio and scene-matching dots, <b>you might see</b> in the same corner, finer than the global methods but limited in range.</p><p class="mean"><b>What it means:</b> real navigation is a ladder of senses: coarse and global at the top, fine and local at the bottom, each handing over to the next.</p></div>
+    </div></details><!--/HOW:w-scale-->
     <canvas class="w3" id="ld2-c" aria-label="Chart of range against position accuracy for different navigation methods"></canvas>
     <div class="status" id="ld2-out"></div>
   </div>
@@ -1367,6 +1540,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>A desert ant walks out hundreds of steps in a wiggly search for food, and then walks back <i>in a straight line</i>. It has no map and sees no landmarks near the nest. It does it with two things: a compass (the sky) and a step counter. At every step it adds a little arrow, the way it just moved, to a running total: the <b>home vector</b>. The insect brain stores that total as eight numbers, one for each of eight compass directions (the little bars in the corner). The black square is home, the grey line is the real walk, the green dashed line is where the ant <i>thinks</i> it walked, and the red arrow is the walk home.</p>
   <div class="widget" id="w-ant">
     <div class="wh"><h4>Out and back, with a faulty compass</h4><span>grey: the real path; green: the path the ant believes; red: its way home</span></div>
+    <!--HOW:w-ant--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>An ant walks out on a winding path (grey) and then goes home. At every step it adds the way it moved to a running total, the home vector. The green dashed line is the path the ant believes it took, the red arrow is its walk home, the red dot is where it ends, and the black square is home. The eight small bars in the corner are the home vector as the insect brain stores it: its pull along eight compass axes.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Where the heading comes from</dt><dd>A gyro, whose error accumulates, or a sky compass, whose error is fresh each step and does not, or a perfect heading. This is the comparison that matters.</dd><dt>Heading error</dt><dd>How wrong the heading is each step. With the sky it is applied three times as strongly, to show it still wins.</dd><dt>Step-counter error</dt><dd>How wrong its distance is, as a percentage.</dd><dt>A different walk</dt><dd>A new random outbound path.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> gyro with 2° error per step, then switch to the sky with the same slider, <b>you will see</b> a believed path that curls far from the real one and a miss of tens of steps with the gyro, and a miss of a step or two with the sky.</p><p><b>If you instead</b> set the heading to Perfect and put 15% on the step counter, <b>you might see</b> the ant going the right way but stopping short of or past home.</p><p class="mean"><b>What it means:</b> heading errors pile up and distance errors only scale; so every long trip needs a heading reference that does not drift.</p></div>
+    </div></details><!--/HOW:w-ant-->
     <div class="rowc">
       <div class="mapbox"><canvas class="w3" id="an-c" aria-label="An ant's outbound path, its believed path and its return"></canvas></div>
       <div class="side-panel">
@@ -1390,6 +1568,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Back to the ladder of scales: a flight needs a <b>heading</b>, a <b>speed or distance</b>, the <b>wind</b> and a <b>place</b>, and each of the four needs a sensor that works <i>today</i>. Choose a day, then switch sensors on and off. A bar turns green when something you carry works for that job in those conditions. The numbers are our own rough scores from this chapter's catalogue, not measurements.</p>
   <div class="widget" id="w-pick">
     <div class="wh"><h4>Which rungs of the ladder have you got?</h4><span>our scores, from the catalogue above</span></div>
+    <!--HOW:w-pick--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A flight needs a heading, a speed or distance, the wind and a place. Choose a day and tick the sensors you carry. Each bar says how well the best of your sensors does that job today, using our own rough scores.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Today's flight</dt><dd>The conditions: night, cloud, over water, flat ground, fog, or GPS jammed.</dd><dt>What you carry</dt><dd>Tick and untick the sensors. Each has a role (heading, speed, wind, place) and a score that depends on the day.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> pick "Night over the sea" and add the star compass and the magnetometer, <b>you will see</b> the heading and place bars turning green.</p><p><b>If you instead</b> pick "Over a city, GPS jammed" with GPS ticked, <b>you might see</b> GPS giving a place bar of zero, so the others have to carry it.</p><p class="mean"><b>What it means:</b> the ladder is complete only when every job has a sensor that fails differently from the rest.</p></div>
+    </div></details><!--/HOW:w-pick-->
     <div class="f">Today's flight<div class="seg" id="pk-scen" role="group" aria-label="Scenario"></div></div>
     <div class="rowc">
       <div class="side-panel"><div class="f">What you carry<div id="pk-sens" style="display:grid;gap:6px"></div></div></div>
@@ -1405,6 +1588,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>A cruise missile has no camera for most of its flight. It has a radar altimeter that measures its height above the ground as it goes, and a stored map of heights. A single reading says almost nothing, but a <i>stretch</i> of readings is a fingerprint: the rises and falls of the last few kilometres can only fit a few places along the track. The top plot is the stored terrain. The amber band is the stretch just flown. The red line is what the altimeter measured (with noise); the grey dashed line is the stored terrain where it fits best; the green curve at the bottom is how well each place fits.</p>
   <div class="widget" id="w-ter">
     <div class="wh"><h4>Where along the track does this profile fit?</h4><span>amber line: the true position</span></div>
+    <!--HOW:w-ter--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>Terrain matching. The top plot is the stored ground height along the track. The aircraft measures the height beneath it over the last stretch (red, middle plot) and slides that profile along the stored one (the green curve at the bottom is how well each place fits). The peak is its guess; the orange line is where it really is.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>How hilly</dt><dd>The relief of the ground. No relief means no profile.</dd><dt>Altimeter noise</dt><dd>How inexact the height readings are.</dd><dt>Length of the stretch</dt><dd>How long a profile it uses.</dd><dt>Where the aircraft really is</dt><dd>Moves the true position.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> keep it hilly with low noise and slide the true position, <b>you will see</b> a single sharp peak under the orange line.</p><p><b>If you instead</b> take the hills to zero, or raise the noise and shorten the stretch, <b>you might see</b> a flat curve (nothing to match) or several peaks (look-alike stretches).</p><p class="mean"><b>What it means:</b> terrain matching needs relief and a long enough profile; over water or a plain it says nothing.</p></div>
+    </div></details><!--/HOW:w-ter-->
     <canvas class="w3" id="tm-c" aria-label="Stored terrain, the measured profile and the fit along the track"></canvas>
     <div class="controls">
       <label for="tm-rel">How hilly <output id="tm-rel-o"></output><input type="range" id="tm-rel" min="0" max="100" value="60"></label>
@@ -1423,6 +1611,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>The Earth's field leans into the ground at an angle (the <b>dip angle</b>: flat at the equator, straight down at the poles) and is stronger toward the poles. Those two numbers together are a fingerprint of latitude. Real fields are lumpy, because rocks in the crust add their own magnetism, and the lumps are what can tell two places on the same latitude apart. Drag to turn the globe; click to put the turtle somewhere; then send it home to the star (its natal beach). It steers only by making its two numbers match the beach's. Slide the lumpiness to zero and see what it cannot do.</p>
   <div class="widget" id="w-globe">
     <div class="wh"><h4>Homing on two numbers</h4><span>colour: field strength (blue weak, red strong); white line: the turtle's track</span></div>
+    <!--HOW:w-globe--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A globe coloured by the Earth's magnetic field strength. The turtle (red) reads two numbers, the dip angle and the field strength, and tries to swim to a place with the same two numbers as its natal beach (the star). The white line is its track.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Dragging the globe</dt><dd>Turns it; clicking puts the turtle somewhere else.</dd><dt>How lumpy the field is</dt><dd>The strength of the local anomalies from rocks. Without them both numbers depend on latitude alone.</dd><dt>Swim home</dt><dd>Runs the homing: first downhill in the two numbers (which finds the right latitude), then along that latitude reading the lumps, then a fine adjustment.</dd><dt>Put the turtle back</dt><dd>Returns it to the start.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> set lumpiness to 0 and press "Swim home", <b>you will see</b> the turtle reaching the beach's latitude and stopping somewhere along it.</p><p><b>If you instead</b> set lumpiness to 30–60 and try again, then click the turtle somewhere else and repeat, <b>you might see</b> sometimes landing on the beach and sometimes on a place with the same two numbers.</p><p class="mean"><b>What it means:</b> two numbers give a coarse address in a smooth world and a finer one in a lumpy world, but not always a unique one.</p></div>
+    </div></details><!--/HOW:w-globe-->
     <div class="rowc">
       <div class="mapbox"><canvas class="w3" id="gb-c" aria-label="A globe coloured by magnetic field strength with a turtle and a natal beach"></canvas></div>
       <div class="side-panel">
@@ -1442,6 +1635,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>At night the stars turn around the pole at 15 degrees an hour. In a long exposure they draw arcs, and all the arcs are centred on one point: the pole, due north, as many degrees above the horizon as your latitude. Aim the camera north and tilt it up, take a long exposure, and the centre of the arcs <i>is</i> a compass and a latitude gauge. Take a very short exposure and the stars are points, but you cannot see so many. The number under the picture says how much a star smears in the exposure, which is the same problem as motion blur in the sensor chapter.</p>
   <div class="widget" id="w-star">
     <div class="wh"><h4>Star trails</h4><span>a camera looking at the night sky; the pole is the centre of the arcs</span></div>
+    <!--HOW:w-star--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A long-exposure photo of the night sky from a camera on the ground. Stars turn about the pole at 15° an hour, so each draws an arc. The arcs share a centre, the celestial pole, which is due north and as high above the horizon as the latitude. The red mark shows it.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Latitude</dt><dd>Sets how high the pole is in the sky.</dd><dt>Camera points toward / tilted up</dt><dd>Aims the camera. The pole is only in view if you aim north and up to about the latitude.</dd><dt>Exposure</dt><dd>How long the shutter is open: longer means longer arcs and more smear.</dd><dt>Mark the pole</dt><dd>Shows where the arcs' centre is.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> latitude 45°, camera pointing north (0°) and tilted up 45°, <b>you will see</b> arcs circling the red mark right at the middle of the picture.</p><p><b>If you instead</b> turn the camera east and shorten the exposure to a few minutes, <b>you might see</b> gentle curved arcs with the pole off the picture, then short dashes, then dots.</p><p class="mean"><b>What it means:</b> the arcs' centre is a compass and a latitude gauge; a long exposure shows them, but costs smear, which a moving camera cannot afford.</p></div>
+    </div></details><!--/HOW:w-star-->
     <canvas class="w3" id="st-c" aria-label="Star trails around the celestial pole"></canvas>
     <div class="controls">
       <label for="st-lat">Latitude <output id="st-lat-o"></output><input type="range" id="st-lat" min="0" max="85" value="45"></label>
@@ -1461,6 +1659,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>The pilot's oldest sum. An aeroplane moves through the air at one speed in the direction its nose points. The air itself moves over the ground. The motion over the ground is the sum of the two: draw the nose vector, draw the wind from its tip, and the ground vector closes the triangle. To fly a <i>track</i> over the ground you must point the nose a little into the wind (the <b>crab angle</b>). That is exactly what the fly's wind memory does over the lake.</p>
   <div class="widget" id="w-tri">
     <div class="wh"><h4>The wind triangle</h4><span>green: through the air; orange: the wind; red: over the ground</span></div>
+    <!--HOW:w-tri--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The pilot's oldest sum. The green arrow is the aircraft through the air, in the direction its nose points. The orange arrow is the wind, added on its tip. The red arrow, from the start to the end, is the motion over the ground. The dashed line is the track you want.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>What do you want to find out?</dt><dd>Either the heading to fly for a chosen track, or the track that a chosen heading gives.</dd><dt>Air speed / Wind speed / Wind direction</dt><dd>The two vectors that make the triangle.</dd><dt>The track I want / The heading I fly</dt><dd>The one you set, depending on the mode.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> wind 30 blowing toward 90° (east), track 0° (north), "heading for my track", <b>you will see</b> the nose pointing a little west of north and a ground speed a bit below the air speed.</p><p><b>If you instead</b> turn the wind to blow along the track (0° or 180°), <b>you might see</b> no crab angle at all, but a ground speed changed by the full wind speed.</p><p class="mean"><b>What it means:</b> a crosswind costs heading and a head or tail wind costs time; to keep a track you must point into the wind.</p></div>
+    </div></details><!--/HOW:w-tri-->
     <div class="rowc">
       <div class="mapbox"><canvas class="w3" id="tr-c" aria-label="The wind triangle"></canvas></div>
       <div class="side-panel">
@@ -1480,6 +1683,105 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
     <ol><li>Wind 30 from the west (blowing toward 90°) and a track of 0°: the nose must point several degrees to the left of north, and the ground speed is a little lower than the air speed.</li>
     <li>Turn the wind to blow along the track (0° or 180°): no crab angle at all, but the ground speed changes by the full wind speed. Headwinds cost time; crosswinds cost heading.</li>
     <li>Make the wind as strong as the air speed and see what happens to a track against it.</li></ol></div>
+
+  <h3>Two compasses that disagree</h3>
+  <p>A real fly keeps its heading in a ring of nerve cells in the middle of its brain: one bump of activity on the ring says which way the fly is facing. The bump is pulled around by whatever it can see of the world, the sky's polarisation or landmarks, and by its own turning. What happens when two cues <i>disagree</i>? The ring does what a careful navigator does: it trusts each cue in proportion to how reliable it is. Below, the orange bars are the ring. The green arrow is the sky compass, the red arrow is the landmarks, and the black arrow is the ring's answer.</p>
+  <div class="widget" id="w-compass">
+    <div class="wh"><h4>The head-direction ring and a conflict of cues</h4><span>orange: the ring; black: its answer</span></div>
+    <!--HOW:w-compass--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The orange bars are a ring of head-direction cells; the bump of activity points at the direction the fly believes it faces. Two cues pull on it: the sky (green) and the landmarks (red). The ring combines them, weighting each by how reliable it is (the arrows' lengths), and the black arrow is the result.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Direction the sky / the landmarks say</dt><dd>Where each cue says north (or forward) is.</dd><dt>How reliable each is</dt><dd>How trusted each cue is. Cloud, poor light or moved landmarks lower it.</dd><dt>Turn the landmarks 90°</dt><dd>Simulates the world changing under the fly: a landmark map that has shifted.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> make both cues equally reliable and 20° apart, <b>you will see</b> the ring pointing half way between, with a narrow bump.</p><p><b>If you instead</b> turn the landmarks 90° and then 180° from the sky, with the reliabilities equal, <b>you might see</b> the bump becoming broad and shrinking: the ring has no good answer.</p><p class="mean"><b>What it means:</b> a careful navigator averages by reliability, and when equally good cues strongly disagree the honest state is "unsure".</p></div>
+    </div></details><!--/HOW:w-compass-->
+    <div class="rowc">
+      <div class="mapbox"><canvas class="w3" id="cm-c" aria-label="A ring of head-direction cells pulled by two cues"></canvas></div>
+      <div class="side-panel">
+        <div class="controls" style="grid-template-columns:minmax(0,1fr)">
+          <label for="cm-a">The sky says we face <output id="cm-a-o"></output><input type="range" id="cm-a" min="0" max="359" value="40"></label>
+          <label for="cm-ka">How reliable the sky is <output id="cm-ka-o"></output><input type="range" id="cm-ka" min="0" max="100" value="80"></label>
+          <label for="cm-b">The landmarks say we face <output id="cm-b-o"></output><input type="range" id="cm-b" min="0" max="359" value="130"></label>
+          <label for="cm-kb">How reliable the landmarks are <output id="cm-kb-o"></output><input type="range" id="cm-kb" min="0" max="100" value="40"></label>
+        </div>
+        <button class="btn" id="cm-jump">Turn the landmarks 90°</button>
+        <div class="status" id="cm-out"></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Speed from the ground: a high, fast helicopter looks like a low, slow one</h3>
+  <p>The optic-flow odometer measures how fast the ground slides past the camera. But the ground slides past faster when you are <i>low</i>: the same speed looks quicker from 10 metres than from 100. So flow alone is speed divided by height, and a fast aircraft at height looks the same as a slow one near the ground. Press "Run it", then set the two panels so they slide at the same rate: the dots in the left panel are bigger and sparser, because it is lower. A fly that knows its height can turn flow into speed; one that does not cannot.</p>
+  <div class="widget" id="w-flow">
+    <div class="wh"><h4>Optic flow depends on height</h4><span>two helicopters, two heights</span></div>
+    <!--HOW:w-flow--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>Two helicopters look at the ground. Each panel shows a patch of ground sliding past, at the speed set by the speed and height sliders. The ground slides faster in the picture the lower and faster you are. The text compares the two "flow" numbers (speed divided by height).</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Speed and height of A and B</dt><dd>The two helicopters. Setting B to twice the speed and twice the height of A gives the same flow.</dd><dt>Run it</dt><dd>Starts and stops the animation.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> press "Run it" and set B to double A's speed and double its height, <b>you will see</b> the dots sliding at the same rate in both panels, but the dots in B smaller and denser.</p><p><b>If you instead</b> change only the height of B, <b>you might see</b> B's slide speeding up or slowing as its height falls or rises.</p><p class="mean"><b>What it means:</b> optic flow gives speed divided by height, so the fly must know its height (from the size of the ground texture or an altimeter) to get its speed.</p></div>
+    </div></details><!--/HOW:w-flow-->
+    <canvas class="w3" id="of-c" aria-label="Two panels of ground texture sliding past at different speeds and heights"></canvas>
+    <div class="controls">
+      <label for="of-v1">Helicopter A: speed <output id="of-v1-o"></output><input type="range" id="of-v1" min="2" max="40" value="10"></label>
+      <label for="of-h1">Helicopter A: height <output id="of-h1-o"></output><input type="range" id="of-h1" min="10" max="100" value="20"></label>
+      <label for="of-v2">Helicopter B: speed <output id="of-v2-o"></output><input type="range" id="of-v2" min="2" max="40" value="20"></label>
+      <label for="of-h2">Helicopter B: height <output id="of-h2-o"></output><input type="range" id="of-h2" min="10" max="100" value="40"></label>
+    </div>
+    <button class="btn primary" id="of-run">Run it</button>
+    <div class="status" id="of-out"></div>
+  </div>
+
+  <h3>The sun's clock</h3>
+  <p>The sun is a good compass only if you know the time, because it moves: about 15 degrees an hour on average, quickly near noon in summer and at low latitudes, slowly at other times. Bees carry an internal clock for exactly this reason. The orange curve is the sun's compass direction through the day; the red dot is now. Choose a latitude and a day, then see how far the heading drifts if the fly ignores the sun's movement, or if its clock is a few minutes off.</p>
+  <div class="widget" id="w-sunclock">
+    <div class="wh"><h4>Where is the sun, and how fast is it moving?</h4><span>compass direction of the sun through the day</span></div>
+    <!--HOW:w-sunclock--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The sun's compass direction through the day, for a latitude and a day of the year. The orange curve is the sun, the red dot is the time you chose. The text gives its direction and height and how fast it is moving, and how wrong a heading learned from the sun becomes if the fly ignores the movement or its clock is off.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Latitude and day of the year</dt><dd>The curve depends on where you are and the season: fast in the tropics and at midsummer near noon, slow in other cases.</dd><dt>Time of day</dt><dd>Moves the red dot.</dd><dt>Minutes flown since the heading was set</dt><dd>How long the fly flies on a heading it set from the sun.</dd><dt>Error of the fly's clock</dt><dd>How wrong its sense of time is. A bee's clock must be right to a few minutes.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> latitude 50°, midsummer, 10:00, fly 60 minutes, <b>you will see</b> the sun moving about 15° an hour, so a heading left uncorrected for an hour is wrong by about 10–15°.</p><p><b>If you instead</b> move the latitude to 5° and the time to near noon, <b>you might see</b> the sun racing through the sky, so even a short flight changes its direction a lot.</p><p class="mean"><b>What it means:</b> a sun compass needs a clock; the nearer the sun is to overhead, the faster it swings and the more the clock matters.</p></div>
+    </div></details><!--/HOW:w-sunclock-->
+    <canvas class="w3" id="sc-c" aria-label="The sun's compass direction against the time of day"></canvas>
+    <div class="controls">
+      <label for="sc-lat">Latitude <output id="sc-lat-o"></output><input type="range" id="sc-lat" min="0" max="70" value="50"></label>
+      <label for="sc-day">Day of the year <output id="sc-day-o"></output><input type="range" id="sc-day" min="1" max="365" value="172"></label>
+      <label for="sc-t">Time of day <output id="sc-t-o"></output><input type="range" id="sc-t" min="40" max="200" value="100"></label>
+      <label for="sc-fly">Minutes flown since the heading was set <output id="sc-fly-o"></output><input type="range" id="sc-fly" min="0" max="180" value="60"></label>
+      <label for="sc-clk">Error of the fly's clock <output id="sc-clk-o"></output><input type="range" id="sc-clk" min="0" max="30" value="5"></label>
+    </div>
+    <div class="status" id="sc-out"></div>
+  </div>
+
+  <h3>Find the island you cannot see</h3>
+  <p>A swell crossing the open sea is a steady pattern of straight waves. An island disturbs it: it makes a calm patch downwind (a wave shadow), bends the waves round its edges and sends ripples back out in rings. Polynesian and Marshall Island navigators read these disturbances with their bodies, sometimes lying in the canoe, to find land beyond the horizon. Drag the boat around the sea and watch the "land near" meter, then press "Show the islands" to check.</p>
+  <div class="widget" id="w-swell">
+    <div class="wh"><h4>Reading land from the waves</h4><span>drag the boat; the white arrow is the direction the swell travels</span></div>
+    <!--HOW:w-swell--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>The sea seen from above, with a steady swell and hidden islands. Away from land the waves are straight and evenly spaced. An island makes a calm shadow downwind, bends the waves round its edges and sends ring-shaped ripples outward. The boat reads the waves and the meter shows how disturbed they are.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Swell travels toward</dt><dd>The direction of the open-sea swell; it is also a heading reference over open water.</dd><dt>Distance between waves</dt><dd>The wavelength; long swells are easier to read.</dd><dt>Number of islands</dt><dd>How many hidden islands are in the picture.</dd><dt>Show the islands</dt><dd>Reveals where they are, so you can check your guess.</dd><dt>Dragging the boat</dt><dd>Moves where the readings are taken.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> drag the boat across the open water far from the islands, <b>you will see</b> straight even waves and a low "land near" meter.</p><p><b>If you instead</b> drag it close to where waves look broken or ringed, and then press "Show the islands", <b>you might see</b> a high meter near an island, and calm patches downwind of it.</p><p class="mean"><b>What it means:</b> land far over the horizon can be read from the way it disturbs a swell, which is how Pacific navigators found islands without instruments.</p></div>
+    </div></details><!--/HOW:w-swell-->
+    <canvas class="w3" id="sw-c" aria-label="A sea with a swell and hidden islands"></canvas>
+    <div class="controls">
+      <label for="sw-d">Swell travels toward <output id="sw-d-o"></output><input type="range" id="sw-d" min="0" max="359" value="60"></label>
+      <label for="sw-l">Distance between waves <output id="sw-l-o"></output><input type="range" id="sw-l" min="20" max="120" value="60"></label>
+      <label for="sw-n">Number of islands <output id="sw-n-o"></output><input type="range" id="sw-n" min="1" max="3" value="2"></label>
+    </div>
+    <button class="btn" id="sw-show">Show the islands</button>
+    <div class="status" id="sw-out"></div>
+  </div>
+
+  <h3>Two radio towers: why the angle between them matters</h3>
+  <p>With a direction finder (an old automatic direction finder, or a modern radio receiver) an aircraft can tell which way a known tower lies, but only to within some error. One bearing puts it somewhere on a line; a second tower's bearing puts it at the crossing. But a crossing is a sharp point only if the two lines cross at a good angle. Drag the towers and the aircraft (red) around. The orange patch is every place that fits both bearings.</p>
+  <div class="widget" id="w-towers">
+    <div class="wh"><h4>Triangulating from towers</h4><span>drag the towers (black triangles) and the aircraft (red dot)</span></div>
+    <!--HOW:w-towers--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>Radio towers at known places and an aircraft that can only tell each tower's bearing to within some error. Each tower draws a wedge around its bearing; the orange patch is every place that fits all of them. Its size is the fix's uncertainty.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Bearing error</dt><dd>How inexact the direction finder is. The wedges widen with it.</dd><dt>Add a third tower</dt><dd>Adds another bearing to cut the patch down.</dd><dt>Dragging the towers and the aircraft</dt><dd>Changes the geometry, which is the point.</dd><dt>Put everything back</dt><dd>Restores the starting positions.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> drag the aircraft so the two bearings cross near a right angle, <b>you will see</b> a small compact orange patch.</p><p><b>If you instead</b> drag it onto the line joining the two towers, <b>you might see</b> a long thin streak: the position along the line is nearly unknown.</p><p class="mean"><b>What it means:</b> the geometry matters as much as the instrument: two lines that cross at a shallow angle give a poor fix, and a third tower rescues it.</p></div>
+    </div></details><!--/HOW:w-towers-->
+    <canvas class="w3" id="tw-c" aria-label="Two or three radio towers and the region consistent with the bearings"></canvas>
+    <div class="controls"><label for="tw-nz">Bearing error (one standard deviation) <output id="tw-nz-o"></output><input type="range" id="tw-nz" min="5" max="100" value="30"></label></div>
+    <label class="switch-row"><input type="checkbox" id="tw-3"> Add a third tower</label>
+    <button class="btn" id="tw-reset">Put everything back</button>
+    <div class="status" id="tw-out"></div>
+  </div>
 
 
   <h3>The catalogue</h3>
@@ -1576,6 +1878,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Drag the picture to turn it, scroll to zoom. The helicopter flies a route over hills that you can raise. The orange box is where the camera looks. If it holds its height above <i>sea level</i> (as a plane or a lazy helicopter would), it gets closer to the ground over a hill, so the view shrinks; in a valley it grows. If it follows the terrain with a radar altimeter, the view keeps its size and only the shading changes. The little picture is what the 20 × 14 sensors actually receive. The map beside it has contour lines.</p>
   <div class="widget" id="w-t3">
     <div class="wh"><h4>A route over hills, in 3D</h4><span>drag to rotate, scroll to zoom</span></div>
+    <!--HOW:w-t3--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A 3D heightfield with a route over it and a helicopter on the route. The orange box on the ground is the patch the camera sees. The small picture is the camera's own 20 × 14 view, and the map beside it is the same land from above with contour lines.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Dragging and scrolling</dt><dd>Rotates and zooms the 3D view.</dd><dt>Height of the hills</dt><dd>The relief.</dd><dt>Position along the route</dt><dd>Moves the helicopter.</dd><dt>Sun's compass direction</dt><dd>Changes which slopes are lit.</dd><dt>Hold height above sea level / Follow the terrain</dt><dd>Two ways to fly: constant absolute height (the view size changes over hills) or a radar altimeter keeping a constant height above the ground.</dd><dt>A lake across the middle</dt><dd>Adds a flat band of water.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> hills at 1.5 holding height, slide along the route over a ridge, <b>you will see</b> the orange box shrinking as it crosses the ridge and growing in valleys.</p><p><b>If you instead</b> switch to "Follow the terrain" and turn the lake on, <b>you might see</b> a box of constant size, and a camera picture of plain blue over the lake.</p><p class="mean"><b>What it means:</b> relief changes the scale of what the camera sees; water leaves it nothing to recognise.</p></div>
+    </div></details><!--/HOW:w-t3-->
     <div class="rowc">
       <div class="mapbox" style="max-width:560px"><canvas class="w3" id="t3-c" aria-label="A 3D terrain with a route and a helicopter whose camera footprint is shown"></canvas></div>
       <div class="side-panel">
@@ -1601,6 +1908,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>An aeroplane crosses a view length in a fraction of the time a helicopter does, so its picture is smeared along the direction of flight (<b>motion blur</b>); engine vibration shakes the camera (<b>jitter</b>); rain and dust leave blobs on the lens that sit in the same place in every picture (<b>smudges</b>); clouds drop moving <b>shadows</b>; and in autumn the greens turn yellow-brown (<b>season</b>). The fly learned the route in clear, steady conditions. Pick a condition below: the left picture is what it learned, the right is what it sees now, and the bar says whether it would still call the place familiar. Click the map to move along the route.</p>
   <div class="widget" id="w-wild">
     <div class="wh"><h4>What the camera sees in the wild</h4><span>left: learned; right: now</span></div>
+    <!--HOW:w-wild--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>Left: the picture the fly learned at a place on the route. Right: what it sees now in the wild. The bar says how different the two are, in units of the learned picture's own contrast; below about 0.5 the place still looks familiar. Effects: motion blur, vibration, dirt on the lens, cloud shadows and autumn colours.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Preset</dt><dd>A set of values: aeroplane, rain, cloud shadows, autumn, or all of them.</dd><dt>Motion blur</dt><dd>How far the ground smears during one picture, in view lengths. An aeroplane smears more.</dd><dt>Vibration</dt><dd>How much the camera shakes between pictures.</dd><dt>Dirt on the lens</dt><dd>The share of sensors covered by blobs, fixed on the sensors.</dd><dt>Cloud shadows / Autumn</dt><dd>Patches of darkness over the ground, and green turning to yellow-brown.</dd><dt>Contrast filter / Smooth</dt><dd>The cures: stretch the contrast, and average neighbouring sensors.</dd><dt>Clicking the map</dt><dd>Moves the fly along the route.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> press "Aeroplane" and tick Smooth, <b>you will see</b> a smeared picture, a difference score that falls once smoothed.</p><p><b>If you instead</b> press "Cloud shadows" and then tick the contrast filter, <b>you might see</b> dark patches on the right-hand picture and a score that improves only if a shadow covers the whole view.</p><p class="mean"><b>What it means:</b> the fly tolerates most of this because it compares directions through one camera; the one that really hurt in the lab was rain that arrived after training.</p></div>
+    </div></details><!--/HOW:w-wild-->
     <div class="rowc">
       <div class="mapbox"><canvas class="map" id="wl-map" aria-label="The maze with the fly's position"></canvas></div>
       <div class="side-panel">
@@ -1629,6 +1941,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>A navigator who cannot see the ground is never sure where the aircraft is, only <i>how unsure</i>. A heading that is wrong by a few degrees, or a wind that nobody measured, pushes the aircraft sideways in proportion to how far it has flown, so the area where it could be widens into a <b>cone</b> (amber). The fly can only recognise its goal when the cone has narrowed to inside what its camera sees (the red bar at B). Every cheap trick of this chapter works on the cone: the sky compass squeezes the heading error, the wind memory squeezes the wind, and every landmark it recognises on the way resets the cone to almost nothing.</p>
   <div class="widget" id="w-cone">
     <div class="wh"><h4>Will the goal be inside the cone?</h4><span>route A to B, 10 maze cells; amber: where the aircraft might be</span></div>
+    <!--HOW:w-cone--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A route from A to B. The amber cone is where the aircraft could be: it widens with distance flown because of heading error and unmeasured wind. The red bar at B is what the camera can see. The diamonds are landmarks the fly recognises; at each one the cone collapses.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Heading error</dt><dd>How wrong the heading is; it widens the cone in proportion to distance.</dd><dt>Wind nobody has measured</dt><dd>The sideways push as a share of the speed.</dd><dt>Landmarks it recognises</dt><dd>How often a place resets the doubt: every N cells, or never.</dd><dt>A sky compass</dt><dd>Caps the heading error at 1°.</dd><dt>A wind memory</dt><dd>Cuts the unmeasured wind to 15%.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> heading error 6° and wind 30%, then tick both the sky compass and the wind memory, <b>you will see</b> a wide cone at B shrinking to under a cell.</p><p><b>If you instead</b> leave both off and add a landmark every three cells, <b>you might see</b> a row of saw-teeth and B inside the last one.</p><p class="mean"><b>What it means:</b> every cheap trick is a way to shrink the cone, and recognising places is often cheaper than flying perfectly.</p></div>
+    </div></details><!--/HOW:w-cone-->
     <canvas class="w3" id="cn-c" aria-label="A cone of uncertainty widening along a route"></canvas>
     <div class="controls">
       <label for="cn-eps">Heading error <output id="cn-eps-o"></output><input type="range" id="cn-eps" min="0" max="20" value="6"></label>
@@ -1648,6 +1965,11 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Over land the fly can see the ground move, and so knows the wind. Over a lake the waves move, and the ground is gone. If it just points at the far shore it is blown sideways the whole way. With a <b>wind memory</b> it keeps the wind it measured on the near shore and steers a little into it (the <b>crab angle</b>), so its track over the water points where it wants. Gusts make the memory go stale.</p>
   <div class="widget" id="w-wt">
     <div class="wh"><h4>Crossing a lake in the wind</h4><span>grey: points at the far shore; green: wind memory plus crab angle</span></div>
+    <!--HOW:w-wt--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A lake crossing in a crosswind. The fly learns the wind on the near shore and then loses the ground over the water. The grey path just holds the route's direction; the green one uses the wind memory and a crab angle.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Wind speed / direction</dt><dd>The push and where it blows toward.</dd><dt>Gusts</dt><dd>Makes the wind wander around its mean, so the memory goes stale.</dd><dt>Fly it</dt><dd>Draws the two flights.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> wind 0.30 toward 90°, no gusts, press "Fly it", <b>you will see</b> the grey path ending several cells off the goal and the green one on it.</p><p><b>If you instead</b> add gusts, <b>you might see</b> the green path also starting to miss.</p><p class="mean"><b>What it means:</b> a wind memory fixes a steady wind, and gusts need a wind sense that keeps up.</p></div>
+    </div></details><!--/HOW:w-wt-->
     <canvas class="w3" id="wt-c" aria-label="Two flight paths across a lake in a crosswind"></canvas>
     <div class="controls">
       <label for="wt-w">Wind speed <output id="wt-w-o"></output><input type="range" id="wt-w" min="0" max="60" value="30"></label>
@@ -1684,7 +2006,12 @@ pre.cmd{overflow-x:auto;background:var(--paper);border:1px solid var(--line);bor
   <p>Training time is dominated by the learning flights, because they cover the whole map, so it grows with the <i>area</i>. Learning the route itself grows only with its length. Move the sliders to plan a real flight: one maze cell is taken to be about the flying height, since the camera sees a patch of ground roughly 1.5 times as long as it is high.</p>
   <div class="widget" id="w-plan">
     <div class="wh"><h4>Plan a real flight</h4><span>estimates from measurements</span></div>
-    <div class="controls">
+    <!--HOW:w-plan--><details class="how"><summary><b>How this works</b><small>what is happening, what the controls are for, what to try</small></summary><div class="how-body">
+      <h5>What is happening</h5><p>A calculator for a real flight, using the lab's measurements: how big a maze, how high, how fast, how many practice heights, how big a swarm, and what it would cost in computing and flying time.</p>
+      <h5>The controls, and why they are there</h5><dl class="ctl"><dt>Maze size / Flying height / Speed</dt><dd>The size and kind of flight.</dd><dt>Practice heights</dt><dd>How many heights it practises at (a memory for each).</dd><dt>Swarm size</dt><dd>How many members share the camera.</dd></dl>
+      <h5>Things to try</h5><div class="expt"><p><b>If you</b> slide the maze size up to 50, <b>you will see</b> training time growing with the area.</p><p><b>If you instead</b> raise the practice heights from 1 to 4, <b>you might see</b> the time roughly multiplying.</p><p class="mean"><b>What it means:</b> learning flights cover the whole map, so cost grows with area; practising at several heights multiplies it.</p></div>
+    </div></details><!--/HOW:w-plan-->
+        <div class="controls">
       <label for="pl-n">Maze size <output id="pl-n-o"></output><input type="range" id="pl-n" min="6" max="100" value="20"></label>
       <label for="pl-h">Flying height <output id="pl-h-o"></output><input type="range" id="pl-h" min="5" max="200" value="50"></label>
       <label for="pl-v">Speed <output id="pl-v-o"></output><input type="range" id="pl-v" min="3" max="20" value="10"></label>
@@ -3404,6 +3731,127 @@ function drawTri() {
   $('tr-t').closest('label').style.display = mode === 'track' ? '' : 'none'; $('tr-h').closest('label').style.display = mode === 'track' ? 'none' : '';
 }
 ['tr-as', 'tr-w', 'tr-wd', 'tr-t', 'tr-h'].forEach((id) => $(id).addEventListener('input', drawTri)); segHook($('tr-mode'), drawTri); redraws.push(drawTri);
+
+// ---------------------------------------------------------------- even more widgets: the sparse code, two compasses, optic flow, the sun's clock, swell and islands, two towers
+const frac = (v) => v - Math.floor(v);
+
+// ---------------------------------------------------------------- how far can you move before it stops looking familiar? (the sparse code)
+const SP = { views: null, i0: -1, wiring: {}, mean: null };
+const spPos = ctl('sp-pos', (v) => v + '%'), spSp = ctl('sp-s', (v) => (v / 10).toFixed(1) + '%');
+function spN() { const b = $('sp-n').querySelector('[aria-pressed=true]'); return b ? +b.dataset.v : 10000; }
+function spWire(N) { if (SP.wiring[N]) return SP.wiring[N]; let s = 4321 + N; const rg = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; const idx = new Int32Array(N * 6), wt = new Float32Array(N * 6); for (let i = 0; i < N * 6; i++) { idx[i] = Math.floor(rg() * 840); wt[i] = rg() < 0.5 ? -1 : 1; } return (SP.wiring[N] = { idx, wt }); }
+function spCode(u, N, frac1) { const { idx, wt } = spWire(N), a = new Float32Array(N); for (let k = 0; k < N; k++) { let s = 0; for (let j = 0; j < 6; j++) s += wt[k * 6 + j] * u[idx[k * 6 + j]]; a[k] = s; } const stp = Math.max(1, Math.floor(N / 2000)), sm = []; for (let k = 0; k < N; k += stp) sm.push(a[k]); sm.sort((p, q) => p - q); const thr = sm[Math.min(sm.length - 1, Math.floor((1 - frac1) * sm.length))], on = new Uint8Array(N); for (let k = 0; k < N; k++) if (a[k] >= thr) on[k] = 1; return on; }
+function drawSparse() {
+  if (!ME) return; const i0 = Math.round((spPos() / 100) * (ROUTE.length - 1)), N = spN(), f1 = spSp() / 1000;
+  if (SP.i0 !== i0 || !SP.views) { // the views along the route (every 4th point) and a few places off it
+    SP.i0 = i0; const out = []; for (let d = -3; d <= 3.001; d += 0.2) { let j = i0, dist = 0; const step = d < 0 ? -1 : 1; while (Math.abs(dist) < Math.abs(d) * CELL && j + step >= 0 && j + step < ROUTE.length) { dist += step * Math.hypot(ROUTE[j + step][0] - ROUTE[j][0], ROUTE[j + step][1] - ROUTE[j][1]); j += step; } out.push({ d: dist / CELL, v: seeCamera('A', ROUTE[j][0], ROUTE[j][1], ME.tangent(i0), 1, {}) }); }
+    nseed = 5; const off = []; for (let k = 0; k < 24; k++) off.push(seeCamera('A', 200 + nrand() * (SIZE - 400), 200 + nrand() * (SIZE - 400), nrand() * 6.28, 1, {}));
+    const m = new Float32Array(840); [...out.map((o) => o.v), ...off].forEach((v) => { for (let i = 0; i < 840; i++) m[i] += v[i]; }); const nv = out.length + off.length; for (let i = 0; i < 840; i++) m[i] /= nv; SP.mean = m; SP.views = out; SP.off = off;
+  }
+  const cen = (v) => { const u = new Float32Array(840); for (let i = 0; i < 840; i++) u[i] = v[i] - SP.mean[i]; return u; };
+  const ref = SP.views.find((o) => Math.abs(o.d) < 1e-6) || SP.views[Math.floor(SP.views.length / 2)], c0 = spCode(cen(ref.v), N, f1), n0 = c0.reduce((a, b) => a + b, 0);
+  const ov = (c) => { let s = 0; for (let k = 0; k < N; k++) if (c0[k] && c[k]) s++; return s / Math.max(1, n0); };
+  const line = SP.views.map((o) => [o.d, ov(spCode(cen(o.v), N, f1))]), offAvg = SP.off.reduce((a, v) => a + ov(spCode(cen(v), N, f1)), 0) / SP.off.length;
+  const { c, w, h } = fit($('sp-c'), 0.55), pl = 40, pb = 30, X = (d) => pl + ((d + 3) / 6) * (w - pl - 10), Y = (v) => 10 + (1 - v) * (h - pb - 10);
+  c.clearRect(0, 0, w, h); c.strokeStyle = css('--line'); c.fillStyle = css('--muted'); c.font = '11px system-ui,sans-serif'; c.lineWidth = 1;
+  for (let v = 0; v <= 1.001; v += 0.25) { c.beginPath(); c.moveTo(pl, Y(v)); c.lineTo(w - 10, Y(v)); c.stroke(); c.textAlign = 'right'; c.fillText((v * 100).toFixed(0) + '%', pl - 4, Y(v) + 4); }
+  for (let d = -3; d <= 3; d++) { c.textAlign = 'center'; c.fillText(d + ' cells', X(d), h - 12); }
+  c.strokeStyle = css('--muted'); c.setLineDash([5, 4]); c.beginPath(); c.moveTo(pl, Y(offAvg)); c.lineTo(w - 10, Y(offAvg)); c.stroke(); c.setLineDash([]); c.fillText('typical place elsewhere', pl + 80, Y(offAvg) - 5);
+  c.strokeStyle = css('--teal'); c.lineWidth = 3; c.beginPath(); line.forEach(([d, v], i) => (i ? c.lineTo(X(d), Y(v)) : c.moveTo(X(d), Y(v)))); c.stroke();
+  c.fillStyle = css('--red'); c.beginPath(); c.arc(X(0), Y(1), 5, 0, 7); c.fill(); c.textAlign = 'left'; c.fillStyle = css('--ink'); c.fillText('the view it learned', X(0) + 8, Y(1) + 14);
+  const near = line.filter(([d, v]) => d > 0 && v > offAvg + 0.5 * (1 - offAvg)).map(([d]) => d); const reach = near.length ? Math.max(...near) : 0;
+  paintSensors($('sp-v'), ref.v);
+  $('sp-out').innerHTML = `${N.toLocaleString()} Kenyon cells, <b>${n0}</b> fire for the learned view. A place <b>0.6 cell</b> along the route shares <b>${(line.find(([d]) => d >= 0.55)?.[1] * 100 || 0).toFixed(0)}%</b> of them; a typical place elsewhere shares <b>${(offAvg * 100).toFixed(0)}%</b> (by chance, about ${(f1 * 100).toFixed(1)}%). The route's neighbourhood stands clearly above the rest for about <b>${reach.toFixed(1)} cells</b> ahead.`;
+}
+['sp-pos', 'sp-s'].forEach((id) => $(id).addEventListener('input', drawSparse)); segHook($('sp-n'), drawSparse); redraws.push(drawSparse);
+
+// ---------------------------------------------------------------- two compasses disagree
+const cmA = ctl('cm-a', (v) => v + '°'), cmB = ctl('cm-b', (v) => v + '°'), cmKa = ctl('cm-ka', (v) => v + '%'), cmKb = ctl('cm-kb', (v) => v + '%');
+function drawCompass() {
+  const { c, w, h } = fit($('cm-c'), 0.62), cx = w / 2, cy = h / 2 + 4, R = Math.min(w, h) * 0.34, a = cmA() * DEG, b = cmB() * DEG, ka = cmKa() / 100 * 8, kb = cmKb() / 100 * 8;
+  const sx = ka * Math.sin(a) + kb * Math.sin(b), sy = ka * Math.cos(a) + kb * Math.cos(b), th = Math.atan2(sx, sy), kk = Math.hypot(sx, sy);
+  c.clearRect(0, 0, w, h); c.strokeStyle = css('--line'); c.lineWidth = 1; c.beginPath(); c.arc(cx, cy, R, 0, 7); c.stroke();
+  const NC = 16; for (let i = 0; i < NC; i++) { const ph = (i / NC) * 2 * Math.PI, act = Math.exp(kk * (Math.cos(ph - th) - 1)), r1 = R + 6, r2 = R + 6 + 46 * act; c.strokeStyle = SUN_COL; c.lineWidth = 9; c.beginPath(); c.moveTo(cx + r1 * Math.sin(ph), cy - r1 * Math.cos(ph)); c.lineTo(cx + r2 * Math.sin(ph), cy - r2 * Math.cos(ph)); c.stroke(); }
+  // compass angles in the sliders are bearings (0 = up, clockwise)
+  const P = (ang, r) => [cx + r * Math.sin(ang), cy - r * Math.cos(ang)];
+  const arr = (ang, k, col, nm) => { const q = P(ang, R * 0.95), n = P(ang, R * (0.3 + 0.65 * Math.min(1, k / 8))); arrow(c, cx, cy, q[0] * 0 + n[0], n[1], col, 2 + 3 * Math.min(1, k / 8)); c.fillStyle = col; c.font = '600 11px system-ui,sans-serif'; c.textAlign = 'center'; const t = P(ang, R + 70); c.fillText(nm, t[0], t[1]); };
+  const A2 = a, B2 = b; arr(A2, ka, css('--teal'), 'sky'); arr(B2, kb, css('--red'), 'landmarks');
+  arrow(c, cx, cy, ...P(th, R * 0.55), css('--ink'), 4); c.fillStyle = css('--muted'); c.textAlign = 'center'; c.fillText('N', cx, cy - R - 58);
+  const wa = ka / Math.max(1e-6, ka + kb);
+  $('cm-out').innerHTML = `The head-direction ring (the orange bars) points at <b>${(((th / DEG) % 360 + 360) % 360).toFixed(0)}°</b>, and the bump is <b>${kk < 1.5 ? 'wide: it is unsure' : kk < 5 ? 'moderate' : 'narrow: it is sure'}</b>. The sky has <b>${(wa * 100).toFixed(0)}%</b> of the say.` + (Math.abs(((a - b + 3 * Math.PI) % (2 * Math.PI)) - Math.PI) > 2.4 && Math.abs(ka - kb) < 1.5 ? ' The two cues disagree by nearly half a turn and are about equally trusted: the ring has no good answer.' : '');
+}
+['cm-a', 'cm-b', 'cm-ka', 'cm-kb'].forEach((id) => $(id).addEventListener('input', drawCompass)); $('cm-jump').addEventListener('click', () => { const el = $('cm-b'); el.value = (+el.value + 90) % 360; el.dispatchEvent(new Event('input')); }); redraws.push(drawCompass);
+
+// ---------------------------------------------------------------- optic flow: speed and height look alike
+const OF = { t: 0, run: null, dots: null };
+const ofV1 = ctl('of-v1', (v) => v + ' m/s'), ofH1 = ctl('of-h1', (v) => v + ' m'), ofV2 = ctl('of-v2', (v) => v + ' m/s'), ofH2 = ctl('of-h2', (v) => v + ' m');
+function ofDots() { if (OF.dots) return OF.dots; let s = 77; const rg = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; OF.dots = Array.from({ length: 4000 }, () => [rg() * 300, rg() * 300, 0.5 + rg()]); return OF.dots; }
+function drawOf() {
+  const { c, w, h } = fit($('of-c'), 0.5), panels = [[ofV1(), ofH1(), 0], [ofV2(), ofH2(), 1]], pw = (w - 12) / 2; c.clearRect(0, 0, w, h);
+  panels.forEach(([v, hh, k]) => { const x0 = k * (pw + 12), view = hh * 1.6, off = (OF.t * v) % 300; c.save(); c.beginPath(); c.rect(x0, 0, pw, h - 34); c.clip(); c.fillStyle = 'rgba(80,120,60,.25)'; c.fillRect(x0, 0, pw, h - 34); c.fillStyle = css('--ink');
+    for (const [dx, dy, r] of ofDots()) { const wy = ((dy - off) % 300 + 300) % 300, X = x0 + pw / 2 + ((dx - 150) / (view * 1.43)) * pw, Y = (h - 34) * 0.5 + ((wy - 150) / view) * (h - 34); if (X > x0 && X < x0 + pw && Y > 0 && Y < h - 34) { c.beginPath(); c.arc(X, Y, Math.max(1, 25 * r / hh), 0, 7); c.fill(); } }
+    c.restore(); c.fillStyle = css('--muted'); c.font = '12px system-ui,sans-serif'; c.textAlign = 'left'; c.fillText(`${v} m/s at ${hh} m: the ground slides by at ${(v / hh).toFixed(2)} view-heights per second`, x0 + 2, h - 14); });
+  const f1 = ofV1() / ofH1(), f2 = ofV2() / ofH2();
+  $('of-out').innerHTML = `Flow A: <b>${f1.toFixed(2)}</b> per second. Flow B: <b>${f2.toFixed(2)}</b> per second. ` + (Math.abs(f1 - f2) < 0.02 ? '<b style="color:' + css('--red') + '">They look the same speed</b> although A is moving at ' + ofV1() + ' m/s and B at ' + ofV2() + ' m/s: from the flow alone the fly cannot tell. It needs its height (the size of the ground texture, or an altimeter).' : 'Different flow: the one with the larger number is the faster slide.');
+}
+['of-v1', 'of-h1', 'of-v2', 'of-h2'].forEach((id) => $(id).addEventListener('input', drawOf));
+$('of-run').addEventListener('click', () => { if (OF.run) { clearInterval(OF.run); OF.run = null; $('of-run').textContent = 'Run it'; return; } $('of-run').textContent = 'Stop'; OF.run = setInterval(() => { OF.t += 0.05; drawOf(); }, 40); });
+redraws.push(drawOf);
+
+// ---------------------------------------------------------------- the sun's clock
+const scLat = ctl('sc-lat', (v) => v + '°'), scDay = ctl('sc-day', (v) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Math.min(11, Math.floor(v / 30.5))] + ' ' + (Math.round(v - Math.floor(v / 30.5) * 30.5) + 1)), scT = ctl('sc-t', (v) => (v / 10).toFixed(1) + ' h'), scFly = ctl('sc-fly', (v) => v + ' min'), scClk = ctl('sc-clk', (v) => v + ' min');
+function sunAt(lat, day, hr) { const dec = 23.44 * DEG * Math.sin(2 * Math.PI * (284 + day) / 365), H = (hr - 12) * 15 * DEG, p = lat * DEG, sinEl = Math.sin(p) * Math.sin(dec) + Math.cos(p) * Math.cos(dec) * Math.cos(H), el = Math.asin(clamp(sinEl, -1, 1)), az = Math.atan2(-Math.sin(H) * Math.cos(dec), Math.sin(dec) * Math.cos(p) - Math.cos(dec) * Math.cos(H) * Math.sin(p)); return [((az / DEG) + 360) % 360, el / DEG]; }
+function drawSunClock() {
+  const lat = scLat(), day = scDay(), t0 = scT() / 10, fly = scFly() / 60, clk = scClk() / 60, { c, w, h } = fit($('sc-c'), 0.5), pl = 44, pb = 28, X = (t) => pl + ((t - 4) / 16) * (w - pl - 10), Y = (az) => 10 + (1 - az / 360) * (h - pb - 10);
+  c.clearRect(0, 0, w, h); c.strokeStyle = css('--line'); c.fillStyle = css('--muted'); c.font = '11px system-ui,sans-serif'; c.lineWidth = 1;
+  for (let a = 0; a <= 360; a += 90) { c.beginPath(); c.moveTo(pl, Y(a)); c.lineTo(w - 10, Y(a)); c.stroke(); c.textAlign = 'right'; c.fillText(['N', 'E', 'S', 'W', 'N'][a / 90], pl - 5, Y(a) + 4); }
+  for (let t = 4; t <= 20; t += 2) { c.textAlign = 'center'; c.fillText(t + ':00', X(t), h - 10); }
+  c.strokeStyle = SUN_COL; c.lineWidth = 3; c.beginPath(); let on = false; for (let t = 4; t <= 20; t += 0.1) { const [az, el] = sunAt(lat, day, t); if (el > 0) { const y = Y(az); if (on && Math.abs(y - Y(sunAt(lat, day, t - 0.1)[0])) > 80) { c.stroke(); c.beginPath(); on = false; } on ? c.lineTo(X(t), y) : c.moveTo(X(t), y); on = true; } else if (on) { c.stroke(); c.beginPath(); on = false; } } c.stroke();
+  const [az0, el0] = sunAt(lat, day, t0), [az1] = sunAt(lat, day, t0 + fly), [az2] = sunAt(lat, day, t0 + 0.01), rate = ((az2 - az0 + 540) % 360 - 180) / 0.01;
+  c.fillStyle = css('--red'); if (el0 > 0) { c.beginPath(); c.arc(X(t0), Y(az0), 6, 0, 7); c.fill(); }
+  const move = ((az1 - az0 + 540) % 360) - 180, clockErr = Math.abs(rate) * clk;
+  $('sc-out').innerHTML = el0 > 0 ? `At this time the sun is at <b>${az0.toFixed(0)}°</b> (compass) and <b>${el0.toFixed(0)}°</b> above the horizon, and it is moving <b>${Math.abs(rate).toFixed(0)}°</b> an hour. <br>If the fly learned its heading from the sun and flies <b>${scFly()} minutes</b> <i>without</i> allowing for the sun's movement, its heading is wrong by <b>${Math.abs(move).toFixed(1)}°</b>. If it allows for it but its clock is <b>${scClk()} minutes</b> off, it is wrong by <b>${clockErr.toFixed(1)}°</b>.` : 'The sun is below the horizon at that time. Pick another hour: this is where the star compass takes over.';
+}
+['sc-lat', 'sc-day', 'sc-t', 'sc-fly', 'sc-clk'].forEach((id) => $(id).addEventListener('input', drawSunClock)); redraws.push(drawSunClock);
+
+// ---------------------------------------------------------------- swell: find the island you cannot see
+const SW2 = { boat: [0.2, 0.3], reveal: false, drag: false };
+const swDir = ctl('sw-d', (v) => v + '°'), swLam = ctl('sw-l', (v) => v + ' m'), swN = ctl('sw-n', (v) => v);
+const swIslands = (n) => [[0.62, 0.38, 0.07], [0.3, 0.72, 0.06], [0.82, 0.78, 0.05]].slice(0, n);
+function swField(x, y, t, isl, dir, lam) { const k = 2 * Math.PI / (lam / 400), d = bearingVec(dir), u = [d[0], -d[1]]; let amp = 1, ph = k * (x * u[0] + y * u[1]) - t, ring = 0; for (const [ix, iy, r] of isl) { const dx = x - ix, dy = y - iy, along = dx * u[0] + dy * u[1], cross = dx * u[1] - dy * u[0], rr = Math.hypot(dx, dy); if (along > 0) amp -= 0.85 * Math.exp(-(cross * cross) / (2 * (r * 1.6) ** 2)) * Math.exp(-along / 0.5) * (along > r ? 1 : 0.6); amp -= rr < r ? 1 : 0; ph += 0.9 * Math.exp(-rr * rr / (2 * (r * 2.2) ** 2)); ring += 0.35 * Math.cos(k * rr * 1.1 + t) * Math.exp(-rr / 0.22) * (rr > r ? 1 : 0); } return [clamp(amp, 0, 1), Math.cos(ph) * clamp(amp, 0, 1) + ring, clamp(amp, 0, 1) + Math.abs(ring)]; }
+function drawSwell() {
+  const { c, w, h } = fit($('sw-c'), 0.74), gw = 150, gh = Math.round(gw * 0.74), isl = swIslands(swN()), dir = swDir(), lam = swLam(), img = c.createImageData(gw, gh); let amb = 1;
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const x = (i + 0.5) / gw, y = (j + 0.5) / gh * 0.74, [a, v] = swField(x, y, 0, isl, dir, lam), q = 0.5 + 0.5 * v, o = (j * gw + i) * 4; img.data[o] = 20 + 50 * q; img.data[o + 1] = 70 + 110 * q; img.data[o + 2] = 120 + 120 * q; img.data[o + 3] = 255; }
+  const tmp = document.createElement('canvas'); tmp.width = gw; tmp.height = gh; tmp.getContext('2d').putImageData(img, 0, 0); c.imageSmoothingEnabled = true; c.drawImage(tmp, 0, 0, w, h);
+  if (SW2.reveal) { c.fillStyle = 'rgba(190,170,110,.9)'; for (const [ix, iy, r] of isl) { c.beginPath(); c.arc(ix * w, iy * w, r * w, 0, 7); c.fill(); } }
+  const [bx, by] = SW2.boat, [, , dist] = swField(bx, by * 0.74 / 0.74, 0, isl, dir, lam), dis = clamp(1 - dist + 0.2, 0, 1), d0 = bearingVec(dir);
+  c.fillStyle = css('--red'); c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.arc(bx * w, by * w, 8, 0, 7); c.fill(); c.stroke(); arrow(c, bx * w, by * w, bx * w + 40 * d0[0], by * w - 40 * d0[1], '#fff', 3);
+  const gx = w - 120, gy = 16; c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(gx - 6, gy - 6, 116, 34); c.fillStyle = '#fff'; c.font = '11px system-ui,sans-serif'; c.textAlign = 'left'; c.fillText('land near? ' + (dis * 100).toFixed(0) + '%', gx, gy + 6); c.fillStyle = dis > 0.5 ? SUN_COL : '#8fe'; c.fillRect(gx, gy + 12, 100 * dis, 6);
+  $('sw-out').innerHTML = `The boat (red) reads the swell. Out in the open the waves are straight, evenly spaced and the same height, and run <b>${dir}°</b> (the white arrow), which is a heading in itself. ` + (dis > 0.55 ? '<b>Here the waves are broken: calm patches and ring-shaped ripples. Land is close.</b>' : 'Here they are regular: no land close.') + (SW2.reveal ? '' : ' Drag the boat around; the islands are hidden until you press "Show the islands".');
+}
+['sw-d', 'sw-l', 'sw-n'].forEach((id) => $(id).addEventListener('input', drawSwell)); $('sw-show').addEventListener('click', () => { SW2.reveal = !SW2.reveal; $('sw-show').textContent = SW2.reveal ? 'Hide the islands' : 'Show the islands'; drawSwell(); });
+{ const cv = $('sw-c'); cv.style.touchAction = 'none'; const mv = (e) => { const r = cv.getBoundingClientRect(); SW2.boat = [clamp((e.clientX - r.left) / r.width, 0.02, 0.98), clamp((e.clientY - r.top) / r.width, 0.02, 0.72)]; drawSwell(); }; cv.addEventListener('pointerdown', (e) => { SW2.drag = true; cv.setPointerCapture(e.pointerId); mv(e); }); cv.addEventListener('pointermove', (e) => { if (SW2.drag) mv(e); }); cv.addEventListener('pointerup', () => { SW2.drag = false; }); }
+redraws.push(drawSwell);
+
+// ---------------------------------------------------------------- two towers: why the angle between them matters
+const TW = { t: [[0.15, 0.2], [0.85, 0.25], [0.5, 0.9]], ac: [0.5, 0.55], drag: -1 };
+const twNz = ctl('tw-nz', (v) => (v / 10).toFixed(1) + '°');
+function drawTowers() {
+  const { c, w, h } = fit($('tw-c'), 0.78), sg = twNz() / 10 * DEG, n = $('tw-3').checked ? 3 : 2, ac = TW.ac, bear = (t) => Math.atan2(ac[0] - t[0], -(ac[1] - t[1]) * (h / w) / 1);
+  c.clearRect(0, 0, w, h); const gw = 120, gh = Math.round(gw * 0.78), img = c.createImageData(gw, gh); let cnt = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const x = (i + 0.5) / gw, y = (j + 0.5) / gh; let ok = true; for (let q = 0; q < n; q++) { const t = TW.t[q], b0 = Math.atan2(x - t[0], -(y - t[1]) * 0.78), b1 = Math.atan2(ac[0] - t[0], -(ac[1] - t[1]) * 0.78); let d = Math.abs(b0 - b1) % (2 * Math.PI); if (d > Math.PI) d = 2 * Math.PI - d; if (d > 2 * sg) { ok = false; break; } } const o = (j * gw + i) * 4; if (ok) { img.data[o] = 232; img.data[o + 1] = 162; img.data[o + 2] = 26; img.data[o + 3] = 200; cnt++; sx += x; sy += y; sxx += x * x; syy += y * y; sxy += x * y; } else img.data[o + 3] = 0; }
+  const tmp = document.createElement('canvas'); tmp.width = gw; tmp.height = gh; tmp.getContext('2d').putImageData(img, 0, 0); c.fillStyle = 'rgba(80,120,60,.12)'; c.fillRect(0, 0, w, h); c.imageSmoothingEnabled = false; c.drawImage(tmp, 0, 0, w, h);
+  for (let q = 0; q < n; q++) { const t = TW.t[q], b = Math.atan2(ac[0] - t[0], -(ac[1] - t[1]) * 0.78); c.strokeStyle = css('--muted'); c.lineWidth = 1.5; for (const s of [-2, 0, 2]) { const bb = b + s * sg, L = 1.6; c.setLineDash(s ? [4, 4] : []); c.beginPath(); c.moveTo(t[0] * w, t[1] * h); c.lineTo((t[0] + Math.sin(bb) * L) * w, (t[1] - Math.cos(bb) * L / 0.78) * h); c.stroke(); } c.setLineDash([]); c.fillStyle = css('--ink'); c.beginPath(); c.moveTo(t[0] * w, t[1] * h - 10); c.lineTo(t[0] * w + 8, t[1] * h + 8); c.lineTo(t[0] * w - 8, t[1] * h + 8); c.closePath(); c.fill(); c.fillStyle = css('--muted'); c.font = '11px system-ui,sans-serif'; c.textAlign = 'center'; c.fillText('tower ' + (q + 1), t[0] * w, t[1] * h + 22); }
+  c.fillStyle = css('--red'); c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.arc(ac[0] * w, ac[1] * h, 8, 0, 7); c.fill(); c.stroke();
+  const mx = sx / Math.max(1, cnt), my = sy / Math.max(1, cnt), varx = sxx / Math.max(1, cnt) - mx * mx, vary = syy / Math.max(1, cnt) - my * my, cov = sxy / Math.max(1, cnt) - mx * my, tr = varx + vary, det = varx * vary - cov * cov, l1 = tr / 2 + Math.sqrt(Math.max(0, tr * tr / 4 - det)), l2 = tr / 2 - Math.sqrt(Math.max(0, tr * tr / 4 - det));
+  const a1 = bear(TW.t[0]), a2 = bear(TW.t[1]); let ang = Math.abs(a1 - a2) % Math.PI; if (ang > Math.PI / 2) ang = Math.PI - ang;
+  $('tw-out').innerHTML = `The orange patch is every place consistent with the bearings (within ±2 σ). Its area: <b>${(cnt / (gw * gh) * 100).toFixed(2)}%</b> of the map; its length-to-width ratio: <b>${(Math.sqrt(Math.max(l1, 1e-9) / Math.max(l2, 1e-9))).toFixed(1)}</b>. The two lines of position cross at <b>${(ang / DEG).toFixed(0)}°</b> ` + (ang / DEG > 60 ? '<b style="color:' + css('--teal') + '">(a good fix: crossing near a right angle)</b>.' : ang / DEG < 25 ? '<b style="color:' + css('--red') + '">(a poor fix: the lines are almost the same line, so the position along them is unknown)</b>.' : '(moderate).');
+}
+$('tw-nz').addEventListener('input', drawTowers); $('tw-3').addEventListener('change', drawTowers); $('tw-reset').addEventListener('click', () => { TW.t = [[0.15, 0.2], [0.85, 0.25], [0.5, 0.9]]; TW.ac = [0.5, 0.55]; drawTowers(); });
+{ const cv = $('tw-c'); cv.style.touchAction = 'none'; const pos = (e) => { const r = cv.getBoundingClientRect(); return [clamp((e.clientX - r.left) / r.width, 0.02, 0.98), clamp((e.clientY - r.top) / r.height, 0.02, 0.98)]; };
+  cv.addEventListener('pointerdown', (e) => { const p = pos(e), all = [...TW.t.slice(0, $('tw-3').checked ? 3 : 2), TW.ac]; let bi = -1, bd = 0.09; all.forEach((q, i) => { const d = Math.hypot(q[0] - p[0], (q[1] - p[1]) * 0.78); if (d < bd) { bd = d; bi = i; } }); TW.drag = bi; if (bi >= 0) cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', (e) => { if (TW.drag < 0) return; const p = pos(e); if (TW.drag === (($('tw-3').checked ? 3 : 2))) TW.ac = p; else TW.t[TW.drag] = p; drawTowers(); }); cv.addEventListener('pointerup', () => { TW.drag = -1; }); }
+redraws.push(drawTowers);
 
 // 14. quiz
 const QUIZ = [
